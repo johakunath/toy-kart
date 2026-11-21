@@ -55,6 +55,8 @@ func apply(raw: Intent, racer: Racer, track: Track, racing: bool, delta: float) 
 		return _out
 
 	_watch_for_trouble(racer, track, delta)
+	# On the kerb: the kart rumbles (a sound for every driver, a gentle "oops" for the kid).
+	racer.kart.on_kerb = absf(racer.progress.lateral) > track.half_width - WALL_MARGIN - 0.4
 	if kid:
 		_out.steer = _smart_steer(raw.steer, racer, track, delta)
 		_out.accelerate = _auto_accelerate(raw.accelerate, racer, track)

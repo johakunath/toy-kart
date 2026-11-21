@@ -165,16 +165,28 @@ Claude Code runs on your gaming PC and does all installs, code and git; you keep
 | Milestone 1: setup, kart feel, input and assists, modes, AI, split screen | Fable 5.2 | Architecture mistakes here are the most expensive later |
 | Milestones 2 and 3: your toys, sound, art pass, 3D toys | Opus 5.5, high effort | Multi-system features |
 | Tuning, new toys, small fixes | Opus 5.5 low or medium, or Sonnet 5.5 | Cheap iterations once the structure stands |
-| Concept art and stylised toy images | ChatGPT image or Gemini | Claude does not generate images |
-| 3D models from photos | Tripo or Meshy | Specialised tools, free tiers |
+| Drawn toy pictures for the cards | Codex (image generation), brief in `docs/ART_BRIEF.md`, prompt in `docs/CODEX_TOY_ART.md` | Claude does not generate images |
+| 3D models: blocky toys (Duplo) | Claude in Blender (scripted, from the photos) | Bricks are simple shapes; no outside tool needed |
+| 3D models: plush and the book character | Tripo or Meshy, from the drawn front/back/side views | Organic shapes need an image-to-3D tool |
 
 Front-load the Fable sprint while you are on Max, and check your remaining usage before each long session. Once you are back on Pro, the foundation is done and new toys or tracks are small, cheap changes.
 
 ## Milestones
 
-Five steps, each ending with a test on the couch. If a gate fails, we fix that before building anything new.
+Each milestone ends with a gate. If a gate fails, we fix that before building anything new.
 
-&#91;embedded content: milestones · 5 steps, each with a gate\]
+**Changed 21 Nov 2026:** your son is not ready for the game yet. Until he is, the gates are
+**your own test drives**; the couch test with him moves to the point where you say he is ready.
+The second controller is bought then, not now. Until then, two players means pad + keyboard or
+two keyboard halves.
+
+| # | Milestone | Content | Gate | Status |
+| --- | --- | --- | --- | --- |
+| 1 | Foundation | Kart feel, input and assists, modes, AI, split screen, Windows export | Your test drive: it drives well, kid mode is neither automatic nor frustrating | **Passed** 21 Nov 2026 (your test drive). Kid couch test postponed |
+| 2 | Your toys and polish | Toys in the game (done), toy vehicles (done), more tracks and turbo arrows (done), sound and music, drawn toy pictures (Codex), driver portraits, graphics presets, scenery | You enjoy a race on the projector with sound on, and the toys look like *his* toys | **In progress** |
+| 3 | 3D toys and art pass | Toys as 3D models (Duplo toys built in Blender by Claude; plush and the book character via Tripo or Meshy), toon look, a themed track (living room) | The 3D toys are recognisable and feel alive | Not started |
+| 4 | More game | Battle mode, cups of three races, aimed items | You want to play it yourself | Not started |
+| 5 | His turn | Second controller, the 5-minute couch test with him, tuning from what he does | He asks for a third race | When you say he is ready |
 
 There are no dates: I expect one or two sessions per milestone, and the gate decides when to move on.
 
@@ -188,7 +200,7 @@ Two small choices are still open; neither blocks milestone 1.
 - [x] Split-screen layout: side by side.
 - [x] Words in the game: icons plus short German labels, readable for adults and the kid.
 - [x] Controllers: one smaller pad for him, bought now.
-- [ ] Which pad: wireless 8BitDo Ultimate 2C or a wired mini.
+- [ ] Which pad: wireless 8BitDo Ultimate 2C or a wired mini. Decide at milestone 5.
 - [ ] First cast: which 3 to 4 toys get photographed, front and back. Needed for milestone 2.
 
 ## Decision log
@@ -215,7 +227,7 @@ Decided on 21 Nov 2026. When a decision changes, change its row here, so Claude 
 
 ## Your setup and shopping list
 
-One purchase now: the smaller pad for him. Everything else you already have or comes later.
+No purchase now: the smaller pad for him waits until he is ready (milestone 5).
 
 | Item | Status | Note |
 | --- | --- | --- |
@@ -223,7 +235,7 @@ One purchase now: the smaller pad for him. Everything else you already have or c
 | Monitor, 1440p at 144 Hz | Have | Building and testing |
 | Projector, 1080p via HDMI | Have | Target: 60 fps at 1080p in split screen |
 | Wireless Xbox controller | Have | Yours |
-| Smaller pad for him | Buy now | See Controllers and input |
+| Smaller pad for him | Later (milestone 5) | See Controllers and input |
 | USB extension cable | Only with a wired pad | If the cable doesn't reach the couch |
 | Claude Code on the gaming PC | Install if missing | Claude then installs Godot, Git, Node.js and the Godot MCP server itself |
 | GitHub account | Have | Claude creates the private repo |

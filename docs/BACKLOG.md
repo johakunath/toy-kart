@@ -1,17 +1,18 @@
 # Backlog
 
-Everything here waits until the couch test says milestone 1 is fun. Pick by what the kids ask for.
+Milestone 1 passed on your test drive (21 Nov 2026); the couch test with him waits until he is
+ready (PLAN.md, milestone 5). Pick by what you want to play.
 
 ## Found while building milestone 1
 
 | Area | Item | When |
 | --- | --- | --- |
-| Test | Play with the real Xbox pad and his small pad (only simulated pads were tested) | Couch test |
-| Tuning | Kid mode after watching him: lane speed, how strongly the stick answers, AI gaps, Kid speed | After the couch test |
-| Tuning | Full mode feel after you drove it: grip, drift, top speeds | After the couch test |
-| Art | Retake the bear photo: toy or page on a plain background (book page lost the bear's hair) | Any time |
-| Art | Small portraits of drivers in the selection row instead of names only | Milestone 2 |
-| Sound | Music; quieter engines in split screen; a different horn per driver | Milestone 2 |
+| Test | Play with his small pad (only your Xbox pad and simulated pads so far) | Milestone 5 |
+| Tuning | Kid mode after watching him: how strongly the stick answers, edge strip, AI gaps, Kid speed | Milestone 5 |
+| Art | Drawn toy pictures instead of photo cut-outs (also fixes Bobo's missing hair): Codex, `docs/CODEX_TOY_ART.md` | Milestone 2, now |
+| Art | Small portraits of drivers in the selection row instead of names only (Codex can draw them) | Milestone 2 |
+| Sound | Listen and tune: volume of music vs. effects, rumble, turbo sound. Real recorded sounds if the generated ones feel cheap | Milestone 2 |
+| Sound | Volume slider instead of only music on/off | If needed |
 | UI | Mouse support on the player selection page | If needed |
 | UI | 3D podium on the finish screen | Later |
 | Input | Controller rumble on boost and bumps (full mode only) | Later |

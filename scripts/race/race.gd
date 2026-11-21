@@ -44,6 +44,11 @@ func _ready() -> void:
 	_spawn_racers()
 	_build_views()
 	_build_overlay()
+	Music.stop(0.6)  # quiet for the countdown; the race tune starts with "Los!"
+	if humans.size() > 1:
+		# Two listeners hear every engine twice in split screen: turn the human karts down a bit.
+		for racer in humans:
+			racer.kart.engine_db_offset = -3.0
 	_update_places()
 	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 
@@ -278,6 +283,7 @@ func _tick_countdown(delta: float) -> void:
 		for hud in huds:
 			hud.show_message("Los!", 1.0, 230, UiKit.SUN)
 		UiKit.play(self, "beep_high")
+		Music.play("race")
 
 func _check_laps() -> void:
 	if Game.mode == Game.Mode.FREE_DRIVE:
@@ -292,6 +298,7 @@ func _check_laps() -> void:
 				_finish_racer(racer)
 			elif racer.is_human and laps_done == Game.track.laps - 1:
 				huds[humans.find(racer)].show_message("Letzte Runde!", 1.6, 120, UiKit.SUN)
+				Music.hurry()
 				UiKit.play(self, "select")
 
 func _finish_racer(racer: Racer) -> void:
@@ -435,6 +442,7 @@ func _on_joy_connection_changed(device: int, connected: bool) -> void:
 
 func _show_finish_screen() -> void:
 	state = State.FINISHED
+	Music.stop(0.8)
 	for hud in huds:
 		hud.hide_message()
 	var record := false

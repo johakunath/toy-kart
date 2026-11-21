@@ -139,6 +139,7 @@ static func play(parent: Node, sound: String, volume_db := 0.0) -> void:
 	var player := AudioStreamPlayer.new()
 	player.stream = load("res://assets/sfx/%s.wav" % sound)
 	player.volume_db = volume_db
+	player.bus = &"Effects"
 	player.process_mode = Node.PROCESS_MODE_ALWAYS
 	parent.add_child(player)
 	player.finished.connect(player.queue_free)

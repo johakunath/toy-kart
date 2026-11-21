@@ -16,7 +16,7 @@ checks yourself. Give him steps only in the Godot editor or on websites.
 ## Folder map
 | Path | What |
 | --- | --- |
-| `scripts/core/` | `game.gd` (autoload `Game`: mode, speed, track, players, catalog, settings), `DriverDef`, `KartDef`, `TrackDef` |
+| `scripts/core/` | `game.gd` (autoload `Game`: mode, speed, track, players, catalog, settings), `music.gd` (autoload `Music`), `DriverDef`, `KartDef`, `TrackDef` |
 | `scripts/input/` | `Intent`, `InputSource` (keyboard, pad, AI, test), `Assist` (kid/full), `LineFollow` |
 | `scripts/kart/` | `Kart` (rolling-ball arcade physics), `KartVisual`, `DriverRig` (3D model or paper card) |
 | `scripts/track/` | `Track` (racing line lookups), `TrackProgress` (laps), `BoostStar`, `BoostPad` (turbo arrows), `Atmosphere` (light, sky, weather), `Scatter` (trees) |
@@ -26,6 +26,7 @@ checks yourself. Give him steps only in the Godot editor or on websites.
 | `data/drivers/`, `data/karts/`, `data/tracks/` | one `.tres` per driver / kart / track; the game lists these folders at start |
 | `assets/` | `kenney_racing/`, `kenney_car_kit/`, `kenney_toy_car_kit/`, `characters/`, `paper/` (toy cut-outs), `sfx/`, `fx/`, `icons/` |
 | `photos/toys/` | toy photos + `pairs.json` (which photo is front/back). Not imported by Godot |
+| `art/toys/` | drawn toy pictures (Codex); win over the photos. Brief: `docs/ART_BRIEF.md`. Not imported |
 | `tools/` | check, export, track builder, cut-out and sound generators |
 | `docs/` | PLAN, DECISIONS, BACKLOG, HANDOVER |
 | `builds/` | exported game (not in git) |
@@ -78,7 +79,8 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1       # builds\ToyKart
 - Rebuild a track: `godot --headless --path . --script res://tools/build_round_track.gd` (all round tracks,
   or `-- --track=<id>`), or `build_track.gd` (Waldkurs). After adding a `class_name`, run `godot --headless --import` once.
 - Light, sky, clouds and weather per track: the looks in `scripts/track/atmosphere.gd`.
-- Regenerate sounds: `tools\.venv\Scripts\python.exe tools\make_sfx.py`.
+- Regenerate sounds / music: `tools\.venv\Scripts\python.exe tools\make_sfx.py` / `make_music.py`.
+  Audio buses (Music, Effects, Engines) in `default_bus_layout.tres`.
 - Tuning knobs: speeds in `game.gd` (`SPEED_FACTOR`), kart feel in `kart.gd` (constants at the top),
   kid assist in `assist.gd`, AI and catch-up in `race.gd` (`_update_pacing`), cameras in `chase_camera.gd`.
 

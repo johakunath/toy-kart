@@ -25,6 +25,7 @@ config/icon="res://assets/kenney_racing/icon.png"
 [autoload]
 
 Game="*res://scripts/core/game.gd"
+Music="*res://scripts/core/music.gd"
 
 [display]
 

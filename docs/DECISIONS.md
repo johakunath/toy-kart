@@ -31,7 +31,8 @@ Claude builds from this file. Change a row only with Johannes' OK, and change it
 | --- | --- | --- |
 | Kid steering | In the middle of the road the stick steers for real, with a light helping hand (30 %). Near the edge the helper takes over and steers back; it looks 0.6 s ahead so a kart pointed at the wall is caught early. The edge strip slows the kart | Changed 21 Nov 2026 at Johannes' request: lane steering drove the whole track by itself, so the kid felt nothing and won by doing nothing. Tests: hands off = 3rd to 5th, holding gas = 3rd, steering well with gas = 1st; no wall hits, no resets |
 | Kid speed | Cruises at 85 % of top speed; gas (A or RT, W or arrow up) gives 100 %. Eases off before tight corners by itself | A button that does something he can feel |
-| Kid side | With one Kind and one Profi player, the Kind player always gets the left half | Matches "the left half is his" without an extra menu step |
+| Kid side | With one Kind and one Profi player, the Kind player always gets the left half. The player panels swap the moment this applies | Matches "the left half is his"; the swap shows it before the race (21 Nov 2026) |
+| Seat choice | Empty panels are "Linke Seite" / "Rechte Seite": left or right on a device takes that seat, the join button the first free one | Johannes: it was unclear who presses what first (21 Nov 2026) |
 | Kart feel | Added grip to the Kenney ball physics: the motion follows the kart's nose | The kit's free-rolling ball slid wide in every corner of a walled track |
 | Full mode buttons | RT or A gas, LT or B brake, RB drift (mini boost after 1 s), X or LB use, Y horn | Close to Mario Kart on an Xbox pad |
 | AI with a kid in the race | Each AI kart holds a spot near the slowest human (+12 m, +4 m, -14 m); it waits when far ahead but never drives faster than normal to hold its spot | Changed 21 Nov 2026: a kid who drives well can win, one who does nothing comes 3rd or 4th, never far behind |
@@ -45,6 +46,9 @@ Claude builds from this file. Change a row only with Johannes' OK, and change it
 | Paper cards | Unshaded with a white sticker outline | Recognisable from every angle |
 | Toy vehicles | Motorrad, Polizei and Flieger replace the kart (front photo ahead, back photo toward the camera); the plane flies 35 cm above the road. The vehicle row shows "fährt selbst" and is skipped; speed and sound come from the vehicle picked before | Asked for by Johannes, 21 Nov 2026 |
 | Turbo arrows | Blue pads with yellow arrows on the road: drive over = short turbo, no button | More to do on the track; steering onto them is a reason to steer |
+| Boosts | Push the kart directly to top speed + 40 % (star, 1.6 s), + 30 % (arrows, 1 s), + 25 % (drift, 0.8 s), never stacking. Flame trail, speed streaks, wider camera | Johannes: boosts had almost no effect and could not be seen (21 Nov 2026) |
+| Music and sound | Generated on this PC like the effects (`tools/make_music.py`, `tools/make_sfx.py`); buses Music (-7 dB), Effects, Engines (-4 dB); music on/off on the options page | No licences, no downloads; easy to regenerate |
+| Toy pictures | Drawn by Codex into `art/toys/`, used instead of the photos when present | Cleaner cards; photos stay as fallback |
 | Colours | A controller gets the next free colour the first time it joins; remembered per device | "His pad, his colour" without setup |
 | Kart bumps | Karts push each other apart softly instead of colliding | No pile-ups, no spinning out |
 | Sounds | All effects synthesised by `tools/make_sfx.py` | No licence questions, no downloads |

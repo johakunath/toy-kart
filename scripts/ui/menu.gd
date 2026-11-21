@@ -25,6 +25,7 @@ var _sources: Array[InputSource] = []
 var _start_timer := -1.0
 var _start_label: Label
 var _kid_note: Control
+var _music_button: Button
 
 func _ready() -> void:
 	if Game.smoke:
@@ -33,6 +34,7 @@ func _ready() -> void:
 		return
 	theme = UiKit.theme()
 	add_child(UiKit.background())
+	Music.play("menu")
 	_build_mode_page()
 	_build_options_page()
 	_build_players_page()
@@ -137,6 +139,14 @@ func _build_options_page() -> void:
 	var back := UiKit.pill_button("arrow_left", "Zurück", Vector2(300, 100))
 	back.pressed.connect(func() -> void: _show(Page.MODE))
 	nav.add_child(back)
+	_music_button = UiKit.pill_button("music", "", Vector2(260, 100))
+	_music_button.pressed.connect(func() -> void:
+		Game.music_on = not Game.music_on
+		Game.save_options()
+		_refresh_music_button()
+		Music.refresh("menu"))
+	nav.add_child(_music_button)
+	_refresh_music_button()
 	_next_button = UiKit.pill_button("arrow_right", "Weiter", Vector2(420, 112))
 	_next_button.add_theme_font_size_override("font_size", 56)
 	_next_button.pressed.connect(func() -> void:
@@ -144,6 +154,10 @@ func _build_options_page() -> void:
 		UiKit.play(self, "select")
 		_show(Page.PLAYERS))
 	nav.add_child(_next_button)
+
+func _refresh_music_button() -> void:
+	_music_button.icon = UiKit.icon("music" if Game.music_on else "music_off")
+	_music_button.text = "Musik an" if Game.music_on else "Musik aus"
 
 func _option_row(parent: Control, title: String) -> HBoxContainer:
 	var block := VBoxContainer.new()

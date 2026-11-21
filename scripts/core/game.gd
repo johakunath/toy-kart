@@ -27,6 +27,7 @@ var speed_class := SpeedClass.KID
 var ai_count := MAX_AI
 var players: Array[PlayerConfig] = []
 var track: TrackDef
+var music_on := true
 
 var drivers: Array[DriverDef] = []
 var karts: Array[KartDef] = []
@@ -49,6 +50,7 @@ func _ready() -> void:
 		save_enabled = false  # test and screenshot runs
 	speed_class = clampi(_settings.get_value("options", "speed_class", SpeedClass.KID), 0, 2) as SpeedClass
 	ai_count = clampi(_settings.get_value("options", "ai_count", MAX_AI), 0, MAX_AI)
+	music_on = _settings.get_value("options", "music", true)
 	_load_catalog()
 	track = track_by_id(smoke_args.get("track", _settings.get_value("options", "track", "")))
 	if not OS.has_feature("editor") and not smoke and not OS.get_cmdline_user_args().has("--windowed"):
@@ -123,6 +125,7 @@ func kart_by_id(id: String) -> KartDef:
 func save_options() -> void:
 	_settings.set_value("options", "speed_class", speed_class)
 	_settings.set_value("options", "ai_count", ai_count)
+	_settings.set_value("options", "music", music_on)
 	_settings.set_value("options", "track", track.id if track else "")
 	_save()
 

@@ -62,7 +62,9 @@ var drifting := false
 var _boost_left := 0.0
 var _boost_strength := 0.0
 var _boost_target := 0.0
-var _flames: GPUParticles3D         ## m/s the kart is pushed to while boosting
+var _flames: GPUParticles3D
+var _rumble: AudioStreamPlayer3D
+var on_kerb := false             ## set by the assist; plays the kerb rumble         ## m/s the kart is pushed to while boosting
 var _drift_time := 0.0
 var _prev_position := Vector3.ZERO
 var _normal := Vector3.UP
@@ -74,6 +76,17 @@ func _ready() -> void:
 	sparkles.emitting = false
 	marker.visible = false
 	_build_flames()
+	_rumble = AudioStreamPlayer3D.new()
+	_rumble.name = "RumbleSound"
+	var rumble_stream := load("res://assets/sfx/rumble.wav") as AudioStreamWAV
+	rumble_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	rumble_stream.loop_begin = 0
+	rumble_stream.loop_end = int(rumble_stream.get_length() * rumble_stream.mix_rate)
+	_rumble.stream = rumble_stream
+	_rumble.bus = &"Effects"
+	_rumble.volume_db = -80.0
+	_rumble.max_distance = 30.0
+	container.add_child(_rumble)
 
 # --- Setup ---------------------------------------------------------------------------------
 
@@ -86,6 +99,9 @@ func setup(p_kart: KartDef, p_driver: DriverDef) -> void:
 		engine_sound.play()
 	if kart_def:
 		horn_sound.pitch_scale = kart_def.horn_pitch
+		if driver_def:
+			# Every driver honks a little differently (same driver, same horn every time).
+			horn_sound.pitch_scale *= 0.86 + float(absi(hash(driver_def.id)) % 29) / 100.0
 
 ## Shows a floating arrow in the player's colour above the kart.
 func set_marker_color(color: Color) -> void:
@@ -312,6 +328,7 @@ func _physics_process(delta: float) -> void:
 			_flames.emitting = false
 
 	_effect_engine(delta)
+	_effect_rumble(delta)
 	_effect_body(delta)
 	_effect_wheels(delta)
 	_effect_trails(delta)
@@ -365,6 +382,16 @@ func _effect_wheels(delta: float) -> void:
 		wheel.rotation.y = lerp_angle(wheel.rotation.y, -input.x / 1.5, delta * 10.0)
 	if visual.fork:
 		visual.fork.rotation.y = lerp_angle(visual.fork.rotation.y, -input.x / 1.5, delta * 5.0)
+
+func _effect_rumble(delta: float) -> void:
+	var loud := on_kerb and colliding and speed() > 2.0 and not frozen
+	var target := (-6.0 + engine_db_offset) if loud else -60.0
+	_rumble.volume_db = lerpf(_rumble.volume_db, target, delta * 12.0)
+	_rumble.pitch_scale = clampf(0.6 + speed() / 15.0, 0.6, 1.6)
+	if _rumble.volume_db > -50.0 and not _rumble.playing:
+		_rumble.play()
+	elif _rumble.volume_db <= -55.0 and _rumble.playing:
+		_rumble.stop()
 
 func _effect_engine(delta: float) -> void:
 	var speed_factor := clampf(absf(linear_speed), 0.0, 1.0)

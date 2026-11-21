@@ -4,6 +4,10 @@ Reads photos/toys/pairs.json (plus any <id>-front.* / <id>-back.* files), remove
 locally with rembg (free, runs on this PC), trims, adds a white sticker outline, and writes
   assets/paper/<id>_front.png, assets/paper/<id>_back.png, data/drivers/paper_<id>.tres
 
+Drawn art wins over photos: if art/toys/<id>-front.png (or -back.png) exists, it is used instead
+of the photo. A drawing with a transparent background is used as it is (no rembg); one on a
+plain background goes through rembg like a photo. See docs/ART_BRIEF.md.
+
 Run via tools/make_paper_drivers.ps1. Existing .tres files are kept unless --force is given,
 so hand-tuned values (name, card height) survive a re-run.
 """
@@ -19,6 +23,7 @@ from scipy import ndimage
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PHOTOS = os.path.join(ROOT, "photos", "toys")
+ART = os.path.join(ROOT, "art", "toys")
 OUT_IMG = os.path.join(ROOT, "assets", "paper")
 OUT_RES = os.path.join(ROOT, "data", "drivers")
 TARGET = 512      # longest side of the finished cut-out in pixels
@@ -45,15 +50,39 @@ def load_pairs():
     return toys
 
 
+def art_path(toy_id, side):
+    """The drawn version of a toy side, if there is one."""
+    for ext in ("png", "webp"):
+        p = os.path.join(ART, "%s-%s.%s" % (toy_id, side, ext))
+        if os.path.exists(p):
+            return p
+    return None
+
+
+def has_transparency(img):
+    if img.mode != "RGBA":
+        return False
+    a = np.array(img.getchannel("A"))
+    return (a < 16).mean() > 0.05
+
+
 def cut_out(path, session, crop=None):
-    from rembg import remove
-    img = ImageOps.exif_transpose(Image.open(path)).convert("RGB")
+    raw = ImageOps.exif_transpose(Image.open(path))
+    if raw.mode in ("RGBA", "LA", "P"):
+        raw = raw.convert("RGBA")
     if crop:
-        w, h = img.size
-        img = img.crop((int(crop[0] * w), int(crop[1] * h), int(crop[2] * w), int(crop[3] * h)))
-    # Work at a moderate size: plenty for a 512 px card, and faster.
-    img.thumbnail((1400, 1400), Image.LANCZOS)
-    rgba = remove(img, session=session, post_process_mask=True)
+        w, h = raw.size
+        raw = raw.crop((int(crop[0] * w), int(crop[1] * h), int(crop[2] * w), int(crop[3] * h)))
+    if has_transparency(raw):
+        # A drawing that already has a transparent background: keep its alpha as it is.
+        rgba = raw
+        rgba.thumbnail((1400, 1400), Image.LANCZOS)
+    else:
+        from rembg import remove
+        img = raw.convert("RGB")
+        # Work at a moderate size: plenty for a 512 px card, and faster.
+        img.thumbnail((1400, 1400), Image.LANCZOS)
+        rgba = remove(img, session=session, post_process_mask=True)
     arr = np.array(rgba)
     alpha = arr[:, :, 3]
     # Keep the biggest blob plus anything nearly as big; drops stray background specks.
@@ -120,9 +149,12 @@ def main():
         if only and toy["id"] not in only:
             continue
         sizes = {}
+        used = {}
         for side in ("front", "back"):
-            src = os.path.join(PHOTOS, toy[side])
-            img = cut_out(src, session, toy.get("crop_" + side))
+            drawn = art_path(toy["id"], side)
+            src = drawn or os.path.join(PHOTOS, toy[side])
+            used[side] = "art" if drawn else "photo"
+            img = cut_out(src, session, None if drawn else toy.get("crop_" + side))
             img.save(os.path.join(OUT_IMG, "%s_%s.png" % (toy["id"], side)), optimize=True)
             sizes[side] = img.size
         aspect = max(sizes["front"][0] / sizes["front"][1], sizes["back"][0] / sizes["back"][1])
@@ -132,7 +164,8 @@ def main():
         if args.force or not os.path.exists(tres):
             with open(tres, "w", encoding="utf-8", newline="\n") as f:
                 f.write(TRES.format(id=toy["id"], name=toy["name"], order=10 + order, height=height))
-        print("ok  %-10s front %s  back %s  card %.2f m" % (toy["id"], sizes["front"], sizes["back"], height))
+        print("ok  %-12s front %s (%s)  back %s (%s)  card %.2f m" % (
+            toy["id"], sizes["front"], used["front"], sizes["back"], used["back"], height))
     print("done: %d toys" % len(toys))
 
 

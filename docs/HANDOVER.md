@@ -1,6 +1,6 @@
 # Handover
 
-Updated 21 Nov 2026, after the third round (your first test drive) of the milestone 1 session.
+Updated 21 Nov 2026, fourth round: milestone 1 passed on your test drive, milestone 2 started.
 
 ## Where it stands
 
@@ -11,6 +11,28 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## New in the fourth round (milestone 2 starts)
+
+- **Who sits where:** the empty panels are now "Linke Seite" and "Rechte Seite". Press left on
+  your stick or keys to sit left, right to sit right (the join button still takes the first free
+  seat). The panel header says "Links" or "Rechts". If the Kind player sits right and the Profi
+  left, the panels swap at once, so you see the real seats before the race.
+- **Boosts you feel and see:** stars and turbo arrows push the kart forward (+40 % for 1.6 s,
+  arrows +30 % for 1 s) instead of the old barely noticeable change. While boosting: an orange
+  flame trail, white speed streaks on the screen, and a wider camera view (also in kid mode,
+  a little calmer). Tested: hands-off kid still 4th, good driving still wins.
+- **Music:** a calm menu tune and an upbeat race tune that starts with "Los!" and speeds up on the
+  last lap. Generated on this PC (`tools/make_music.py`), no licences. "Musik an / aus" on the
+  options page.
+- **Sound:** separate channels for music, effects and engines (music a bit quieter, engines a bit
+  quieter than effects; quieter again in split screen). A rumble when you drive on the kerb,
+  a zip on the turbo arrows, and every driver honks a little differently.
+- **Drawn toys, prepared for Codex:** put drawings in `art/toys/` and the game uses them instead
+  of the photos. The brief is `docs/ART_BRIEF.md`, the prompt to paste into Codex is
+  `docs/CODEX_TOY_ART.md`.
+- **Plan:** milestone 1 passed on your test drive. Your test drives are the gates until he is
+  ready; the second controller and his couch test are milestone 5.
 
 ## New in the third round (after your first test drive)
 
@@ -156,7 +178,10 @@ Tell Claude the answers by voice; they become the tuning list.
 
 ## What is next
 
-1. Tuning from the next couch test (kid mode feel, gas button, Riesenrunde length, sound).
+1. You: one race with sound on, on the projector. Too loud, too quiet, annoying? Do the boosts
+   feel right now? Is the seat choice clear?
+2. Codex: drawn toy pictures (`docs/CODEX_TOY_ART.md`).
+3. Rest of milestone 2: driver portraits, graphics presets for projector and monitor, scenery.
 2. Milestone 2 per PLAN.md: more of your toys (retake the bear), music and sound, graphics presets.
    The Duplo plane has all four side photos, so it is the first candidate for a 3D model.
 3. Two small open decisions from PLAN.md: which small pad, and the first cast for 3D toys.

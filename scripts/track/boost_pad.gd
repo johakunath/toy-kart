@@ -11,6 +11,7 @@ static var _material: StandardMaterial3D
 var _arrows: MeshInstance3D
 var _time := 0.0
 var _last_hit := {}
+var _sound: AudioStreamPlayer3D
 
 func _ready() -> void:
 	monitoring = true
@@ -36,6 +37,11 @@ func _ready() -> void:
 	_arrows.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_arrows.position.y = -0.13
 	add_child(_arrows)
+	_sound = AudioStreamPlayer3D.new()
+	_sound.stream = load("res://assets/sfx/turbo.wav")
+	_sound.bus = &"Effects"
+	_sound.max_distance = 35.0
+	add_child(_sound)
 	body_entered.connect(_on_body_entered)
 
 func _process(delta: float) -> void:
@@ -53,6 +59,8 @@ func _on_body_entered(body: Node) -> void:
 		return
 	_last_hit[kart.get_instance_id()] = now
 	kart.call("boost", 1.0, 0.3)
+	_sound.pitch_scale = randf_range(0.95, 1.08)
+	_sound.play()
 
 ## Three chevrons pointing forward (+Z) on a dark plate.
 static func _build_mesh() -> ArrayMesh:

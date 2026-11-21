@@ -136,6 +136,29 @@ def applause():
     save("applause.wav", buf, 0.55)
 
 
+def rumble():
+    """Kerb rumble: quick low thuds, one per kerb stripe. A seamless 0.48 s loop."""
+    seconds = 0.48
+    n = int(SR * seconds)
+    buf = np.zeros(n)
+    thud_len = int(SR * 0.05)
+    x = np.arange(thud_len) / SR
+    for k in range(12):
+        f = 70 + 20 * (k % 2)
+        thud = np.sin(2 * np.pi * f * x) * np.exp(-55 * x)
+        thud += 0.25 * rng.standard_normal(thud_len) * np.exp(-90 * x)
+        mix_at(buf, thud, k * seconds / 12)
+    save("rumble.wav", buf, 0.8)
+
+
+def turbo():
+    """Turbo arrows: a short rising zip."""
+    n = t(0.35)
+    f = 300 + 1500 * n / 0.35
+    y = np.tanh(2 * np.sin(2 * np.pi * np.cumsum(f) / SR)) * env(len(n), 0.005, 0.12)
+    save("turbo.wav", y, 0.6)
+
+
 def sparkle_png():
     size = 64
     yy, xx = np.mgrid[0:size, 0:size]
@@ -191,6 +214,8 @@ if __name__ == "__main__":
     ui()
     fanfare()
     applause()
+    rumble()
+    turbo()
     sparkle_png()
     dot_png()
     leaf_png()
