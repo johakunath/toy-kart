@@ -37,7 +37,7 @@ steering, AI, laps, places, reset and the start grid.
 
 ## Checks (run before every handover)
 ```
-powershell -ExecutionPolicy Bypass -File tools\check.ps1        # names, parse, pad mapping, 7 headless races
+powershell -ExecutionPolicy Bypass -File tools\check.ps1        # names, parse, pad mapping, menu flow, 7 headless races
 powershell -ExecutionPolicy Bypass -File tools\check.ps1 -Quick # parse + one race
 powershell -ExecutionPolicy Bypass -File tools\export.ps1       # builds\ToyKart.exe + start tests
 ```
@@ -48,6 +48,9 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1       # builds\ToyKart
   (race) or `res://scenes/menu.tscn -- --windowed --shot=<png> --page=mode|options|players` (menu).
   Read only the saved PNG, never asset files.
 - Frame rate: windowed with `--disable-vsync` and `-- --smoke --perf=1 --seconds=25` prints a `PERF` line.
+- Test and screenshot runs never write `user://settings.cfg` (`Game.save_enabled`).
+- Tool scripts run with `--script` are compiled before autoloads exist: do the work in `_process`,
+  and do not name classes that use `Game` (see `tools/menu_check.gd`).
 
 ## Rules
 1. Godot 4.7 APIs only. No Godot 3 names (`KinematicBody`, `yield`, `export var`, `.instance()` ...);

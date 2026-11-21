@@ -36,15 +36,20 @@ var karts: Array[KartDef] = []
 var smoke := false
 var smoke_args := {}
 
+## Tests switch this off so they never touch the family's saved colours and best times.
+var save_enabled := true
+
 var _settings := ConfigFile.new()
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_settings.load(SETTINGS_PATH)
+	_parse_cmdline()
+	if smoke or not smoke_args.is_empty():
+		save_enabled = false  # test and screenshot runs
 	speed_class = clampi(_settings.get_value("options", "speed_class", SpeedClass.KID), 0, 2) as SpeedClass
 	ai_count = clampi(_settings.get_value("options", "ai_count", MAX_AI), 0, MAX_AI)
 	_load_catalog()
-	_parse_cmdline()
 	if not OS.has_feature("editor") and not smoke and not OS.get_cmdline_user_args().has("--windowed"):
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 
@@ -105,7 +110,7 @@ func kart_by_id(id: String) -> KartDef:
 func save_options() -> void:
 	_settings.set_value("options", "speed_class", speed_class)
 	_settings.set_value("options", "ai_count", ai_count)
-	_settings.save(SETTINGS_PATH)
+	_save()
 
 ## Per-device memory: colour, driver, kart, control mode. Returns {} for a device never seen before.
 func device_prefs(device_id: String) -> Dictionary:
@@ -113,7 +118,7 @@ func device_prefs(device_id: String) -> Dictionary:
 
 func save_device_prefs(device_id: String, prefs: Dictionary) -> void:
 	_settings.set_value("devices", device_id, prefs)
-	_settings.save(SETTINGS_PATH)
+	_save()
 
 func best_time(speed: int) -> float:
 	return _settings.get_value("best_times", "%s_%d" % [track_scene_path.get_file().get_basename(), speed], 0.0)
@@ -124,8 +129,12 @@ func submit_time(speed: int, seconds: float) -> bool:
 	if old > 0.0 and seconds >= old:
 		return false
 	_settings.set_value("best_times", "%s_%d" % [track_scene_path.get_file().get_basename(), speed], seconds)
-	_settings.save(SETTINGS_PATH)
+	_save()
 	return true
+
+func _save() -> void:
+	if save_enabled:
+		_settings.save(SETTINGS_PATH)
 
 # --- Scene switching -----------------------------------------------------------------------
 

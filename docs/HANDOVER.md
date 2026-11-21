@@ -20,6 +20,7 @@ The couch test below is the gate for milestone 1.
 | Leave a race | Start button on a pad, or Esc: Pause, then **Menü** |
 | Leave the game | **Ende** on the first menu page |
 | Window instead of full screen | F11 |
+| Game opened on the monitor, not the projector | Win + Shift + arrow key moves it to the other screen |
 
 ## Controls
 
@@ -59,7 +60,8 @@ road by itself, slows for tight corners, and cannot hit the walls hard or turn a
 ## Checked automatically (all passing)
 
 `tools\check.ps1`: no Godot 3 names; every script, scene and resource loads; simulated gamepad
-mapping (30 checks); 7 headless runs of the race scene, including two kid karts with nobody
+mapping (30 checks); a scripted walk through the menu with two keyboard players into a race, pause
+and resume (22 checks); 7 headless runs of the race scene, including two kid karts with nobody
 touching the controls, with the stick held to one side, and with random button mashing. At Kid
 speed no kart needs a rescue. `tools\export.ps1`: the exe runs a full 2-player kid race with 3 AI
 karts and opens its window.

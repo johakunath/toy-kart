@@ -4,7 +4,7 @@
 #   powershell -ExecutionPolicy Bypass -File tools\check.ps1 -Quick     (parse + one race)
 #
 # 1. Godot 3 names: scripts must use Godot 4.7 APIs only.
-# 2. Import + parse: every script, scene and resource must load. Gamepad mapping test.
+# 2. Import + parse: every script, scene and resource must load. Gamepad mapping and menu flow tests.
 # 3. Headless races: the race scene runs by itself, with fake children at the controls.
 # Exit code 0 = all good.
 
@@ -51,6 +51,11 @@ $r = Invoke-Godot @('--headless', '--script', 'res://tools/input_check.gd')
 $errors = Get-ScriptErrors $r.Output
 $ok = ($r.Output -match 'INPUT CHECK: PASS') -and ($errors.Count -eq 0)
 Report 'Gamepad mapping: kid and full mode (simulated pad)' $ok (@($r.Output -split "`r?`n" | Where-Object { $_ -match 'INPUT CHECK|ERROR' }))
+
+$r = Invoke-Godot @('--headless', '--fixed-fps', '60', '--script', 'res://tools/menu_check.gd')
+$errors = Get-ScriptErrors $r.Output
+$ok = ($r.Output -match 'MENU CHECK: PASS') -and ($errors.Count -eq 0)
+Report 'Menu flow: pick mode, two players join, race starts, pause' $ok (@($r.Output -split "`r?`n" | Where-Object { $_ -match 'MENU CHECK|ERROR' }))
 
 # --- 3. Headless runs of the race scene --------------------------------------------------------
 $scenarios = @(
