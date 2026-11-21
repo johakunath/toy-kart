@@ -5,6 +5,13 @@ class_name KartDef extends Resource
 @export var display_name := ""
 @export var sort_order := 100
 @export var model_scene: PackedScene
+## Size and direction fix for models from other packs (+Z must end up as forward).
+@export var model_scale := 1.0
+@export var model_yaw_degrees := 0.0
+## Parts of the model to hide, for example a built-in driver figure.
+@export var hide_nodes: PackedStringArray = []
+## AI karts only pick vehicles with this ticked.
+@export var ai_can_use := true
 
 ## Where the driver sits, in the kart model's space (+Z is forward, +Y is up).
 @export var seat_position := Vector3(0, 0.75, -0.1)

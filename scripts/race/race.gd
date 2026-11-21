@@ -107,7 +107,9 @@ func _spawn_racers() -> void:
 
 	var ai_count := Game.ai_count if Game.mode == Game.Mode.RACE else 0
 	var ai_drivers := _ai_driver_pool(configs)
-	var ai_karts := Game.karts.duplicate()
+	var ai_karts := Game.karts.filter(func(k: KartDef) -> bool: return k.ai_can_use)
+	if ai_karts.is_empty():
+		ai_karts = Game.karts.duplicate()
 	ai_karts.shuffle()
 	var skills := AI_SKILLS.duplicate()
 	skills.shuffle()

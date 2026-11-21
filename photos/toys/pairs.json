@@ -54,6 +54,12 @@
       "name": "Flieger",
       "front": "WhatsApp Image 2026-11-21 at 17.04.12 (6).jpeg",
       "back": "WhatsApp Image 2026-11-21 at 17.04.12 (3).jpeg"
+    },
+    {
+      "id": "duploflieger",
+      "name": "Duplo-Flieger",
+      "front": "duploflieger-front.jpg",
+      "back": "duploflieger-back.jpg"
     }
   ]
 }

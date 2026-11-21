@@ -287,7 +287,7 @@ func _effect_body(delta: float) -> void:
 
 func _effect_wheels(delta: float) -> void:
 	for wheel in visual.wheels:
-		wheel.rotation.x += acceleration
+		wheel.rotation.x += acceleration * visual.wheel_spin_sign
 	for wheel in visual.front_wheels:
 		wheel.rotation.y = lerp_angle(wheel.rotation.y, -input.x / 1.5, delta * 10.0)
 	if visual.fork:

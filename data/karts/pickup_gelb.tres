@@ -8,7 +8,7 @@
 script = ExtResource("1")
 id = "pickup_gelb"
 display_name = "Pickup"
-sort_order = 10
+sort_order = 110
 model_scene = ExtResource("2")
 seat_position = Vector3(0, 0.5, -0.38)
 top_speed = 1.0
@@ -16,3 +16,4 @@ acceleration = 1.0
 handling = 1.0
 engine_sound = ExtResource("3")
 horn_pitch = 1.0
+ai_can_use = false
