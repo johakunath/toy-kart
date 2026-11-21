@@ -1,6 +1,6 @@
 # Handover
 
-Updated 21 Nov 2026, fourth round: milestone 1 passed on your test drive, milestone 2 started.
+Updated 22 Nov 2026, fifth round: fewer boosts, Codex drawings in, the 3D toy pipeline ready.
 
 ## Where it stands
 
@@ -11,6 +11,19 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## New in the fifth round (your feedback on boosts, first drawings, 3D start)
+
+- **Boosts toned down:** you were boosted almost all the time on Kurvenkurs. Measured: 40 to 85 %
+  of the race. Now about half the stars and turbo arrows on every track, and shorter boosts
+  (star 1.3 s, arrows 0.8 s, the push itself unchanged). A normal racer is now boosted 5 to 15 %
+  of the race, a very good driver who hunts every star about 25 %. The smoke races print
+  `boosted=..%` per kart, so this stays measurable.
+- **Codex drawings in the game:** Koba, Bobo, Polizei and Flieger use the drawn pictures
+  (Codex commit 080a1b3). Fuchs, Duplo-Mädchen, Motorrad and Duplo-Flieger still use photos.
+- **3D toys, step one:** `tools/blender/prepare_toy_model.py` turns a Tripo download into a game
+  model (clean, shrink to 12k triangles, size, face forward, check sheet). Tested end to end with a
+  stand-in model. Waiting for the Koba model from Tripo; steps in `docs/MODELS_3D.md`.
 
 ## New in the fourth round (milestone 2 starts)
 
@@ -178,13 +191,11 @@ Tell Claude the answers by voice; they become the tuning list.
 
 ## What is next
 
-1. You: one race with sound on, on the projector. Too loud, too quiet, annoying? Do the boosts
-   feel right now? Is the seat choice clear?
-2. Codex: drawn toy pictures (`docs/CODEX_TOY_ART.md`).
-3. Rest of milestone 2: driver portraits, graphics presets for projector and monitor, scenery.
-2. Milestone 2 per PLAN.md: more of your toys (retake the bear), music and sound, graphics presets.
-   The Duplo plane has all four side photos, so it is the first candidate for a 3D model.
-3. Two small open decisions from PLAN.md: which small pad, and the first cast for 3D toys.
+1. You: Koba on tripo3d.ai (`docs/MODELS_3D.md`, step 1), then Claude brings it in.
+2. Claude: the Duplo-Flieger as a 3D model built in Blender.
+3. You: a race to check the boosts now feel special, not constant.
+4. Codex: the other four drawings (Fuchs, Duplo-Mädchen, Motorrad, Duplo-Flieger).
+5. Rest of milestone 2: driver portraits, graphics presets for projector and monitor, scenery.
 
 ## Notes for the next Claude session
 

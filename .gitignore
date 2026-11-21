@@ -14,3 +14,6 @@ __pycache__/
 # Editors / OS
 .vscode/
 Thumbs.db
+
+# Raw downloads from Tripo / Meshy (large; the prepared models are in assets/models)
+art/models/

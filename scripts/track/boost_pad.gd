@@ -58,7 +58,7 @@ func _on_body_entered(body: Node) -> void:
 	if now - float(_last_hit.get(kart.get_instance_id(), -10.0)) < COOLDOWN:
 		return
 	_last_hit[kart.get_instance_id()] = now
-	kart.call("boost", 1.0, 0.3)
+	kart.call("boost", 0.8, 0.3)
 	_sound.pitch_scale = randf_range(0.95, 1.08)
 	_sound.play()
 

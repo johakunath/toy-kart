@@ -183,8 +183,8 @@ two keyboard halves.
 | # | Milestone | Content | Gate | Status |
 | --- | --- | --- | --- | --- |
 | 1 | Foundation | Kart feel, input and assists, modes, AI, split screen, Windows export | Your test drive: it drives well, kid mode is neither automatic nor frustrating | **Passed** 21 Nov 2026 (your test drive). Kid couch test postponed |
-| 2 | Your toys and polish | Toys in the game (done), toy vehicles (done), more tracks and turbo arrows (done), sound and music, drawn toy pictures (Codex), driver portraits, graphics presets, scenery | You enjoy a race on the projector with sound on, and the toys look like *his* toys | **In progress** |
-| 3 | 3D toys and art pass | Toys as 3D models (Duplo toys built in Blender by Claude; plush and the book character via Tripo or Meshy), toon look, a themed track (living room) | The 3D toys are recognisable and feel alive | Not started |
+| 2 | Your toys and polish | Toys in the game (done), toy vehicles (done), more tracks and turbo arrows (done), sound and music (done), drawn toy pictures (Codex: 4 of 8 done), driver portraits, graphics presets, scenery | You enjoy a race on the projector with sound on, and the toys look like *his* toys | **In progress** |
+| 3 | 3D toys and art pass | Toys as 3D models (Duplo toys built in Blender by Claude; plush and the book character via Tripo or Meshy), toon look, a themed track (living room) | The 3D toys are recognisable and feel alive | **Started**: Koba first, via Tripo ([MODELS_3D.md](MODELS_3D.md)) |
 | 4 | More game | Battle mode, cups of three races, aimed items | You want to play it yourself | Not started |
 | 5 | His turn | Second controller, the 5-minute couch test with him, tuning from what he does | He asks for a third race | When you say he is ready |
 

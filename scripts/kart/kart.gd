@@ -18,6 +18,7 @@ const GRIP := 0.85               ## 1 = drives on rails, 0 = the kit's free-roll
 const DRIFT_GRIP := 0.45
 const DRIFT_BOOST_AFTER := 1.0   ## seconds of drifting that earn a mini boost
 const BOOST_KICK := 3.5          ## m/s added at once when a boost starts
+const STAR_BOOST_SECONDS := 1.3  ## a used star: 40 % faster for this long
 const BOOST_PUSH := 22.0         ## m/s² pushing the kart up to its boost speed
 const BALL_RADIUS := 0.5
 
@@ -62,6 +63,7 @@ var drifting := false
 var _boost_left := 0.0
 var _boost_strength := 0.0
 var _boost_target := 0.0
+var boost_time := 0.0            ## seconds spent boosting (smoke tests report it)
 var _flames: GPUParticles3D
 var _rumble: AudioStreamPlayer3D
 var on_kerb := false             ## set by the assist; plays the kerb rumble         ## m/s the kart is pushed to while boosting
@@ -242,7 +244,7 @@ func use_item() -> void:
 	if has_item:
 		has_item = false
 		item_changed.emit(false)
-		boost(1.6, 0.4)
+		boost(STAR_BOOST_SECONDS, 0.4)
 
 func honk() -> void:
 	horn_sound.play()
@@ -322,6 +324,7 @@ func _physics_process(delta: float) -> void:
 		if missing > 0.0 and colliding:
 			_push_forward(minf(missing, BOOST_PUSH * delta))
 		_boost_left -= delta
+		boost_time += delta
 		if _boost_left <= 0.0:
 			_boost_strength = 0.0
 			sparkles.emitting = false

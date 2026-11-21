@@ -492,9 +492,10 @@ func _smoke_tick(delta: float) -> void:
 	var ok := true
 	print("SMOKE track=%s mode=%s speed=%s time=%.1fs resets=%d" % [Game.track.id, Game.MODE_NAMES[Game.mode], Game.SPEED_NAMES[Game.speed_class], _smoke_time, _resets])
 	for racer in racers:
-		print("SMOKE   %-12s human=%s place=%d laps=%d finished=%s time=%.1f dist=%.0fm wall_hits=%d" % [
+		print("SMOKE   %-12s human=%s place=%d laps=%d finished=%s time=%.1f dist=%.0fm wall_hits=%d boosted=%.0f%%" % [
 			racer.display_name, racer.is_human, racer.place, maxi(racer.progress.lap, 0), racer.finished,
-			racer.finish_time, racer.progress.distance(), racer.kart.wall_hits])
+			racer.finish_time, racer.progress.distance(), racer.kart.wall_hits,
+			100.0 * racer.kart.boost_time / maxf(racer.finish_time if racer.finished else _smoke_time, 0.1)])
 		if racer.is_human:
 			if Game.mode == Game.Mode.FREE_DRIVE:
 				ok = ok and racer.progress.distance() > 60.0
