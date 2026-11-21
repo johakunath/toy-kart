@@ -9,6 +9,7 @@ var progress: TrackProgress
 
 var is_human := false
 var player_index := -1          ## 0 or 1 for humans, -1 for AI
+var ai_number := 0              ## 0, 1, 2 for AI karts
 var control_mode := Game.ControlMode.FULL
 var color := Color.WHITE
 var display_name := ""

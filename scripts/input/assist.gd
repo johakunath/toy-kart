@@ -2,14 +2,23 @@ class_name Assist extends RefCounted
 ## The per-player assist layer. It sits between the device (or AI) and the kart:
 ## it takes the driver's intent and returns the intent the kart actually gets.
 ##
-## Kid mode: auto-accelerate, smart steering toward the racing line, soft walls,
-## pickups fire by themselves, reset after 2 s off course or when stuck.
-## Full mode and AI: intent passes through; only a rescue when lost or stuck.
+## Kid mode:
+##   - Auto-accelerate, easing off by itself before tight corners.
+##   - Smart steering: the stick does not turn the kart freely, it picks a lane on the road.
+##     Left moves the kart to the left side, right to the right side, and the assist steers
+##     along that lane. Hands off the stick: the kart keeps its lane round the whole track.
+##   - Soft walls: an invisible cushion pushes the kart back before it reaches a real wall.
+##   - Pickups fire by themselves.
+##   - Reset onto the track after 2 s off course, or when stuck.
+## Full mode and AI: the intent passes through; only a rescue when lost or stuck.
 
 const KID_OFF_COURSE_SECONDS := 2.0
 const KID_STUCK_SECONDS := 2.5
 const OTHER_RESCUE_SECONDS := 4.0
 const AUTO_USE_DELAY := 0.35
+const LANE_SPEED := 4.0          ## metres per second the lane moves sideways at full stick
+const WALL_MARGIN := 1.3         ## the kid's lane stays this far from the walls
+const DIRECT_FEEL := 0.35        ## share of the stick that reaches the wheels directly
 
 var kid := false
 var is_ai := false
@@ -18,6 +27,8 @@ var is_ai := false
 var wants_reset := false
 
 var _out := Intent.new()
+var _lane := 0.0
+var _lane_known := false
 var _off_time := 0.0
 var _stuck_time := 0.0
 var _stuck_ref := 0.0
@@ -25,6 +36,9 @@ var _use_timer := 0.0
 
 func apply(raw: Intent, racer: Racer, track: Track, racing: bool, delta: float) -> Intent:
 	_out.copy_from(raw)
+	if not _lane_known:
+		_lane = racer.progress.lateral
+		_lane_known = true
 	if not racing:
 		_out.accelerate = 0.0
 		_out.brake = 0.0
@@ -37,10 +51,10 @@ func apply(raw: Intent, racer: Racer, track: Track, racing: bool, delta: float) 
 
 	_watch_for_trouble(racer, track, delta)
 	if kid:
-		_out.accelerate = 1.0
+		_out.steer = _smart_steer(raw.steer, racer, track, delta)
+		_out.accelerate = _auto_accelerate(racer, track)
 		_out.brake = 0.0
 		_out.drift = false
-		_out.steer = _smart_steer(raw.steer, racer, track)
 		_soft_walls(racer, track)
 		_out.use = false
 		if racer.kart.has_item:
@@ -52,42 +66,34 @@ func apply(raw: Intent, racer: Racer, track: Track, racing: bool, delta: float) 
 			_use_timer = 0.0
 	return _out
 
+## Called after a reset or at the start: forget timers, keep the lane where the kart is.
 func clear_timers(racer: Racer) -> void:
 	_off_time = 0.0
 	_stuck_time = 0.0
 	_stuck_ref = racer.progress.distance()
+	_lane = racer.progress.lateral
 	wants_reset = false
 
-# --- Smart steering ------------------------------------------------------------------------
+# --- Kid mode ------------------------------------------------------------------------------
 
-## Blends the player's steering with steering toward a point ahead on the track.
-## In the middle of the road the player decides. Near a wall, when pointing the wrong way,
-## or with hands off the stick, the assist takes over.
-func _smart_steer(player_steer: float, racer: Racer, track: Track) -> float:
-	var kart := racer.kart
+func _smart_steer(stick: float, racer: Racer, track: Track, delta: float) -> float:
 	var progress := racer.progress
-	var speed := kart.speed()
-	var safe := track.half_width - 1.3
+	var safe := track.half_width - WALL_MARGIN
+	if absf(stick) > 0.15:
+		_lane += stick * LANE_SPEED * delta
+	_lane = clampf(_lane, -safe, safe)
+	var auto := LineFollow.steer_to_lane(racer.kart, progress, track, _lane)
+	# A bit of the stick goes straight to the wheels so the kart answers at once,
+	# fading out as the kart gets close to the wall on that side.
+	var room := clampf((safe - progress.lateral * signf(stick)) / safe, 0.0, 1.0)
+	return clampf(auto + stick * DIRECT_FEEL * room, -1.0, 1.0)
 
-	# The lane the kid is aiming for: where the kart is now, shifted by the stick, kept on the road.
-	var lane := clampf(progress.lateral * 0.92 + player_steer * 2.5, -safe, safe)
-	var look := 5.0 + speed * 0.5
-	var s_ahead := progress.s() + look
-	var target := track.pos_at(s_ahead) + track.right_at(s_ahead) * lane
-	var to := target - kart.ground_position()
-	to.y = 0.0
-	var fwd := kart.forward()
-	fwd.y = 0.0
-	var error := fwd.normalized().signed_angle_to(to.normalized(), Vector3.DOWN)
-	var auto := clampf(error * 2.2, -1.0, 1.0)
+func _auto_accelerate(racer: Racer, track: Track) -> float:
+	var kart := racer.kart
+	var limit := LineFollow.corner_speed(kart, racer.progress, track)
+	var top := maxf(kart.top_speed(), 0.1)
+	return clampf(limit / top, 0.35, 1.0)
 
-	var near_wall := smoothstep(safe - 0.8, safe + 0.4, absf(progress.lateral))
-	var wrong_way := smoothstep(0.6, 1.2, absf(progress.heading_error))
-	var hands_off := 0.8 if absf(player_steer) < 0.15 else 0.3
-	var weight := maxf(hands_off, maxf(near_wall, wrong_way))
-	return clampf(lerpf(player_steer, auto, weight), -1.0, 1.0)
-
-## An invisible cushion in front of the real walls: pushes the kart back before it hits.
 func _soft_walls(racer: Racer, track: Track) -> void:
 	var progress := racer.progress
 	var limit := track.half_width - 1.0

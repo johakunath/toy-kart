@@ -4,6 +4,8 @@ class_name KartPreview extends SubViewportContainer
 
 var cheering := false
 var spin_speed := 0.7
+var shown_kart: KartDef
+var shown_driver: DriverDef
 
 var _viewport: SubViewport
 var _visual: KartVisual
@@ -33,9 +35,9 @@ func _init() -> void:
 	_viewport.add_child(sun)
 
 	var camera := Camera3D.new()
-	camera.fov = 32.0
+	camera.fov = 30.0
 	_viewport.add_child(camera)
-	camera.look_at_from_position(Vector3(0, 1.75, 4.1), Vector3(0, 0.62, 0), Vector3.UP)
+	camera.look_at_from_position(Vector3(0, 1.55, 3.3), Vector3(0, 0.6, 0), Vector3.UP)
 	camera.current = true
 
 	_visual = KartVisual.new()
@@ -43,6 +45,8 @@ func _init() -> void:
 	_viewport.add_child(_visual)
 
 func show_kart(kart_def: KartDef, driver_def: DriverDef) -> void:
+	shown_kart = kart_def
+	shown_driver = driver_def
 	_visual.build(kart_def, driver_def)
 	if _visual.driver:
 		_visual.driver.set_cheering(cheering)

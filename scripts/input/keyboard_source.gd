@@ -10,6 +10,7 @@ func _init(p_layout: int) -> void:
 	id = "kb%d" % (p_layout + 1)
 	label = "Tasten %s" % ("WASD" if p_layout == 0 else "Pfeile")
 	icon = "keyboard"
+	accept_hint = "Leertaste" if p_layout == 0 else "Enter"
 
 func _k(code: Key) -> bool:
 	return Input.is_physical_key_pressed(code)

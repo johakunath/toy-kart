@@ -126,7 +126,8 @@ def main():
             img.save(os.path.join(OUT_IMG, "%s_%s.png" % (toy["id"], side)), optimize=True)
             sizes[side] = img.size
         aspect = max(sizes["front"][0] / sizes["front"][1], sizes["back"][0] / sizes["back"][1])
-        height = 0.85 if aspect <= 1.0 else max(0.45, 0.85 / aspect)
+        # Card size in metres: at most 0.7 high and about 0.75 wide (a kart is 0.75 wide).
+        height = max(0.4, min(0.7, 0.75 / aspect))
         tres = os.path.join(OUT_RES, "paper_%s.tres" % toy["id"])
         if args.force or not os.path.exists(tres):
             with open(tres, "w", encoding="utf-8", newline="\n") as f:

@@ -66,7 +66,9 @@ func _make_card(tex: Texture2D, height: float, is_back: bool) -> MeshInstance3D:
 	mat.albedo_texture = tex
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
 	mat.alpha_scissor_threshold = 0.5
-	mat.roughness = 1.0
+	# Unshaded: the toy photo stays recognisable from every side, like a sticker.
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.96, 0.96, 0.96)
 	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
 	quad.material = mat
 	var mi := MeshInstance3D.new()

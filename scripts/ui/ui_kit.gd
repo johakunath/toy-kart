@@ -28,7 +28,7 @@ static func box(bg: Color, radius := 28, border := Color.TRANSPARENT, border_wid
 	style.set_corner_radius_all(radius)
 	style.set_border_width_all(border_width)
 	style.border_color = border
-	style.set_content_margin_all(18)
+	style.set_content_margin_all(14)
 	style.anti_aliasing = true
 	return style
 

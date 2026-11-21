@@ -5,6 +5,7 @@ class_name InputSource extends RefCounted
 var id := ""     ## stable id, used to remember colour and picks per device
 var label := ""  ## short German label for the UI
 var icon := "gamepad"
+var accept_hint := "A"  ## name of this device's "yes" button, for the UI
 
 var _intent := Intent.new()
 var _prev_use := false

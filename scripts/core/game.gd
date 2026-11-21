@@ -137,6 +137,16 @@ func go_to_menu() -> void:
 	get_tree().paused = false
 	get_tree().change_scene_to_file(MENU_SCENE)
 
+## Quit without leaving sounds playing: free the scene first, then exit.
+func quit_clean(exit_code := 0) -> void:
+	get_tree().paused = false
+	var scene := get_tree().current_scene
+	if scene:
+		scene.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	get_tree().quit(exit_code)
+
 # --- Devices -------------------------------------------------------------------------------
 
 ## All devices that can join right now: two keyboard layouts plus every connected gamepad.

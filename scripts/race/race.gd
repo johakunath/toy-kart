@@ -9,6 +9,9 @@ const KART_SCENE := preload("res://scenes/kart.tscn")
 const COUNTDOWN_SECONDS := 3.0
 const BUMP_DISTANCE := 1.25
 const AI_SKILLS: Array[float] = [0.95, 0.9, 0.86]
+## With a kid in the race, each AI kart aims for its own spot around the slowest human:
+## one a little ahead, one just behind, one further back (metres).
+const AI_KID_GAPS: Array[float] = [10.0, -6.0, -22.0]
 
 var track: Track
 var racers: Array[Racer] = []
@@ -28,6 +31,7 @@ var _finish_delay := -1.0
 var _kid_context := false
 var _smoke_time := 0.0
 var _resets := 0
+var _shot_wait := 0.0
 
 func _ready() -> void:
 	if Game.players.is_empty():
@@ -45,16 +49,22 @@ func _use_default_setup() -> void:
 	if Game.smoke:
 		var args := Game.smoke_args
 		var count := int(args.get("players", "2"))
-		var full: bool = args.get("control", "kid") == "full"
 		Game.mode = {"free": Game.Mode.FREE_DRIVE, "trial": Game.Mode.TIME_TRIAL}.get(args.get("mode", "race"), Game.Mode.RACE)
 		Game.speed_class = clampi(int(args.get("speed", "0")), 0, 2) as Game.SpeedClass
 		Game.ai_count = clampi(int(args.get("ai", "3")), 0, Game.MAX_AI)
+		# --control=kid|full|mixed   --input=none|left|right|random (what the kid "does")
+		var control: String = args.get("control", "kid")
 		for i in count:
-			# Kid test players hold no buttons at all: the assists alone must get them round.
-			var source: InputSource = AiSource.new() if full else InputSource.new()
-			source.id = "bot%d" % i
-			source.label = "Test %d" % (i + 1)
-			Game.players.append(Game.make_player(source, Game.ControlMode.FULL if full else Game.ControlMode.KID, i, i * 2, i))
+			var is_full := control == "full" or (control == "mixed" and i == 1)
+			# Full-mode test players are driven by the AI; kid test players by a fake child.
+			var source: InputSource
+			if is_full:
+				source = AiSource.new()
+				source.id = "bot%d" % i
+				source.label = "Test %d" % (i + 1)
+			else:
+				source = TestSource.new(args.get("input", "none"), i)
+			Game.players.append(Game.make_player(source, Game.ControlMode.FULL if is_full else Game.ControlMode.KID, i, i * 2, i))
 	else:
 		Game.mode = Game.Mode.RACE
 		Game.players.append(Game.make_player(KeyboardSource.new(0), Game.ControlMode.FULL, 0, 0, 0))
@@ -104,7 +114,8 @@ func _spawn_racers() -> void:
 		var kart_def: KartDef = ai_karts[i % ai_karts.size()] if not ai_karts.is_empty() else null
 		var racer := _make_racer(kart_def, driver, slot)
 		var ai := AiSource.new()
-		_wire_ai(ai, racer, skills[i % skills.size()] * (0.9 if _kid_context else 1.0))
+		_wire_ai(ai, racer, 1.0 if _kid_context else skills[i % skills.size()])
+		racer.ai_number = i
 		racer.source = ai
 		racer.assist.is_ai = true
 		racer.color = Color(0.75, 0.78, 0.85)
@@ -331,10 +342,12 @@ func _update_pacing(delta: float) -> void:
 			var lead := racer.progress.distance() - slowest
 			var behind := fastest - racer.progress.distance()
 			if _kid_context:
-				if lead > 8.0:
-					pace = lerpf(1.0, 0.7, clampf((lead - 8.0) / 45.0, 0.0, 1.0))
-				elif behind > 12.0:
-					pace = lerpf(1.0, 1.12, clampf((behind - 12.0) / 40.0, 0.0, 1.0))
+				var target_gap := AI_KID_GAPS[racer.ai_number % AI_KID_GAPS.size()]
+				# On the home stretch the AI in front eases off: a close finish for the kid.
+				var remaining := Game.LAPS * track.length - slowest
+				if remaining < 150.0:
+					target_gap = minf(target_gap, lerpf(-4.0, target_gap, clampf(remaining / 150.0, 0.0, 1.0)))
+				pace = clampf(1.0 + (target_gap - lead) / 40.0, 0.6, 1.3)
 			else:
 				if lead > 30.0:
 					pace = lerpf(1.0, 0.9, clampf((lead - 30.0) / 60.0, 0.0, 1.0))
@@ -403,12 +416,26 @@ func _show_finish_screen() -> void:
 func _smoke_tick(delta: float) -> void:
 	_smoke_time += delta
 	var limit := float(Game.smoke_args.get("seconds", "240"))
-	if Game.smoke_args.has("shot") and _smoke_time >= float(Game.smoke_args.get("shot_at", "8")):
+	var shot_now := false
+	if Game.smoke_args.has("shot"):
+		if Game.smoke_args.get("shot_at", "8") == "finish":
+			_shot_wait = _shot_wait + delta if state == State.FINISHED else 0.0
+			shot_now = _shot_wait > 3.2
+		else:
+			shot_now = _smoke_time >= float(Game.smoke_args.get("shot_at", "8"))
+	if shot_now:
 		# Dev helper: save a picture of the running race, then quit.
 		get_viewport().get_texture().get_image().save_png(Game.smoke_args["shot"])
-		get_tree().quit(0)
+		set_physics_process(false)
+		Game.quit_clean(0)
 		return
-	var done := state == State.FINISHED
+	if Game.smoke_args.has("trace") and int(_smoke_time * 60.0) % 6 == 0:
+		# Dev helper: ten lines per second about the first player, to judge steering smoothness.
+		var from := float(Game.smoke_args["trace"])
+		if _smoke_time >= from and _smoke_time < from + 6.0:
+			var r := humans[0]
+			print("TRACE t=%.1f s=%.0f lat=%+.2f head=%+.2f v=%.1f steer=%+.2f" % [_smoke_time, r.progress.s(), r.progress.lateral, r.progress.heading_error, r.kart.speed(), r.kart.intent.steer])
+	var done := state == State.FINISHED and not Game.smoke_args.has("shot")
 	if Game.mode == Game.Mode.FREE_DRIVE:
 		done = _smoke_time >= minf(limit, 25.0)
 	if not done and _smoke_time < limit:
@@ -416,13 +443,14 @@ func _smoke_tick(delta: float) -> void:
 	var ok := true
 	print("SMOKE mode=%s speed=%s time=%.1fs resets=%d" % [Game.MODE_NAMES[Game.mode], Game.SPEED_NAMES[Game.speed_class], _smoke_time, _resets])
 	for racer in racers:
-		print("SMOKE   %-12s human=%s place=%d laps=%d finished=%s time=%.1f dist=%.0fm" % [
+		print("SMOKE   %-12s human=%s place=%d laps=%d finished=%s time=%.1f dist=%.0fm wall_hits=%d" % [
 			racer.display_name, racer.is_human, racer.place, maxi(racer.progress.lap, 0), racer.finished,
-			racer.finish_time, racer.progress.distance()])
+			racer.finish_time, racer.progress.distance(), racer.kart.wall_hits])
 		if racer.is_human:
 			if Game.mode == Game.Mode.FREE_DRIVE:
 				ok = ok and racer.progress.distance() > 60.0
 			else:
 				ok = ok and racer.finished
 	print("SMOKE RESULT: %s" % ("PASS" if ok else "FAIL"))
-	get_tree().quit(0 if ok else 1)
+	set_physics_process(false)
+	Game.quit_clean(0 if ok else 1)

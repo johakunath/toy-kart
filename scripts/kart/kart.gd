@@ -13,6 +13,9 @@ const BASE_TOP_SPEED := 12.5     ## m/s reached at speed multiplier 1.0
 const STEER_RATE := 4.0          ## rad/s at full steer
 const SPHERE_OFFSET := 0.65      ## visible kart sits this far below the ball centre
 const DRIFT_STEER := 1.45
+const STEER_RESPONSE := 7.0      ## how fast the steering reaches its target (1/s)
+const GRIP := 0.85               ## 1 = drives on rails, 0 = the kit's free-rolling ball
+const DRIFT_GRIP := 0.45
 const DRIFT_BOOST_AFTER := 1.0   ## seconds of drifting that earn a mini boost
 
 @onready var sphere: RigidBody3D = $Sphere
@@ -38,6 +41,7 @@ var pace := 1.0                  ## AI pacing
 var catchup := 0.0               ## 0..0.3 extra top speed for a kid who is behind
 var engine_db_offset := 0.0      ## AI karts are quieter
 var has_item := false
+var wall_hits := 0              ## how often the kart hit a wall hard (for the checks)
 
 var kart_def: KartDef
 var driver_def: DriverDef
@@ -121,6 +125,10 @@ func speed_multiplier() -> float:
 	var boost := _boost_strength if _boost_left > 0.0 else 0.0
 	return class_factor * stat * pace * (1.0 + catchup) * (1.0 + boost)
 
+## Turn rate in rad/s at full steer.
+func steer_rate() -> float:
+	return STEER_RATE * (kart_def.handling if kart_def else 1.0)
+
 ## Top speed in m/s without boost or catch-up.
 func top_speed() -> float:
 	return BASE_TOP_SPEED * class_factor * (kart_def.top_speed if kart_def else 1.0)
@@ -176,12 +184,18 @@ func _physics_process(delta: float) -> void:
 	if direction == 0.0:
 		direction = signf(input.z) if absf(input.z) > 0.1 else 1.0
 
-	var handling := kart_def.handling if kart_def else 1.0
 	var steering_grip := clampf(absf(linear_speed), 0.2, 1.0)
-	var steer_rate := STEER_RATE * handling * (DRIFT_STEER if drifting else 1.0)
-	var target_angular := -input.x * steering_grip * steer_rate * direction
-	angular_speed = lerpf(angular_speed, target_angular, delta * 4.0)
-	container.rotate_y(angular_speed * delta)
+	var rate := steer_rate() * (DRIFT_STEER if drifting else 1.0)
+	var target_angular := -input.x * steering_grip * rate * direction
+	angular_speed = lerpf(angular_speed, target_angular, minf(1.0, delta * STEER_RESPONSE))
+	var turn := angular_speed * delta
+	container.rotate_y(turn)
+	# Grip: the ball's motion turns with the kart's nose. Without this the ball keeps rolling
+	# the old way for a moment and the kart slides wide in every corner.
+	if colliding:
+		var grip_turn := turn * (DRIFT_GRIP if drifting else GRIP)
+		sphere.angular_velocity = sphere.angular_velocity.rotated(Vector3.UP, grip_turn)
+		sphere.linear_velocity = sphere.linear_velocity.rotated(Vector3.UP, grip_turn)
 
 	# Ground alignment
 	if raycast.is_colliding():
@@ -319,6 +333,7 @@ func _on_sphere_body_entered(_body: Node) -> void:
 	var impact := absf(linear_velocity.dot(container.global_basis.z))
 	if impact < 1.0:
 		return
+	wall_hits += 1
 	if not impact_sound.playing:
 		impact_sound.volume_db = clampf(remap(impact, 0.0, 6.0, -20.0, 0.0), -20.0, 0.0) + engine_db_offset
 		impact_sound.play()

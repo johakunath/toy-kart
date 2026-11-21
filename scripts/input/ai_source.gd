@@ -27,22 +27,9 @@ func _read_raw(_control_mode: int) -> Dictionary:
 		_lane_timer = randf_range(3.0, 8.0)
 		lane = randf_range(-1.0, 1.0) * (track.half_width - 1.6)
 
-	var look := 4.0 + speed * 0.45
-	var s_ahead := progress.s() + look
-	var target := track.pos_at(s_ahead) + track.right_at(s_ahead) * lane
-	var to := target - kart.ground_position()
-	to.y = 0.0
-	var fwd := kart.forward()
-	fwd.y = 0.0
-	var error := fwd.normalized().signed_angle_to(to.normalized(), Vector3.DOWN)
-	var steer := clampf(error * 2.5, -1.0, 1.0)
-
+	var steer := LineFollow.steer_to_lane(kart, progress, track, lane)
 	var top := maxf(kart.top_speed(), 0.1)
-	var curvature := track.max_curvature(progress.s(), 6.0 + speed * 0.8)
-	var corner_speed := INF
-	if curvature > 0.02:
-		corner_speed = Kart.STEER_RATE * 0.85 / curvature
-	var target_speed := minf(top * skill, corner_speed)
+	var target_speed := minf(top * skill, LineFollow.corner_speed(kart, progress, track))
 	return {
 		"steer": steer,
 		"accelerate": clampf(target_speed / top, 0.0, 1.0),
