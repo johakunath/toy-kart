@@ -1,0 +1,16 @@
+# Godot 4+
+.godot/
+*.tmp
+*.translation
+export_credentials.cfg
+
+# Builds and local tools
+builds/*
+!builds/.gdignore
+tools/.venv/
+tools/.cache/
+__pycache__/
+
+# Editors / OS
+.vscode/
+Thumbs.db

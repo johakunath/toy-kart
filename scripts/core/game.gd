@@ -1,0 +1,173 @@
+extends Node
+## Autoload "Game": what the next race should look like, the driver/kart catalog,
+## saved settings, and scene switching. Menus write to it, the race scene reads it.
+
+enum Mode { FREE_DRIVE, RACE, TIME_TRIAL }
+enum SpeedClass { KID, NORMAL, FAST }
+enum ControlMode { KID, FULL }
+
+const SPEED_FACTOR: Array[float] = [0.7, 1.0, 1.3]
+const SPEED_NAMES: Array[String] = ["Kind", "Normal", "Schnell"]
+const MODE_NAMES: Array[String] = ["Freie Fahrt", "Rennen", "Zeitfahren"]
+const CONTROL_NAMES: Array[String] = ["Kind", "Profi"]
+const LAPS := 3
+const MAX_AI := 3
+
+const PLAYER_COLORS: Array[Color] = [
+	Color("e8483f"), Color("3b8beb"), Color("3fbf5f"), Color("f2b90f"),
+	Color("a55de0"), Color("f08a24"),
+]
+const COLOR_NAMES: Array[String] = ["Rot", "Blau", "Grün", "Gelb", "Lila", "Orange"]
+
+const MENU_SCENE := "res://scenes/menu.tscn"
+const RACE_SCENE := "res://scenes/race.tscn"
+const SETTINGS_PATH := "user://settings.cfg"
+
+var mode := Mode.RACE
+var speed_class := SpeedClass.KID
+var ai_count := MAX_AI
+var players: Array[PlayerConfig] = []
+var track_scene_path := "res://scenes/tracks/track_01.tscn"
+
+var drivers: Array[DriverDef] = []
+var karts: Array[KartDef] = []
+
+## Set by "-- --smoke" on the command line: the race runs itself and quits (used by tools/check.ps1).
+var smoke := false
+var smoke_args := {}
+
+var _settings := ConfigFile.new()
+
+func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	_settings.load(SETTINGS_PATH)
+	speed_class = clampi(_settings.get_value("options", "speed_class", SpeedClass.KID), 0, 2) as SpeedClass
+	ai_count = clampi(_settings.get_value("options", "ai_count", MAX_AI), 0, MAX_AI)
+	_load_catalog()
+	_parse_cmdline()
+	if not OS.has_feature("editor") and not smoke and not OS.get_cmdline_user_args().has("--windowed"):
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	var key := event as InputEventKey
+	if key and key.pressed and not key.echo and key.keycode == KEY_F11:
+		var full := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if full else DisplayServer.WINDOW_MODE_FULLSCREEN)
+
+# --- Catalog -------------------------------------------------------------------------------
+
+func _load_catalog() -> void:
+	drivers.clear()
+	karts.clear()
+	for res in _load_dir("res://data/drivers"):
+		if res is DriverDef:
+			drivers.append(res)
+	for res in _load_dir("res://data/karts"):
+		if res is KartDef:
+			karts.append(res)
+	drivers.sort_custom(func(a: DriverDef, b: DriverDef) -> bool:
+		return a.sort_order < b.sort_order or (a.sort_order == b.sort_order and a.id < b.id))
+	karts.sort_custom(func(a: KartDef, b: KartDef) -> bool:
+		return a.sort_order < b.sort_order or (a.sort_order == b.sort_order and a.id < b.id))
+
+func _load_dir(dir_path: String) -> Array[Resource]:
+	var out: Array[Resource] = []
+	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		push_warning("Catalog folder missing: " + dir_path)
+		return out
+	var seen := {}
+	for file in dir.get_files():
+		# Exported builds list "x.tres.remap" instead of "x.tres".
+		var file_name := file.trim_suffix(".remap")
+		if not file_name.ends_with(".tres") or seen.has(file_name):
+			continue
+		seen[file_name] = true
+		var res := load(dir_path + "/" + file_name)
+		if res:
+			out.append(res)
+	return out
+
+func driver_by_id(id: String) -> DriverDef:
+	for d in drivers:
+		if d.id == id:
+			return d
+	return drivers[0] if not drivers.is_empty() else null
+
+func kart_by_id(id: String) -> KartDef:
+	for k in karts:
+		if k.id == id:
+			return k
+	return karts[0] if not karts.is_empty() else null
+
+# --- Saved settings ------------------------------------------------------------------------
+
+func save_options() -> void:
+	_settings.set_value("options", "speed_class", speed_class)
+	_settings.set_value("options", "ai_count", ai_count)
+	_settings.save(SETTINGS_PATH)
+
+## Per-device memory: colour, driver, kart, control mode. Returns {} for a device never seen before.
+func device_prefs(device_id: String) -> Dictionary:
+	return _settings.get_value("devices", device_id, {})
+
+func save_device_prefs(device_id: String, prefs: Dictionary) -> void:
+	_settings.set_value("devices", device_id, prefs)
+	_settings.save(SETTINGS_PATH)
+
+func best_time(speed: int) -> float:
+	return _settings.get_value("best_times", "%s_%d" % [track_scene_path.get_file().get_basename(), speed], 0.0)
+
+## Stores the time if it beats the old one. Returns true for a new record.
+func submit_time(speed: int, seconds: float) -> bool:
+	var old := best_time(speed)
+	if old > 0.0 and seconds >= old:
+		return false
+	_settings.set_value("best_times", "%s_%d" % [track_scene_path.get_file().get_basename(), speed], seconds)
+	_settings.save(SETTINGS_PATH)
+	return true
+
+# --- Scene switching -----------------------------------------------------------------------
+
+func start_race() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file(RACE_SCENE)
+
+func go_to_menu() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file(MENU_SCENE)
+
+# --- Devices -------------------------------------------------------------------------------
+
+## All devices that can join right now: two keyboard layouts plus every connected gamepad.
+func list_sources() -> Array[InputSource]:
+	var out: Array[InputSource] = [KeyboardSource.new(0), KeyboardSource.new(1)]
+	var per_guid := {}
+	for device in Input.get_connected_joypads():
+		var guid := Input.get_joy_guid(device)
+		var ordinal: int = per_guid.get(guid, 0)
+		per_guid[guid] = ordinal + 1
+		var pad := PadSource.new(device, ordinal)
+		pad.label = "Controller %d" % (out.size() - 1)
+		out.append(pad)
+	return out
+
+## Config for a player who did not go through the selection screen (dev runs, tests).
+func make_player(source: InputSource, control_mode: int, color_index: int, driver_index: int, kart_index: int) -> PlayerConfig:
+	var p := PlayerConfig.new()
+	p.source = source
+	p.control_mode = control_mode
+	p.color_index = color_index
+	p.driver = drivers[driver_index % drivers.size()] if not drivers.is_empty() else null
+	p.kart = karts[kart_index % karts.size()] if not karts.is_empty() else null
+	return p
+
+# --- Command line --------------------------------------------------------------------------
+
+func _parse_cmdline() -> void:
+	for arg in OS.get_cmdline_user_args():
+		if arg == "--smoke":
+			smoke = true
+		elif arg.begins_with("--") and arg.contains("="):
+			var parts := arg.trim_prefix("--").split("=", true, 1)
+			smoke_args[parts[0]] = parts[1]

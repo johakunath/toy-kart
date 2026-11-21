@@ -1,0 +1,59 @@
+{
+  "_comment": "Which photo is the front and the back of each toy. tools/make_paper_drivers.py turns each entry into a paper driver. New photos named <id>-front.jpg and <id>-back.jpg are picked up without an entry here. Optional per side: crop = [left, top, right, bottom] as fractions of the photo.",
+  "toys": [
+    {
+      "id": "junge",
+      "name": "Junge",
+      "front": "WhatsApp Image 2026-11-21 at 17.04.09 (1).jpeg",
+      "back": "WhatsApp Image 2026-11-21 at 17.04.08 (1).jpeg"
+    },
+    {
+      "id": "katze",
+      "name": "Katze",
+      "front": "WhatsApp Image 2026-11-21 at 17.04.11 (1).jpeg",
+      "back": "WhatsApp Image 2026-11-21 at 17.04.09 (4).jpeg"
+    },
+    {
+      "id": "loewe",
+      "name": "Löwe",
+      "front": "WhatsApp Image 2026-11-21 at 17.04.12 (11).jpeg",
+      "back": "WhatsApp Image 2026-11-21 at 17.04.12 (9).jpeg"
+    },
+    {
+      "id": "baer",
+      "name": "Bär",
+      "front": "WhatsApp Image 2026-11-21 at 17.04.12 (1).jpeg",
+      "back": "WhatsApp Image 2026-11-21 at 17.04.11 (12).jpeg",
+      "crop_front": [
+        0.16,
+        0.2,
+        0.8,
+        0.88
+      ],
+      "crop_back": [
+        0.14,
+        0.16,
+        0.86,
+        0.8
+      ]
+    },
+    {
+      "id": "polizei",
+      "name": "Polizei",
+      "front": "WhatsApp Image 2026-11-21 at 17.04.11 (10).jpeg",
+      "back": "WhatsApp Image 2026-11-21 at 17.04.11 (8).jpeg"
+    },
+    {
+      "id": "motorrad",
+      "name": "Motorrad",
+      "front": "WhatsApp Image 2026-11-21 at 17.04.11 (4).jpeg",
+      "back": "WhatsApp Image 2026-11-21 at 17.04.11 (2).jpeg"
+    },
+    {
+      "id": "flieger",
+      "name": "Flieger",
+      "front": "WhatsApp Image 2026-11-21 at 17.04.12 (6).jpeg",
+      "back": "WhatsApp Image 2026-11-21 at 17.04.12 (3).jpeg"
+    }
+  ]
+}

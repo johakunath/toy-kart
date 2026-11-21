@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="KartDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/kart_def.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/kenney_racing/models/vehicle-truck-purple.glb" id="2"]
+[ext_resource type="AudioStream" path="res://assets/kenney_racing/audio/engine.ogg" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = "bus_lila"
+display_name = "Bus"
+sort_order = 30
+model_scene = ExtResource("2")
+seat_position = Vector3(0, 0.78, -0.1)
+top_speed = 1.03
+acceleration = 0.95
+handling = 0.97
+engine_sound = ExtResource("3")
+horn_pitch = 0.84

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DriverDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/driver_def.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/characters/kenney_mini/character-alien.glb" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "model_alien"
+display_name = "Alien"
+type = 0
+sort_order = 51
+model_scene = ExtResource("2")
+animation = "drive"
+model_scale = 0.8
