@@ -25,7 +25,7 @@ New-Item -ItemType Directory -Force $lic | Out-Null
 Copy-Item (Join-Path $ProjectRoot 'licenses\*') $lic -Force -Exclude '.gdignore'
 
 # Start test 1: the exe runs a whole kid-mode race by itself (no window).
-$r = Invoke-Tool -Exe $exe -Arguments @('--headless', '--fixed-fps', '60', '--', '--smoke', '--input=none', '--speed=0') -WorkDir $builds
+$r = Invoke-Tool -Exe $exe -Arguments @('--headless', '--fixed-fps', '60', '--', '--smoke', '--track=kurvenkurs', '--input=none', '--speed=0') -WorkDir $builds
 $race_ok = ($r.Output -match 'SMOKE RESULT: PASS') -and ($r.Code -eq 0)
 if ($race_ok) { Write-Host "  PASS  exe runs a 2-player kid race with 3 AI karts" -ForegroundColor Green }
 else {

@@ -75,7 +75,7 @@ func _build_world() -> void:
 	_world = Node3D.new()
 	_world.name = "World"
 	add_child(_world)
-	track = (load(Game.track_scene_path) as PackedScene).instantiate() as Track
+	track = (load(Game.track.scene_path) as PackedScene).instantiate() as Track
 	_world.add_child(track)
 	_karts = Node3D.new()
 	_karts.name = "Karts"
@@ -199,6 +199,9 @@ func _build_views() -> void:
 		viewport.add_child(camera)
 		camera.attach(racer.kart)
 		camera.current = true
+		var atmosphere := track.get_node_or_null("Atmosphere") as Atmosphere
+		if atmosphere:
+			camera.add_child(atmosphere.make_camera_weather())
 
 		var hud := PlayerHud.new()
 		view.add_child(hud)
@@ -464,7 +467,7 @@ func _smoke_tick(delta: float) -> void:
 	if not done and _smoke_time < limit:
 		return
 	var ok := true
-	print("SMOKE mode=%s speed=%s time=%.1fs resets=%d" % [Game.MODE_NAMES[Game.mode], Game.SPEED_NAMES[Game.speed_class], _smoke_time, _resets])
+	print("SMOKE track=%s mode=%s speed=%s time=%.1fs resets=%d" % [Game.track.id, Game.MODE_NAMES[Game.mode], Game.SPEED_NAMES[Game.speed_class], _smoke_time, _resets])
 	for racer in racers:
 		print("SMOKE   %-12s human=%s place=%d laps=%d finished=%s time=%.1f dist=%.0fm wall_hits=%d" % [
 			racer.display_name, racer.is_human, racer.place, maxi(racer.progress.lap, 0), racer.finished,

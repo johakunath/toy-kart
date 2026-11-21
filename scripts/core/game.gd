@@ -27,10 +27,11 @@ var mode := Mode.RACE
 var speed_class := SpeedClass.KID
 var ai_count := MAX_AI
 var players: Array[PlayerConfig] = []
-var track_scene_path := "res://scenes/tracks/track_01.tscn"
+var track: TrackDef
 
 var drivers: Array[DriverDef] = []
 var karts: Array[KartDef] = []
+var tracks: Array[TrackDef] = []
 
 ## Set by "-- --smoke" on the command line: the race runs itself and quits (used by tools/check.ps1).
 var smoke := false
@@ -50,6 +51,7 @@ func _ready() -> void:
 	speed_class = clampi(_settings.get_value("options", "speed_class", SpeedClass.KID), 0, 2) as SpeedClass
 	ai_count = clampi(_settings.get_value("options", "ai_count", MAX_AI), 0, MAX_AI)
 	_load_catalog()
+	track = track_by_id(smoke_args.get("track", _settings.get_value("options", "track", "")))
 	if not OS.has_feature("editor") and not smoke and not OS.get_cmdline_user_args().has("--windowed"):
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 
@@ -64,6 +66,11 @@ func _unhandled_key_input(event: InputEvent) -> void:
 func _load_catalog() -> void:
 	drivers.clear()
 	karts.clear()
+	tracks.clear()
+	for res in _load_dir("res://data/tracks"):
+		if res is TrackDef:
+			tracks.append(res)
+	tracks.sort_custom(func(a: TrackDef, b: TrackDef) -> bool: return a.sort_order < b.sort_order)
 	for res in _load_dir("res://data/drivers"):
 		if res is DriverDef:
 			drivers.append(res)
@@ -99,6 +106,13 @@ func driver_by_id(id: String) -> DriverDef:
 			return d
 	return drivers[0] if not drivers.is_empty() else null
 
+## Unknown or empty id gives the first track.
+func track_by_id(id: String) -> TrackDef:
+	for t in tracks:
+		if t.id == id:
+			return t
+	return tracks[0] if not tracks.is_empty() else null
+
 func kart_by_id(id: String) -> KartDef:
 	for k in karts:
 		if k.id == id:
@@ -110,6 +124,7 @@ func kart_by_id(id: String) -> KartDef:
 func save_options() -> void:
 	_settings.set_value("options", "speed_class", speed_class)
 	_settings.set_value("options", "ai_count", ai_count)
+	_settings.set_value("options", "track", track.id if track else "")
 	_save()
 
 ## Per-device memory: colour, driver, kart, control mode. Returns {} for a device never seen before.
@@ -121,14 +136,14 @@ func save_device_prefs(device_id: String, prefs: Dictionary) -> void:
 	_save()
 
 func best_time(speed: int) -> float:
-	return _settings.get_value("best_times", "%s_%d" % [track_scene_path.get_file().get_basename(), speed], 0.0)
+	return _settings.get_value("best_times", "%s_%d" % [track.id, speed], 0.0)
 
 ## Stores the time if it beats the old one. Returns true for a new record.
 func submit_time(speed: int, seconds: float) -> bool:
 	var old := best_time(speed)
 	if old > 0.0 and seconds >= old:
 		return false
-	_settings.set_value("best_times", "%s_%d" % [track_scene_path.get_file().get_basename(), speed], seconds)
+	_settings.set_value("best_times", "%s_%d" % [track.id, speed], seconds)
 	_save()
 	return true
 

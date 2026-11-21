@@ -1,6 +1,6 @@
 # Handover
 
-Updated 21 Nov 2026, end of the milestone 1 session (Fable 5.2).
+Updated 21 Nov 2026, after the second round of the milestone 1 session (Fable 5.2).
 
 ## Where it stands
 
@@ -9,7 +9,22 @@ Milestone 1 is built. All local checks pass and the Windows game is exported to
 No gamepad was plugged in during the build, so pads were tested with simulated button presses only.
 The couch test below is the gate for milestone 1.
 
-![Split screen](img/race-split-screen.jpg)
+![Kurvenkurs, split screen](img/race-split-screen.jpg)
+![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## New in the second round (your four requests)
+
+- **Duplo plane:** in the game as the driver "Duplo-Flieger". All five photos are kept in
+  `photos/toys/` (front, back, left, right, top) for a 3D model later.
+- **Track with round curves:** "Kurvenkurs", a flowing loop with wide bends, no 90 degree corners.
+  It is now the first track. The tile track stays as "Waldkurs". Pick the track on the options
+  page; each button shows the track's shape.
+- **Karts the toys sit inside:** five little open go-karts, a racing car and an oldtimer. The
+  trucks and the motorcycle are still at the end of the list.
+- **Light and weather:** warm sun with soft shadows, a sky that lights the shade, haze in the
+  distance, bloom, clouds that drift and cast moving shadows, dust glinting in the air.
+  Kurvenkurs is a sunny day with petals; Waldkurs is a warm evening with long shadows, light
+  shafts between the trees and autumn leaves.
 
 ## How you start it
 
@@ -44,9 +59,11 @@ road by itself, slows for tight corners, and cannot hit the walls hard or turn a
   Gegner (0 to 3), then "press a button to join". Options and picks are remembered.
 - Player selection: each player picks driver, vehicle, Kind or Profi, and colour with their own
   controller, with a live 3D preview. A controller keeps its colour.
-- 15 drivers: your 7 toys as paper cut-outs (Junge, Katze, Löwe, Bär, Polizei, Motorrad, Flieger)
-  and 8 animated Kenney characters. 5 vehicles (4 trucks, 1 motorcycle).
-- One track from Kenney tiles, 40 tiles, 284 m, 3 laps: about 1:45 at Kid speed.
+- 16 drivers: your 8 toys as paper cut-outs (Junge, Katze, Löwe, Bär, Polizei, Motorrad, Flieger,
+  Duplo-Flieger) and 8 animated Kenney characters. 12 vehicles: 5 karts, racing car, oldtimer,
+  4 trucks, motorcycle.
+- Two tracks, each about 285 m and 3 laps (about 1:45 at Kid speed): Kurvenkurs (round curves,
+  sunny) and Waldkurs (Kenney tiles, evening).
 - Race with 1 or 2 players and 0 to 3 AI karts; split screen side by side with a coloured frame
   per player; the Kind player gets the left half.
 - Kid mode: auto-accelerate, lane steering, soft walls, pickups fire alone, catch-up boost when
@@ -55,13 +72,14 @@ road by itself, slows for tight corners, and cannot hit the walls hard or turn a
 - Boost stars with sound and sparkles; horn; countdown; "Letzte Runde!"; pause menu.
 - Finish screen with confetti and applause for everyone, places shown small, Nochmal / Menü.
 - Time trial with best time per speed.
-- Frame rate: about 590 fps average at 1080p split screen with 5 karts on the RTX 4070 (target 60).
+- Frame rate at 1080p split screen with 5 karts on the RTX 4070 (target 60): about 450 fps on
+  Kurvenkurs and 350 fps on Waldkurs, worst 1 % above 175 fps.
 
 ## Checked automatically (all passing)
 
 `tools\check.ps1`: no Godot 3 names; every script, scene and resource loads; simulated gamepad
 mapping (30 checks); a scripted walk through the menu with two keyboard players into a race, pause
-and resume (22 checks); 7 headless runs of the race scene, including two kid karts with nobody
+and resume (22 checks); 9 headless runs of the race scene on both tracks, including two kid karts with nobody
 touching the controls, with the stick held to one side, and with random button mashing. At Kid
 speed no kart needs a rescue. `tools\export.ps1`: the exe runs a full 2-player kid race with 3 AI
 karts and opens its window.
@@ -73,7 +91,11 @@ karts and opens its window.
 - Sound levels: all sounds are generated and were never listened to. Expect to want changes.
 - The bear's front picture lost its hair (book page with a busy background). A photo on a plain
   background fixes it.
-- Vehicles are the kit's trucks, not karts.
+- The new look was judged from still pictures only. Moving clouds, leaves and light shafts may
+  feel different in motion; say what is too much.
+- The Duplo plane's front photo is a little blurred; a sharper one would look better.
+- `scenes/tracks/track_01.tscn` is the old copy of the tile track and is no longer used. It was
+  left in place because deleting files needs your OK.
 - Player selection works with pads and keyboard only, not the mouse.
 - Full mode drift and the Fast speed were tuned by the AI driver only.
 
@@ -109,6 +131,7 @@ Tell Claude the answers by voice; they become the tuning list.
 
 1. Tuning from the couch test (kid mode first, then sound levels, then your Profi feel).
 2. Milestone 2 per PLAN.md: more of your toys (retake the bear), music and sound, graphics presets.
+   The Duplo plane has all four side photos, so it is the first candidate for a 3D model.
 3. Two small open decisions from PLAN.md: which small pad, and the first cast for 3D toys.
 
 ## Notes for the next Claude session

@@ -15,7 +15,11 @@ Everything here waits until the couch test says milestone 1 is fun. Pick by what
 | UI | Mouse support on the player selection page | If needed |
 | UI | 3D podium on the finish screen | Later |
 | Input | Controller rumble on boost and bumps (full mode only) | Later |
-| Karts | The kit has trucks and one motorcycle; real kart models from Kenney Car Kit | Milestone 2 |
+| Karts | More vehicles already in `assets/` and not wired up yet: future racer, speedster, two racers, drag racer | When he wants more |
+| Look | More weather: rain with a wet road, snow, night with headlights | Later |
+| Look | A weather or time-of-day choice per track instead of one fixed mood | Later |
+| Tracks | Hills and banked curves on the generated track (needs a sloped floor collider) | Later |
+| Tracks | Scenery on Kurvenkurs: stands, tents, signs, a pond | Milestone 2 |
 | Tech | Driving on the Kenney ramp and bump tiles (the kit's tile library has no collision for them) | With new tracks |
 
 ## From PLAN.md

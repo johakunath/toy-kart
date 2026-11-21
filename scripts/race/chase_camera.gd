@@ -20,7 +20,7 @@ func _ready() -> void:
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	fov = base_fov
 	near = 0.2
-	far = 400.0
+	far = 1500.0
 
 func use_split_screen_setup() -> void:
 	height = 3.4

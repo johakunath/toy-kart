@@ -4,7 +4,7 @@ extends SceneTree
 ##
 ##   godot --headless --path . --script res://tools/build_track.gd
 ##
-## Writes scenes/tracks/track_01.tscn. After that the scene can be edited in the Godot editor
+## Writes scenes/tracks/waldkurs.tscn and data/tracks/waldkurs.tres. After that the scene can be edited in the Godot editor
 ## (GridMap tiles, the RacingLine path, the stars). Re-running this script overwrites it.
 
 const CELL := 9.99          # GridMap cell size in tile units (as in the Kenney kit)
@@ -21,7 +21,9 @@ const ARC := 0.5523         # Bezier handle factor for a quarter circle
 ## x grows to the east, z to the south. The first tile is the finish tile.
 ## S = straight on, L = turn left, R = turn right.
 const TRACK := {
-	"name": "track_01",
+	"name": "waldkurs",
+	"display_name": "Waldkurs",
+	"sort_order": 20,
 	"start": Vector2i(4, 6),
 	"heading": Vector2i(1, 0),
 	"moves": "SSS L SSSSS L S L SSS R SSS R S R S L S L SSS L SSSSS L SSS",
@@ -30,9 +32,10 @@ const TRACK := {
 		[27, [0.0]], [32, [1.4]], [36, [-1.4]], [38, [-1.6, 0.0, 1.6]]],
 }
 
-func _init() -> void:
+func _process(_delta: float) -> bool:
 	var err := _build(TRACK)
 	quit(0 if err == OK else 1)
+	return true
 
 func _cell_center(cell: Vector2i) -> Vector3:
 	return Vector3((cell.x + 0.5) * CELL * SCALE, 0.0, (cell.y + 0.5) * CELL * SCALE)
@@ -62,34 +65,7 @@ func _build(def: Dictionary) -> Error:
 	root.name = "Track"
 	root.half_width = 4.5 * SCALE
 
-	# --- Light and sky (values from the Kenney kit) ---
-	var env := WorldEnvironment.new()
-	env.name = "Environment"
-	env.environment = load("res://assets/kenney_racing/main-environment.tres")
-	root.add_child(env)
-	var sun := DirectionalLight3D.new()
-	sun.name = "Sun"
-	sun.transform = Transform3D(Basis(Vector3(-0.422618, 0, -0.906308), Vector3(-0.694272, 0.642788, 0.323744), Vector3(0.582564, 0.766044, -0.271654)), Vector3.ZERO)
-	sun.shadow_enabled = true
-	sun.shadow_bias = 0.2
-	sun.shadow_normal_bias = 1.0
-	sun.shadow_opacity = 0.75
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
-	sun.directional_shadow_blend_splits = true
-	sun.directional_shadow_max_distance = 70.0
-	root.add_child(sun)
-
-	# --- Ground the karts roll on (the tiles only bring the walls) ---
-	var ground := StaticBody3D.new()
-	ground.name = "Ground"
-	ground.position = Vector3(0, -0.5, 0)
-	var ground_shape := CollisionShape3D.new()
-	ground_shape.name = "Shape"
-	var box := BoxShape3D.new()
-	box.size = Vector3(600, 1, 600)
-	ground_shape.shape = box
-	ground.add_child(ground_shape)
-	root.add_child(ground)
+	TrackBuildCommon.add_ground_collider(root)
 
 	# --- Tiles ---
 	var grid := GridMap.new()
@@ -208,18 +184,17 @@ func _build(def: Dictionary) -> Error:
 			stars.add_child(star)
 			star.owner = root
 
-	for node in [env, sun, ground, ground_shape, grid, path, stars]:
+	for node in [grid, path, stars]:
 		node.owner = root
-	root.set_script(load("res://scripts/track/track.gd"))
 
-	var packed := PackedScene.new()
-	var err := packed.pack(root)
-	if err != OK:
-		push_error("pack failed: %d" % err)
-		return err
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://scenes/tracks"))
-	var out_path := "res://scenes/tracks/%s.tscn" % def["name"]
-	err = ResourceSaver.save(packed, out_path)
-	print("track written: ", out_path, "  tiles=", tiles.size(), "  line length=%.1f m" % curve.get_baked_length(), "  stars=", star_number - 1, "  err=", err)
+	# Warm evening light with long tree shadows across the road.
+	var area_lo := _cell_center(min_c)
+	var area_hi := _cell_center(max_c)
+	TrackBuildCommon.add_atmosphere(root, Atmosphere.Look.GOLDEN_EVENING, (area_lo + area_hi) * 0.5, area_hi - area_lo)
+
+	var err := TrackBuildCommon.save_scene(root, def["name"])
+	if err == OK:
+		err = TrackBuildCommon.write_track_def(def["name"], def["display_name"], def["sort_order"], curve)
+	print("track written: res://scenes/tracks/%s.tscn" % def["name"], "  tiles=", tiles.size(), "  line length=%.1f m" % curve.get_baked_length(), "  stars=", star_number - 1, "  err=", err)
 	root.free()
 	return err

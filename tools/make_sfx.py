@@ -152,6 +152,35 @@ def sparkle_png():
     Image.fromarray(img, "RGBA").save(os.path.join(FX, "sparkle.png"))
 
 
+def dot_png():
+    """Soft round glow for dust in the sunlight."""
+    size = 32
+    yy, xx = np.mgrid[0:size, 0:size]
+    c = (size - 1) / 2
+    r = np.sqrt((xx - c) ** 2 + (yy - c) ** 2) / (size / 2)
+    a = np.clip(1.0 - r, 0, 1) ** 2.2
+    img = np.zeros((size, size, 4), dtype=np.uint8)
+    img[:, :, :3] = 255
+    img[:, :, 3] = (a * 255).astype(np.uint8)
+    Image.fromarray(img, "RGBA").save(os.path.join(FX, "dot.png"))
+
+
+def leaf_png():
+    """A simple white leaf (tinted in the game) with a darker midrib."""
+    size = 64
+    yy, xx = np.mgrid[0:size, 0:size]
+    x = (xx - (size - 1) / 2) / (size / 2)
+    y = (yy - (size - 1) / 2) / (size / 2)
+    # pointed oval: two circular arcs meeting at the tips
+    inside = (np.abs(x) < 0.92) & (np.abs(y) < 0.46 * (1.0 - x * x) ** 0.8)
+    edge = np.clip((0.46 * (1.0 - np.clip(x * x, 0, 1)) ** 0.8 - np.abs(y)) * 14, 0, 1)
+    shade = np.where(np.abs(y) < 0.035, 0.72, 1.0) * (0.86 + 0.14 * (x + 1) / 2)
+    img = np.zeros((size, size, 4), dtype=np.uint8)
+    img[:, :, :3] = (255 * shade)[:, :, None].astype(np.uint8)
+    img[:, :, 3] = (np.where(inside, edge, 0) * 255).astype(np.uint8)
+    Image.fromarray(img, "RGBA").save(os.path.join(FX, "leaf.png"))
+
+
 if __name__ == "__main__":
     os.makedirs(SFX, exist_ok=True)
     os.makedirs(FX, exist_ok=True)
@@ -163,4 +192,6 @@ if __name__ == "__main__":
     fanfare()
     applause()
     sparkle_png()
+    dot_png()
+    leaf_png()
     print("sfx written to", SFX)

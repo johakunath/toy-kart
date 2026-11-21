@@ -5,7 +5,7 @@
 #
 # 1. Godot 3 names: scripts must use Godot 4.7 APIs only.
 # 2. Import + parse: every script, scene and resource must load. Gamepad mapping and menu flow tests.
-# 3. Headless races: the race scene runs by itself, with fake children at the controls.
+# 3. Headless races on both tracks: the race scene runs by itself, with fake children at the controls.
 # Exit code 0 = all good.
 
 param([switch]$Quick)
@@ -59,16 +59,18 @@ Report 'Menu flow: pick mode, two players join, race starts, pause' $ok (@($r.Ou
 
 # --- 3. Headless runs of the race scene --------------------------------------------------------
 $scenarios = @(
-    @{ Name = 'Race: 2 kids (hands off) + 3 AI, Kid speed'; Args = @('--input=none', '--speed=0') }
+    @{ Name = 'Kurvenkurs: 2 kids (hands off) + 3 AI, Kid speed'; Args = @('--track=kurvenkurs', '--input=none', '--speed=0') }
 )
 if (-not $Quick) {
     $scenarios += @(
-        @{ Name = 'Race: 2 kids holding left, Kid speed';       Args = @('--input=left', '--speed=0') },
-        @{ Name = 'Race: 2 kids mashing buttons, Normal speed'; Args = @('--input=random', '--speed=1') },
-        @{ Name = 'Race: kid + full-mode driver, Fast speed';   Args = @('--control=mixed', '--input=right', '--speed=2') },
-        @{ Name = 'Race: 1 full-mode driver, no AI';            Args = @('--players=1', '--control=full', '--ai=0', '--speed=1') },
-        @{ Name = 'Free drive: 1 kid';                          Args = @('--players=1', '--mode=free') },
-        @{ Name = 'Time trial: 1 full-mode driver';             Args = @('--players=1', '--control=full', '--mode=trial', '--speed=1') }
+        @{ Name = 'Waldkurs: 2 kids (hands off) + 3 AI, Kid speed';   Args = @('--track=waldkurs', '--input=none', '--speed=0') },
+        @{ Name = 'Kurvenkurs: 2 kids holding left, Kid speed';       Args = @('--track=kurvenkurs', '--input=left', '--speed=0') },
+        @{ Name = 'Waldkurs: 2 kids holding right, Kid speed';        Args = @('--track=waldkurs', '--input=right', '--speed=0') },
+        @{ Name = 'Waldkurs: 2 kids mashing buttons, Normal speed';   Args = @('--track=waldkurs', '--input=random', '--speed=1') },
+        @{ Name = 'Kurvenkurs: kid + full-mode driver, Fast speed';   Args = @('--track=kurvenkurs', '--control=mixed', '--input=right', '--speed=2') },
+        @{ Name = 'Waldkurs: 1 full-mode driver, no AI';              Args = @('--track=waldkurs', '--players=1', '--control=full', '--ai=0', '--speed=1') },
+        @{ Name = 'Kurvenkurs: free drive, 1 kid';                    Args = @('--track=kurvenkurs', '--players=1', '--mode=free') },
+        @{ Name = 'Waldkurs: time trial, 1 full-mode driver';         Args = @('--track=waldkurs', '--players=1', '--control=full', '--mode=trial', '--speed=1') }
     )
 }
 foreach ($s in $scenarios) {

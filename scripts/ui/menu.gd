@@ -15,6 +15,7 @@ var _mode_buttons: Array[Button] = []
 var _options_title: Label
 var _options_icon: TextureRect
 var _speed_buttons: Array[Button] = []
+var _track_buttons: Array[Button] = []
 var _ai_row: Control
 var _ai_buttons: Array[Button] = []
 var _next_button: Button
@@ -75,17 +76,33 @@ func _on_mode_picked(mode: int) -> void:
 func _build_options_page() -> void:
 	var page := _new_page(Page.OPTIONS)
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 36)
+	column.add_theme_constant_override("separation", 18)
 	page.add_child(column)
 
 	var title_row := HBoxContainer.new()
 	title_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	title_row.add_theme_constant_override("separation", 24)
-	_options_icon = UiKit.icon_rect("flag", 120, Color.WHITE)
+	_options_icon = UiKit.icon_rect("flag", 90, Color.WHITE)
 	title_row.add_child(_options_icon)
-	_options_title = UiKit.label("", 110, Color.WHITE, 26, UiKit.INK)
+	_options_title = UiKit.label("", 84, Color.WHITE, 22, UiKit.INK)
 	title_row.add_child(_options_title)
 	column.add_child(title_row)
+
+	# Strecke: each button shows the shape of its track.
+	var track_group := ButtonGroup.new()
+	var track_row := _option_row(column, "Strecke")
+	for i in Game.tracks.size():
+		var def := Game.tracks[i]
+		var button := _option_button([], def.display_name, track_group, Vector2(500, 170))
+		var content := button.get_child(0) as BoxContainer
+		var icon := TrackIcon.new(def.outline)
+		icon.custom_minimum_size = Vector2(140, 140)
+		content.add_child(icon)
+		content.move_child(icon, 0)
+		content.add_theme_constant_override("separation", 18)
+		button.pressed.connect(func() -> void: Game.track = def)
+		track_row.add_child(button)
+		_track_buttons.append(button)
 
 	# Tempo: one, two or three arrows.
 	var speed_group := ButtonGroup.new()
@@ -107,7 +124,7 @@ func _build_options_page() -> void:
 		var icons: Array[String] = []
 		for k in i:
 			icons.append("robot")
-		var button := _option_button(icons, str(i), ai_group, Vector2(250, 150))
+		var button := _option_button(icons, str(i), ai_group, Vector2(250, 120))
 		button.pressed.connect(func() -> void: Game.ai_count = i)
 		ai_buttons_row.add_child(button)
 		_ai_buttons.append(button)
@@ -116,10 +133,10 @@ func _build_options_page() -> void:
 	nav.alignment = BoxContainer.ALIGNMENT_CENTER
 	nav.add_theme_constant_override("separation", 40)
 	column.add_child(nav)
-	var back := UiKit.pill_button("arrow_left", "Zurück", Vector2(300, 110))
+	var back := UiKit.pill_button("arrow_left", "Zurück", Vector2(300, 100))
 	back.pressed.connect(func() -> void: _show(Page.MODE))
 	nav.add_child(back)
-	_next_button = UiKit.pill_button("arrow_right", "Weiter", Vector2(420, 130))
+	_next_button = UiKit.pill_button("arrow_right", "Weiter", Vector2(420, 112))
 	_next_button.add_theme_font_size_override("font_size", 56)
 	_next_button.pressed.connect(func() -> void:
 		Game.save_options()
@@ -129,16 +146,16 @@ func _build_options_page() -> void:
 
 func _option_row(parent: Control, title: String) -> HBoxContainer:
 	var block := VBoxContainer.new()
-	block.add_theme_constant_override("separation", 10)
+	block.add_theme_constant_override("separation", 6)
 	parent.add_child(block)
-	block.add_child(UiKit.label(title, 46, Color.WHITE, 12, UiKit.INK))
+	block.add_child(UiKit.label(title, 40, Color.WHITE, 12, UiKit.INK))
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 24)
 	block.add_child(row)
 	return row
 
-func _option_button(icons: Array[String], text: String, group: ButtonGroup, min_size := Vector2(380, 150)) -> Button:
+func _option_button(icons: Array[String], text: String, group: ButtonGroup, min_size := Vector2(380, 120)) -> Button:
 	var button := Button.new()
 	button.toggle_mode = true
 	button.button_group = group
@@ -298,6 +315,9 @@ func _show(page: Page) -> void:
 			_options_icon.texture = UiKit.icon(["wheel", "flag", "clock"][Game.mode])
 			_ai_row.visible = Game.mode == Game.Mode.RACE
 			_speed_buttons[Game.speed_class].button_pressed = true
+			var track_index := Game.tracks.find(Game.track)
+			if track_index >= 0:
+				_track_buttons[track_index].button_pressed = true
 			_ai_buttons[Game.ai_count].button_pressed = true
 			_next_button.grab_focus()
 		Page.PLAYERS:
