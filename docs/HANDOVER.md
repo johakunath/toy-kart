@@ -1,6 +1,6 @@
 # Handover
 
-Updated 21 Nov 2026, after the second round of the milestone 1 session (Fable 5.2).
+Updated 21 Nov 2026, after the third round (your first test drive) of the milestone 1 session.
 
 ## Where it stands
 
@@ -11,6 +11,31 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## New in the third round (after your first test drive)
+
+- **Kid mode is no longer automatic.** In the middle of the road the stick really steers. A
+  helper only takes over near the edge, and the edge strip slows the kart. Without gas the kart
+  cruises at 85 %; **A or RT (W / arrow up on a keyboard) = full speed.** B, X, Y honk.
+  In tests: hands off = 3rd to 5th place, only gas = 3rd, steering well with gas = 1st.
+  Still no wall hits and no resets.
+- **AI with a kid:** two AI karts stay a little ahead, one behind, but never drive faster than
+  normal to keep their spot, so a kid who drives well passes them.
+- **Profi:** a leading AI eases off from 8 m ahead; whoever is behind the leading AI gets up to
+  12 % extra top speed. **Schnell is faster** (1.5 instead of 1.3), Normal slightly (1.05),
+  Kind slightly (0.78) to make up for the cruise speed.
+- **Player menu:** an empty panel shows how to join (Controller: A, W A S D: Leertaste,
+  Pfeile: Enter). A joined panel shows what Kind / Profi means, the driving keys for that
+  device, and how to move and leave. The keys also show at the bottom of the screen for the
+  first seconds of a race.
+- **Toy vehicles:** Motorrad, Polizei and Flieger are now the vehicle themselves (the plane
+  flies a bit above the road). The vehicle row then says "fährt selbst". The Duplo-Flieger still
+  sits in a kart; say if it should be a vehicle too (one line in its file).
+- **Names:** Katze is now **Fuchs**, Löwe is **Koba**, Junge is **Duplo-Mädchen**, Bär is **Bobo**.
+- **New long track "Riesenrunde":** 716 m with an S, a wide hairpin and a long home straight,
+  2 laps (about 3 minutes at Kind speed).
+- **Turbo arrows:** blue pads with yellow arrows on all three tracks; drive over them for a
+  short turbo, no button needed. More stars on Waldkurs.
 
 ## New in the second round (your four requests)
 
@@ -42,16 +67,16 @@ The couch test below is the gate for milestone 1.
 | | Kind (kid mode) | Profi (full mode) |
 | --- | --- | --- |
 | Steer | Either stick, D-pad, or LB / RB | Left stick or D-pad |
-| Gas | Automatic | RT or A |
+| Gas | Cruises by itself; A or RT = full speed | RT or A |
 | Brake, reverse | Not needed | LT or B |
 | Drift | No | Hold RB in a curve; after 1 s you get a small boost when you let go |
 | Star (boost) | Fires by itself | X or LB |
-| Horn | Any of A, B, X, Y | Y |
-| Keyboard 1 | A / D steer, other keys honk | W gas, S brake, A / D steer, Space drift, E star, Q horn |
-| Keyboard 2 | Arrow keys | Arrows, `.` drift, Enter star, `,` horn |
+| Horn | B, X or Y | Y |
+| Keyboard 1 | A / D steer, W full speed, other keys honk | W gas, S brake, A / D steer, Space drift, E star, Q horn |
+| Keyboard 2 | Left / right steer, up full speed | Arrows, `.` drift, Enter star, `,` horn |
 
-In kid mode the stick moves the kart to the left or right side of the road. The kart follows the
-road by itself, slows for tight corners, and cannot hit the walls hard or turn around.
+In kid mode he steers himself. A helper catches the kart near the edge and steers it back, the
+edge strip slows it a little, and it cannot hit the walls hard or turn around.
 
 ## What works
 
@@ -89,8 +114,12 @@ karts and opens its window.
 - Real controllers, the projector, and how the driving feels in your hands. I can read numbers
   and screenshots, not feel.
 - Sound levels: all sounds are generated and were never listened to. Expect to want changes.
-- The bear's front picture lost its hair (book page with a busy background). A photo on a plain
-  background fixes it.
+- Bobo's front picture lost its hair (book page with a busy background). A photo on a plain
+  background fixes it: name it `bobo-front.jpg`, or replace the bear photos listed in
+  `photos/toys/pairs.json`.
+- Kid mode feel: tuned with simulated kids only. Watch whether he finds the gas button and
+  whether the edge strip feels like a fair "oops" or like a punishment.
+- Toy vehicles are flat photo cards: from the side they look thin. A 3D model fixes that later.
 - The new look was judged from still pictures only. Moving clouds, leaves and light shafts may
   feel different in motion; say what is too much.
 - The Duplo plane's front photo is a little blurred; a sharper one would look better.
@@ -127,7 +156,7 @@ Tell Claude the answers by voice; they become the tuning list.
 
 ## What is next
 
-1. Tuning from the couch test (kid mode first, then sound levels, then your Profi feel).
+1. Tuning from the next couch test (kid mode feel, gas button, Riesenrunde length, sound).
 2. Milestone 2 per PLAN.md: more of your toys (retake the bear), music and sound, graphics presets.
    The Duplo plane has all four side photos, so it is the first candidate for a 3D model.
 3. Two small open decisions from PLAN.md: which small pad, and the first cast for 3D toys.

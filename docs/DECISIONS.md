@@ -12,7 +12,7 @@ Claude builds from this file. Change a row only with Johannes' OK, and change it
 | Platform | Windows PC first, played on the 1080p projector | Steam Deck and tablet later |
 | Screen | Side-by-side split for 2 players; the left half is the kid's | Each of you looks at the half on your side of the couch |
 | Modes | Free drive, race with 0 to 3 AI karts, time trial | Taking turns first, then racing |
-| Kid mode | Auto-accelerate, smart steering, left and right only, catch-up, soft walls | The same assists as Mario Kart |
+| Kid mode | Auto-accelerate, steering with a helper near the edge, one gas button for full speed, soft walls, catch-up | The same assists as Mario Kart; changed 21 Nov 2026 at Johannes' request: the first version won by itself |
 | Language | Icons plus short German labels | Readable for adults; the kid always plays with you |
 | Drivers | Ready-made CC0 characters plus toy photo cut-outs; 3D toys in milestone 3 | Fast now, clear upgrade path |
 | Toy photos | Front and back per toy in `photos/toys`; left and right for later 3D | Paper drivers now, Tripo multiview later |
@@ -23,26 +23,28 @@ Claude builds from this file. Change a row only with Johannes' OK, and change it
 | Models | Fable 5.2 for milestone 1, Opus 5.5 after, Sonnet for small tweaks | Spend the Max budget on the foundation |
 | Repo | CLAUDE.md is the index, AGENTS.md points to it, GitHub, no Actions | One file to maintain, token-efficient |
 | Family | Only the 4-year-old plays; the 1-year-old gets no screen time | Your call |
-| Scope | 2 tracks (Kurvenkurs with round curves, Waldkurs from tiles), 3 laps, about 2 minutes per race; boost pickups only | Second track asked for by Johannes on 21 Nov 2026; everything else waits until he asks for a third race |
+| Scope | 3 tracks (Kurvenkurs, Waldkurs, Riesenrunde with 2 laps); boost stars and turbo arrows | Johannes asked for longer tracks with more to do on 21 Nov 2026 (second round) |
 
 ## Build decisions made in milestone 1 (by Claude; tell me if you want any changed)
 
 | Area | Decision | Why |
 | --- | --- | --- |
-| Kid steering | The stick picks a **lane** on the road; the assist steers along it. Hands off = the kart keeps its lane round the whole track | Free steering plus a correction made the kart weave and bump walls in tests. Lane steering keeps "left goes left" and cannot leave the road |
-| Kid speed in corners | Auto-accelerate eases off by itself before tight corners | No wall hits at any speed class |
+| Kid steering | In the middle of the road the stick steers for real, with a light helping hand (30 %). Near the edge the helper takes over and steers back; it looks 0.6 s ahead so a kart pointed at the wall is caught early. The edge strip slows the kart | Changed 21 Nov 2026 at Johannes' request: lane steering drove the whole track by itself, so the kid felt nothing and won by doing nothing. Tests: hands off = 3rd to 5th, holding gas = 3rd, steering well with gas = 1st; no wall hits, no resets |
+| Kid speed | Cruises at 85 % of top speed; gas (A or RT, W or arrow up) gives 100 %. Eases off before tight corners by itself | A button that does something he can feel |
 | Kid side | With one Kind and one Profi player, the Kind player always gets the left half | Matches "the left half is his" without an extra menu step |
 | Kart feel | Added grip to the Kenney ball physics: the motion follows the kart's nose | The kit's free-rolling ball slid wide in every corner of a walled track |
 | Full mode buttons | RT or A gas, LT or B brake, RB drift (mini boost after 1 s), X or LB use, Y horn | Close to Mario Kart on an Xbox pad |
-| AI with a kid in the race | Each AI kart holds a spot near the slowest human (+10 m, -6 m, -22 m) and the leader eases off on the home stretch | Close races; the kid is never left alone at the back or the front |
-| AI without a kid | Fixed skill (86 to 95 % of top speed), mild rubber band | A real opponent for full mode |
-| Speeds | Kid 0.7, Normal 1.0, Fast 1.3 of 12.5 m/s | Kid speed gives about 1:45 for 3 laps |
+| AI with a kid in the race | Each AI kart holds a spot near the slowest human (+12 m, +4 m, -14 m); it waits when far ahead but never drives faster than normal to hold its spot | Changed 21 Nov 2026: a kid who drives well can win, one who does nothing comes 3rd or 4th, never far behind |
+| AI without a kid | Fixed skill (86 to 95 % of top speed). A leading AI eases off from 8 m ahead (down to 80 % at 48 m); anyone behind the leading AI gets up to 12 % extra top speed | Changed 21 Nov 2026: Johannes could not win as Profi on Fast |
+| Speeds | Kid 0.78, Normal 1.05, Fast 1.5 of 12.5 m/s | Changed 21 Nov 2026: Fast felt slow |
 | Tracks | Kurvenkurs: road, kerbs, barriers and walls generated along a smooth line through 17 points (286 m, tightest radius 9 m). Waldkurs: Kenney tiles from a list of moves (40 tiles, 284 m) | Road and racing line come from the same data and can never disagree; the Kenney tiles only have tight 90 degree corners |
 | Track moods | Kurvenkurs: sunny day, clouds with moving shadows, petals. Waldkurs: warm evening, long shadows, light shafts, autumn leaves | Different lighting per track; both kept bright enough for a small child to read |
 | Track choice | A "Strecke" row on the options page; each button shows the track's shape | Pick a track without reading |
 | Vehicles | 5 go-karts, a racing car and an oldtimer first; AI drivers use only these. The trucks and the motorcycle come last in the list | Players can still pick a truck |
 | Driver seat | In the karts the driver sits inside, enlarged 1.4 times (toy cards about 1 m), like the big-headed figures the karts shipped with. On trucks they sit on top | The toy must be visible from the chase camera |
 | Paper cards | Unshaded with a white sticker outline | Recognisable from every angle |
+| Toy vehicles | Motorrad, Polizei and Flieger replace the kart (front photo ahead, back photo toward the camera); the plane flies 35 cm above the road. The vehicle row shows "fährt selbst" and is skipped; speed and sound come from the vehicle picked before | Asked for by Johannes, 21 Nov 2026 |
+| Turbo arrows | Blue pads with yellow arrows on the road: drive over = short turbo, no button | More to do on the track; steering onto them is a reason to steer |
 | Colours | A controller gets the next free colour the first time it joins; remembered per device | "His pad, his colour" without setup |
 | Kart bumps | Karts push each other apart softly instead of colliding | No pile-ups, no spinning out |
 | Sounds | All effects synthesised by `tools/make_sfx.py` | No licence questions, no downloads |

@@ -5,5 +5,7 @@ class_name TrackDef extends Resource
 @export var display_name := ""
 @export var sort_order := 100
 @export_file("*.tscn") var scene_path := ""
+## Laps for a race on this track (long tracks have fewer).
+@export var laps := 3
 ## The shape of the track for the menu button: points in a -1..1 box, in driving order.
 @export var outline := PackedVector2Array()

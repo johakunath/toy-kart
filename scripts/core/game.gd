@@ -10,7 +10,6 @@ const SPEED_FACTOR: Array[float] = [0.78, 1.05, 1.5]
 const SPEED_NAMES: Array[String] = ["Kind", "Normal", "Schnell"]
 const MODE_NAMES: Array[String] = ["Freie Fahrt", "Rennen", "Zeitfahren"]
 const CONTROL_NAMES: Array[String] = ["Kind", "Profi"]
-const LAPS := 3
 const MAX_AI := 3
 
 const PLAYER_COLORS: Array[Color] = [

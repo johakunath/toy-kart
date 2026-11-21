@@ -26,6 +26,31 @@ static func add_stars(root: Node3D, curve: Curve3D, rows: Array) -> int:
 			star.owner = root
 	return number - 1
 
+## Adds turbo arrows on the road. `rows` holds [metres from the start, [sideways offsets]].
+static func add_pads(root: Node3D, curve: Curve3D, rows: Array, road_y: float) -> int:
+	var pads := Node3D.new()
+	pads.name = "BoostPads"
+	root.add_child(pads)
+	pads.owner = root
+	var number := 1
+	for row in rows:
+		var s: float = row[0]
+		var here := curve.sample_baked(s, true)
+		var ahead := curve.sample_baked(s + 0.5, true)
+		var dir := (ahead - here)
+		dir.y = 0.0
+		dir = dir.normalized()
+		var right := dir.cross(Vector3.UP)
+		for lateral: float in row[1]:
+			var pad := BoostPad.new()
+			pad.name = "Pad%d" % number
+			number += 1
+			var origin := Vector3(here.x, road_y + 0.15, here.z) + right * lateral
+			pad.transform = Transform3D(Basis(Vector3.UP.cross(dir), Vector3.UP, dir), origin)
+			pads.add_child(pad)
+			pad.owner = root
+	return number - 1
+
 ## Adds the node that sets up light, sky and weather when the track runs.
 static func add_atmosphere(root: Node3D, look: int, center: Vector3, size: Vector3) -> void:
 	var atmosphere := Atmosphere.new()
@@ -52,7 +77,7 @@ static func add_ground_collider(root: Node3D) -> void:
 	shape.owner = root
 
 ## Writes data/tracks/<id>.tres: name, scene and the outline shown on the menu button.
-static func write_track_def(id: String, display_name: String, sort_order: int, curve: Curve3D) -> Error:
+static func write_track_def(id: String, display_name: String, sort_order: int, curve: Curve3D, laps := 3) -> Error:
 	var points := PackedVector2Array()
 	var length := curve.get_baked_length()
 	var count := 72
@@ -74,6 +99,7 @@ static func write_track_def(id: String, display_name: String, sort_order: int, c
 	def.sort_order = sort_order
 	def.scene_path = "res://scenes/tracks/%s.tscn" % id
 	def.outline = points
+	def.laps = laps
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://data/tracks"))
 	return ResourceSaver.save(def, "res://data/tracks/%s.tres" % id)
 

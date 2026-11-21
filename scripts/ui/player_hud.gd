@@ -44,7 +44,7 @@ func setup(p_racer: Racer, mode: int, total_racers: int) -> void:
 	_lap_box = HBoxContainer.new()
 	_lap_box.add_theme_constant_override("separation", 10)
 	_lap_box.add_child(UiKit.icon_rect("flag", 72, Color.WHITE))
-	_lap = UiKit.label("1/%d" % Game.LAPS, 64, Color.WHITE, 16, UiKit.INK)
+	_lap = UiKit.label("1/%d" % Game.track.laps, 64, Color.WHITE, 16, UiKit.INK)
 	_lap_box.add_child(_lap)
 	UiKit.pin(_lap_box, Control.PRESET_TOP_RIGHT, Vector2(-260, 36))
 	_lap_box.visible = mode != Game.Mode.FREE_DRIVE
@@ -96,7 +96,7 @@ func setup(p_racer: Racer, mode: int, total_racers: int) -> void:
 func refresh(race_time: float, delta: float) -> void:
 	if _place.visible:
 		_place.text = "%d." % racer.place
-	_lap.text = "%d/%d" % [racer.display_lap(), Game.LAPS]
+	_lap.text = "%d/%d" % [racer.display_lap(), Game.track.laps]
 	if _time.visible:
 		_time.text = UiKit.format_time(racer.finish_time if racer.finished else race_time)
 	if _item.visible:

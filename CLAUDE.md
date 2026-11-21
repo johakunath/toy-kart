@@ -19,10 +19,10 @@ checks yourself. Give him steps only in the Godot editor or on websites.
 | `scripts/core/` | `game.gd` (autoload `Game`: mode, speed, track, players, catalog, settings), `DriverDef`, `KartDef`, `TrackDef` |
 | `scripts/input/` | `Intent`, `InputSource` (keyboard, pad, AI, test), `Assist` (kid/full), `LineFollow` |
 | `scripts/kart/` | `Kart` (rolling-ball arcade physics), `KartVisual`, `DriverRig` (3D model or paper card) |
-| `scripts/track/` | `Track` (racing line lookups), `TrackProgress` (laps), `BoostStar`, `Atmosphere` (light, sky, weather), `Scatter` (trees) |
+| `scripts/track/` | `Track` (racing line lookups), `TrackProgress` (laps), `BoostStar`, `BoostPad` (turbo arrows), `Atmosphere` (light, sky, weather), `Scatter` (trees) |
 | `scripts/race/` | `race.gd` (builds the race at runtime), `Racer`, `ChaseCamera` |
 | `scripts/ui/` | `menu.gd`, `PlayerSlot`, `PlayerHud`, `FinishScreen`, `PauseMenu`, `KartPreview`, `UiKit` |
-| `scenes/` | `menu.tscn` (main), `race.tscn`, `kart.tscn`, `boost_star.tscn`, `tracks/kurvenkurs.tscn`, `tracks/waldkurs.tscn` |
+| `scenes/` | `menu.tscn` (main), `race.tscn`, `kart.tscn`, `boost_star.tscn`, `tracks/kurvenkurs.tscn`, `tracks/waldkurs.tscn`, `tracks/riesenrunde.tscn` |
 | `data/drivers/`, `data/karts/`, `data/tracks/` | one `.tres` per driver / kart / track; the game lists these folders at start |
 | `assets/` | `kenney_racing/`, `kenney_car_kit/`, `kenney_toy_car_kit/`, `characters/`, `paper/` (toy cut-outs), `sfx/`, `fx/`, `icons/` |
 | `photos/toys/` | toy photos + `pairs.json` (which photo is front/back). Not imported by Godot |
@@ -43,8 +43,8 @@ powershell -ExecutionPolicy Bypass -File tools\check.ps1 -Quick # parse + one ra
 powershell -ExecutionPolicy Bypass -File tools\export.ps1       # builds\ToyKart.exe + start tests
 ```
 - Headless race by hand: `godot --headless --path . --fixed-fps 60 res://scenes/race.tscn -- --smoke`
-  Options after `--smoke`: `--players=1|2 --control=kid|full|mixed --input=none|left|right|random
-  --mode=race|free|trial --speed=0|1|2 --ai=0..3 --track=kurvenkurs|waldkurs --seconds=N --trace=T`.
+  Options after `--smoke`: `--players=1|2 --control=kid|full|mixed --input=none|left|right|random|gas|skilled
+  --mode=race|free|trial --speed=0|1|2 --ai=0..3 --track=kurvenkurs|waldkurs|riesenrunde --seconds=N --trace=T --driver=N`.
   Prints `SMOKE RESULT: PASS|FAIL`.
 - Look at the game: same command without `--headless`, plus `--windowed --shot=<png> --shot_at=<s|finish>`
   (race) or `res://scenes/menu.tscn -- --windowed --shot=<png> --page=mode|options|players` (menu).
@@ -75,7 +75,8 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1       # builds\ToyKart
 ## Common jobs
 - New toy photos: put `<name>-front.jpg` / `<name>-back.jpg` in `photos/toys/` (or add to `pairs.json`),
   run `tools\.venv\Scripts\python.exe tools\make_paper_drivers.py`, then import and check.
-- Rebuild a track: `godot --headless --path . --script res://tools/build_round_track.gd` (or `build_track.gd`).
+- Rebuild a track: `godot --headless --path . --script res://tools/build_round_track.gd` (all round tracks,
+  or `-- --track=<id>`), or `build_track.gd` (Waldkurs). After adding a `class_name`, run `godot --headless --import` once.
 - Light, sky, clouds and weather per track: the looks in `scripts/track/atmosphere.gd`.
 - Regenerate sounds: `tools\.venv\Scripts\python.exe tools\make_sfx.py`.
 - Tuning knobs: speeds in `game.gd` (`SPEED_FACTOR`), kart feel in `kart.gd` (constants at the top),

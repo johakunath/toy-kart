@@ -29,9 +29,13 @@ func tick(track: Track, racing: bool, delta: float) -> void:
 	var final := assist.apply(raw, self, track, racing, delta)
 	kart.intent.copy_from(final)
 
+## Laps of this race, set by the race (kept here so test tools can load this script
+## before the Game autoload exists).
+var laps := 3
+
 ## Lap shown to the player: 1 on the first lap.
 func display_lap() -> int:
-	return clampi(progress.lap + 1, 1, Game.LAPS)
+	return clampi(progress.lap + 1, 1, laps)
 
 func note_lap(race_time: float) -> void:
 	lap_times.append(race_time - _lap_started_at)

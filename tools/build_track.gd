@@ -29,7 +29,10 @@ const TRACK := {
 	"moves": "SSS L SSSSS L S L SSS R SSS R S R S L S L SSS L SSSSS L SSS",
 	# Stars: [tile number along the track, sideways offsets in metres]
 	"stars": [[3, [0.0]], [8, [-1.6, 0.0, 1.6]], [14, [1.2]], [18, [-1.2]], [22, [-1.6, 0.0, 1.6]],
-		[27, [0.0]], [32, [1.4]], [36, [-1.4]], [38, [-1.6, 0.0, 1.6]]],
+		[27, [0.0]], [32, [1.4]], [36, [-1.4]], [38, [-1.6, 0.0, 1.6]], [6, [-1.6, 1.6]], [28, [-1.6, 1.6]],
+		[34, [0.0]]],
+	# Turbo arrows: [metres along the racing line, sideways offsets in metres]
+	"pads": [[12.0, [-1.4, 1.4]], [52.0, [0.0]], [108.0, [-1.2]], [140.0, [1.2]], [210.0, [0.0]], [250.0, [-1.4, 1.4]]],
 }
 
 func _process(_delta: float) -> bool:
@@ -186,6 +189,7 @@ func _build(def: Dictionary) -> Error:
 
 	for node in [grid, path, stars]:
 		node.owner = root
+	TrackBuildCommon.add_pads(root, curve, def["pads"], -0.15)
 
 	# Warm evening light with long tree shadows across the road.
 	var area_lo := _cell_center(min_c)

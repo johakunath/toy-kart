@@ -136,6 +136,7 @@ func _spawn_racers() -> void:
 
 func _make_racer(kart_def: KartDef, driver: DriverDef, slot: int) -> Racer:
 	var racer := Racer.new()
+	racer.laps = Game.track.laps
 	var kart := KART_SCENE.instantiate() as Kart
 	_karts.add_child(kart)
 	kart.setup(kart_def, driver)
@@ -287,9 +288,9 @@ func _check_laps() -> void:
 		var laps_done := racer.progress.lap
 		if laps_done > racer.lap_times.size():
 			racer.note_lap(race_time)
-			if laps_done >= Game.LAPS:
+			if laps_done >= Game.track.laps:
 				_finish_racer(racer)
-			elif racer.is_human and laps_done == Game.LAPS - 1:
+			elif racer.is_human and laps_done == Game.track.laps - 1:
 				huds[humans.find(racer)].show_message("Letzte Runde!", 1.6, 120, UiKit.SUN)
 				UiKit.play(self, "select")
 

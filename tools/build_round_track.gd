@@ -1,24 +1,50 @@
 extends SceneTree
 ## Builds a track with round, flowing curves. Unlike the tile track, nothing here is a grid:
-## the road is drawn along one smooth line through the points in POINTS, and the same line is
+## the road is drawn along one smooth line through a track's points, and the same line is
 ## the racing line. Road, kerbs, barriers, walls, trees and the menu outline all come from it.
 ##
 ##   godot --headless --path . --script res://tools/build_round_track.gd
 ##
-## Writes scenes/tracks/kurvenkurs.tscn (+ _road.res) and data/tracks/kurvenkurs.tres.
-## To change the track: move, add or remove points, run again, run the checks.
+##   godot --headless --path . --script res://tools/build_round_track.gd -- --track=riesenrunde
+##
+## Writes scenes/tracks/<id>.tscn (+ _road.res) and data/tracks/<id>.tres for each track in TRACKS.
+## To change a track: move, add or remove points, run again, run the checks.
 
-const ID := "kurvenkurs"
-const DISPLAY_NAME := "Kurvenkurs"
-const SORT_ORDER := 10
-
-## Centre of the road in metres (x to the east, y to the south), in driving order.
-## The first point is the start/finish line; the line runs smoothly through all points.
-const POINTS: Array[Vector2] = [
-	Vector2(0, 0), Vector2(26, 0), Vector2(44, -5), Vector2(55, -19), Vector2(53, -36),
-	Vector2(40, -47), Vector2(24, -46), Vector2(12, -37), Vector2(0, -33), Vector2(-12, -40),
-	Vector2(-22, -52), Vector2(-38, -54), Vector2(-50, -44), Vector2(-53, -28), Vector2(-45, -14),
-	Vector2(-32, -6), Vector2(-18, -1),
+## Each track: points of the road's centre in metres (x to the east, y to the south), in
+## driving order. The first point is the start/finish line; the line runs smoothly through all.
+## Stars and turbo arrows: [metres after the start line, [sideways offsets in metres]].
+const TRACKS := [
+	{
+		"id": "kurvenkurs", "name": "Kurvenkurs", "sort": 10, "laps": 3, "look": Atmosphere.Look.SUNNY_DAY,
+		"points": [
+			Vector2(0, 0), Vector2(26, 0), Vector2(44, -5), Vector2(55, -19), Vector2(53, -36),
+			Vector2(40, -47), Vector2(24, -46), Vector2(12, -37), Vector2(0, -33), Vector2(-12, -40),
+			Vector2(-22, -52), Vector2(-38, -54), Vector2(-50, -44), Vector2(-53, -28), Vector2(-45, -14),
+			Vector2(-32, -6), Vector2(-18, -1),
+		],
+		"stars": [[28.0, [0.0]], [58.0, [-1.8, 0.0, 1.8]], [92.0, [1.4]], [124.0, [-1.4]],
+			[152.0, [-1.8, 0.0, 1.8]], [186.0, [0.0]], [214.0, [1.6]], [240.0, [-1.6]], [262.0, [-1.8, 0.0, 1.8]]],
+		"pads": [[12.0, [-1.4, 1.4]], [106.0, [0.0]], [170.0, [-1.2]], [200.0, [1.2]], [250.0, [0.0]]],
+	},
+	{
+		# The long one: a big loop with an S, a wide hairpin and a long home straight. Two laps.
+		"id": "riesenrunde", "name": "Riesenrunde", "sort": 30, "laps": 2, "look": Atmosphere.Look.SUNNY_DAY,
+		"points": [
+			Vector2(0, 0), Vector2(30, 0), Vector2(60, 0), Vector2(85, -4), Vector2(100, -18),
+			Vector2(102, -38), Vector2(92, -52), Vector2(75, -56), Vector2(60, -50), Vector2(45, -58),
+			Vector2(30, -70), Vector2(22, -88), Vector2(30, -104), Vector2(48, -112), Vector2(66, -110),
+			Vector2(80, -120), Vector2(84, -138), Vector2(72, -152), Vector2(52, -156), Vector2(30, -150),
+			Vector2(10, -140), Vector2(-8, -128), Vector2(-24, -120), Vector2(-42, -124), Vector2(-58, -134),
+			Vector2(-74, -130), Vector2(-84, -114), Vector2(-82, -94), Vector2(-70, -80), Vector2(-54, -74),
+			Vector2(-44, -60), Vector2(-48, -42), Vector2(-60, -28), Vector2(-58, -12), Vector2(-44, -2),
+			Vector2(-24, 1),
+		],
+		"stars": [[40.0, [-1.8, 0.0, 1.8]], [95.0, [0.0]], [140.0, [-1.4]], [165.0, [1.4]],
+			[205.0, [-1.8, 0.0, 1.8]], [260.0, [0.0]], [300.0, [1.6]], [345.0, [-1.8, 0.0, 1.8]],
+			[395.0, [-1.4]], [440.0, [1.4]], [480.0, [-1.8, 0.0, 1.8]], [530.0, [0.0]]],
+		"pads": [[16.0, [-1.4, 1.4]], [62.0, [0.0]], [120.0, [1.2]], [185.0, [-1.2]], [235.0, [0.0]],
+			[280.0, [-1.4, 1.4]], [325.0, [0.0]], [370.0, [1.2]], [420.0, [-1.2]], [460.0, [0.0]], [505.0, [-1.4, 1.4]]],
+	},
 ]
 
 const HALF_WIDTH := 3.6      # centre line to the wall face (what the karts can use)
@@ -41,28 +67,40 @@ const BARRIER: Array[Vector2] = [
 	Vector2(0.37, 0.47), Vector2(0.49, 0.43), Vector2(0.56, 0.32), Vector2(0.56, -0.1),
 ]
 
-## Stars: [metres after the start line, sideways offsets in metres].
-const STARS := [[28.0, [0.0]], [58.0, [-1.8, 0.0, 1.8]], [92.0, [1.4]], [124.0, [-1.4]],
-	[152.0, [-1.8, 0.0, 1.8]], [186.0, [0.0]], [214.0, [1.6]], [240.0, [-1.6]], [262.0, [-1.8, 0.0, 1.8]]]
-
+var _id := ""
+var _points: Array = []
 var _pos := PackedVector3Array()
 var _right := PackedVector3Array()
 var _count := 0
 
 func _process(_delta: float) -> bool:
-	var err := _build()
+	# "-- --track=<id>" builds one track; without it, all of them.
+	var only := ""
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--track="):
+			only = arg.substr(8)
+	var err := OK
+	for cfg: Dictionary in TRACKS:
+		if only == "" or only == cfg["id"]:
+			var e := _build(cfg)
+			if e != OK:
+				err = e
 	quit(0 if err == OK else 1)
 	return true
 
-func _build() -> Error:
+func _build(cfg: Dictionary) -> Error:
+	_id = cfg["id"]
+	_points = cfg["points"]
+	_pos = PackedVector3Array()
+	_right = PackedVector3Array()
 	# --- The line ---
 	var curve := Curve3D.new()
 	curve.bake_interval = 0.2
-	var n := POINTS.size()
+	var n := _points.size()
 	for i in n + 1:
-		var p := POINTS[i % n]
-		var prev := POINTS[(i - 1 + n) % n]
-		var next := POINTS[(i + 1) % n]
+		var p: Vector2 = _points[i % n]
+		var prev: Vector2 = _points[(i - 1 + n) % n]
+		var next: Vector2 = _points[(i + 1) % n]
 		var handle := (next - prev) / 6.0
 		curve.add_point(Vector3(p.x, 0, p.y), Vector3(-handle.x, 0, -handle.y), Vector3(handle.x, 0, handle.y))
 	var length := curve.get_baked_length()
@@ -90,7 +128,7 @@ func _build() -> Error:
 			if _count - (j - i) < far:
 				continue
 			min_gap = minf(min_gap, _pos[i].distance_to(_pos[j]))
-	print("line: length=%.1f m  slices=%d  tightest radius=%.1f m  closest pass=%.1f m" % [length, _count, min_radius, min_gap])
+	print("%s line: length=%.1f m  slices=%d  tightest radius=%.1f m  closest pass=%.1f m" % [_id, length, _count, min_radius, min_gap])
 	if min_gap < 2.0 * (HALF_WIDTH + 0.6) + 3.0:
 		push_error("Two parts of the track are too close together.")
 		return ERR_INVALID_DATA
@@ -110,7 +148,7 @@ func _build() -> Error:
 	var center := (lo + hi) * 0.5
 	var size := hi - lo
 
-	TrackBuildCommon.add_atmosphere(root, Atmosphere.Look.SUNNY_DAY, center, size)
+	TrackBuildCommon.add_atmosphere(root, cfg["look"], center, size)
 	TrackBuildCommon.add_ground_collider(root)
 	_add_walls(root)
 	_add_road(root)
@@ -123,12 +161,13 @@ func _build() -> Error:
 	path.curve = curve
 	root.add_child(path)
 	path.owner = root
-	var star_count := TrackBuildCommon.add_stars(root, curve, STARS)
+	var star_count := TrackBuildCommon.add_stars(root, curve, cfg["stars"])
+	var pad_count := TrackBuildCommon.add_pads(root, curve, cfg["pads"], ROAD_Y)
 
-	var err := TrackBuildCommon.save_scene(root, ID)
+	var err := TrackBuildCommon.save_scene(root, _id)
 	if err == OK:
-		err = TrackBuildCommon.write_track_def(ID, DISPLAY_NAME, SORT_ORDER, curve)
-	print("track written: res://scenes/tracks/%s.tscn  stars=%d  err=%d" % [ID, star_count, err])
+		err = TrackBuildCommon.write_track_def(_id, cfg["name"], cfg["sort"], curve, cfg["laps"])
+	print("track written: res://scenes/tracks/%s.tscn  stars=%d  pads=%d  err=%d" % [_id, star_count, pad_count, err])
 	root.free()
 	return err
 
@@ -215,7 +254,7 @@ func _add_road(root: Node3D) -> void:
 	material.roughness = 0.85
 	st.set_material(material)
 	var mesh := st.commit()
-	var mesh_path := "res://scenes/tracks/%s_road.res" % ID
+	var mesh_path := "res://scenes/tracks/%s_road.res" % _id
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://scenes/tracks"))
 	ResourceSaver.save(mesh, mesh_path)
 	var road := MeshInstance3D.new()
@@ -316,7 +355,7 @@ func _add_trees(root: Node3D, lo: Vector3, hi: Vector3) -> void:
 	noise.seed = 99
 	noise.frequency = 0.035
 	var spots: Array[Vector3] = []
-	for attempt in 6000:
+	for attempt in 12000:
 		var p := Vector3(rng.randf_range(lo.x - 55.0, hi.x + 55.0), 0, rng.randf_range(lo.z - 55.0, hi.z + 55.0))
 		var dist := _distance_to_line(p)
 		if dist < TREE_CLEARANCE:
@@ -333,7 +372,7 @@ func _add_trees(root: Node3D, lo: Vector3, hi: Vector3) -> void:
 		if crowded:
 			continue
 		spots.append(p)
-		if spots.size() >= 300:
+		if spots.size() >= clampi(int(_count * STEP * 1.05), 300, 650):
 			break
 	var kinds := [
 		{"name": "Trees", "path": "res://assets/kenney_toy_car_kit/tree.glb", "min": 5.0, "max": 7.5},
