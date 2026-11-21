@@ -94,8 +94,6 @@ karts and opens its window.
 - The new look was judged from still pictures only. Moving clouds, leaves and light shafts may
   feel different in motion; say what is too much.
 - The Duplo plane's front photo is a little blurred; a sharper one would look better.
-- `scenes/tracks/track_01.tscn` is the old copy of the tile track and is no longer used. It was
-  left in place because deleting files needs your OK.
 - Player selection works with pads and keyboard only, not the mouse.
 - Full mode drift and the Fast speed were tuned by the AI driver only.
 
