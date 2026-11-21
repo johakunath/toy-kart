@@ -37,7 +37,7 @@ func _init() -> void:
 	var camera := Camera3D.new()
 	camera.fov = 30.0
 	_viewport.add_child(camera)
-	camera.look_at_from_position(Vector3(0, 1.55, 3.3), Vector3(0, 0.6, 0), Vector3.UP)
+	camera.look_at_from_position(Vector3(0, 1.7, 3.6), Vector3(0, 0.72, 0), Vector3.UP)
 	camera.current = true
 
 	_visual = KartVisual.new()
@@ -53,6 +53,7 @@ func show_kart(kart_def: KartDef, driver_def: DriverDef) -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
-	_visual.rotation.y += delta * spin_speed
+	# Swing left and right instead of spinning, so a paper driver always shows its front.
+	_visual.rotation.y = 0.45 + sin(_time * spin_speed) * 0.75
 	if _visual.driver:
 		_visual.driver.animate(delta, sin(_time * 1.3) * 0.6, 0.7, 0.0)

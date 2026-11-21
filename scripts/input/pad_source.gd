@@ -9,7 +9,7 @@ var device := 0
 
 func _init(p_device: int, ordinal: int) -> void:
 	device = p_device
-	var guid := Input.get_joy_guid(p_device)
+	var guid := Input.get_joy_guid(p_device) if Input.get_connected_joypads().has(p_device) else "none"
 	id = "pad:%s:%d" % [guid, ordinal]
 	label = "Controller %d" % (ordinal + 1)
 	icon = "gamepad"

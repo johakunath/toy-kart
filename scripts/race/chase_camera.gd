@@ -23,10 +23,10 @@ func _ready() -> void:
 	far = 400.0
 
 func use_split_screen_setup() -> void:
-	height = 3.9
-	distance = 6.6
-	look_ahead = 2.0
-	base_fov = 78.0
+	height = 3.4
+	distance = 5.8
+	look_ahead = 2.2
+	base_fov = 72.0
 	fov = base_fov
 
 func attach(kart: Kart) -> void:

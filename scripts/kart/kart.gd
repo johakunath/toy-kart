@@ -187,6 +187,8 @@ func _physics_process(delta: float) -> void:
 	var steering_grip := clampf(absf(linear_speed), 0.2, 1.0)
 	var rate := steer_rate() * (DRIFT_STEER if drifting else 1.0)
 	var target_angular := -input.x * steering_grip * rate * direction
+	if frozen:
+		target_angular = 0.0  # wheels turn during the countdown, the kart stays put
 	angular_speed = lerpf(angular_speed, target_angular, minf(1.0, delta * STEER_RESPONSE))
 	var turn := angular_speed * delta
 	container.rotate_y(turn)

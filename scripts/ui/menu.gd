@@ -25,6 +25,10 @@ var _start_timer := -1.0
 var _start_label: Label
 
 func _ready() -> void:
+	if Game.smoke:
+		# The exported game cannot be started on another scene; "-- --smoke" jumps to the race.
+		Game.start_race.call_deferred()
+		return
 	theme = UiKit.theme()
 	add_child(UiKit.background())
 	_build_mode_page()

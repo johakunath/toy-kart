@@ -32,6 +32,7 @@ var _kid_context := false
 var _smoke_time := 0.0
 var _resets := 0
 var _shot_wait := 0.0
+var _perf_frames: Array[float] = []
 
 func _ready() -> void:
 	if Game.players.is_empty():
@@ -41,6 +42,7 @@ func _ready() -> void:
 	_build_views()
 	_build_overlay()
 	_update_places()
+	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 
 # --- Setup ---------------------------------------------------------------------------------
 
@@ -243,6 +245,8 @@ func _physics_process(delta: float) -> void:
 func _process(delta: float) -> void:
 	for hud in huds:
 		hud.refresh(race_time, delta)
+	if Game.smoke and Game.smoke_args.has("perf") and state == State.RACING:
+		_perf_frames.append(delta)
 
 func _tick_countdown(delta: float) -> void:
 	_countdown -= delta
@@ -402,6 +406,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		_pause_menu.open()
 		get_viewport().set_input_as_handled()
 
+## A player's controller went away (battery, cable): pause so nobody loses the race over it.
+func _on_joy_connection_changed(device: int, connected: bool) -> void:
+	if connected or state == State.FINISHED or _pause_menu.visible:
+		return
+	for racer in humans:
+		var pad := racer.source as PadSource
+		if pad and pad.device == device:
+			_pause_menu.open()
+			return
+
 func _show_finish_screen() -> void:
 	state = State.FINISHED
 	for hud in huds:
@@ -416,6 +430,13 @@ func _show_finish_screen() -> void:
 func _smoke_tick(delta: float) -> void:
 	_smoke_time += delta
 	var limit := float(Game.smoke_args.get("seconds", "240"))
+	if Game.smoke_args.has("pause_shot") and _smoke_time > 5.0 and not _pause_menu.visible:
+		# Dev helper: open the pause menu and save a picture of it.
+		_pause_menu.open()
+		await get_tree().create_timer(0.6, true).timeout
+		get_viewport().get_texture().get_image().save_png(Game.smoke_args["pause_shot"])
+		Game.quit_clean(0)
+		return
 	var shot_now := false
 	if Game.smoke_args.has("shot"):
 		if Game.smoke_args.get("shot_at", "8") == "finish":
@@ -451,6 +472,21 @@ func _smoke_tick(delta: float) -> void:
 				ok = ok and racer.progress.distance() > 60.0
 			else:
 				ok = ok and racer.finished
+	# The kid mode promise: at Kid speed nobody needs a rescue.
+	if Game.speed_class == Game.SpeedClass.KID and _resets > 0:
+		print("SMOKE   a kart needed a reset at Kid speed")
+		ok = false
+	if not _perf_frames.is_empty():
+		# Frame rate report for "-- --smoke --perf" (run with a window and --disable-vsync).
+		_perf_frames.sort()
+		var total := 0.0
+		for f in _perf_frames:
+			total += f
+		var worst := _perf_frames[int(_perf_frames.size() * 0.99)]
+		var size := get_window().size
+		print("PERF %s  %dx%d  players=%d  avg=%.0f fps  1%%-low=%.0f fps  frames=%d" % [
+			RenderingServer.get_video_adapter_name(), size.x, size.y, humans.size(),
+			_perf_frames.size() / total, 1.0 / worst, _perf_frames.size()])
 	print("SMOKE RESULT: %s" % ("PASS" if ok else "FAIL"))
 	set_physics_process(false)
 	Game.quit_clean(0 if ok else 1)
