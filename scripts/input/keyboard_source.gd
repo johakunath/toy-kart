@@ -11,6 +11,8 @@ func _init(p_layout: int) -> void:
 	label = "Tasten %s" % ("WASD" if p_layout == 0 else "Pfeile")
 	icon = "keyboard"
 	accept_hint = "Leertaste" if p_layout == 0 else "Enter"
+	back_hint = "Q" if p_layout == 0 else "Rücktaste"
+	move_hint = "W A S D" if p_layout == 0 else "Pfeile"
 
 func _k(code: Key) -> bool:
 	return Input.is_physical_key_pressed(code)
@@ -41,8 +43,8 @@ func _read_raw(control_mode: int) -> Dictionary:
 		horn = _k(KEY_COMMA)
 	var steer := (1.0 if right else 0.0) - (1.0 if left else 0.0)
 	if control_mode == Game.ControlMode.KID:
-		# Kid mode: left and right steer, every other key of the layout honks.
-		return {"steer": steer, "horn": up or down or drift or use or horn}
+		# Kid mode: left and right steer, up is full gas, every other key of the layout honks.
+		return {"steer": steer, "accelerate": 1.0 if up else 0.0, "horn": down or drift or use or horn}
 	return {
 		"steer": steer,
 		"accelerate": 1.0 if up else 0.0,
@@ -62,3 +64,12 @@ func _read_menu_raw() -> Dictionary:
 		"left": _k(KEY_LEFT), "right": _k(KEY_RIGHT), "up": _k(KEY_UP), "down": _k(KEY_DOWN),
 		"accept": _k(KEY_ENTER) or _k(KEY_KP_ENTER), "back": _k(KEY_BACKSPACE),
 	}
+
+func drive_help(control_mode: int) -> String:
+	if layout == 0:
+		if control_mode == Game.ControlMode.KID:
+			return "A D lenken   W Turbo   Q Hupe"
+		return "W Gas   S Bremse   A D lenken   Leertaste Drift   E Stern   Q Hupe"
+	if control_mode == Game.ControlMode.KID:
+		return "Pfeile lenken   Pfeil hoch Turbo   Komma Hupe"
+	return "Hoch Gas   Runter Bremse   Links Rechts lenken   Punkt Drift   Enter Stern   Komma Hupe"

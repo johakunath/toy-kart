@@ -1,6 +1,6 @@
 class_name TestSource extends InputSource
 ## A fake device for the headless checks. It stands in for a small child at the controls:
-## "none" never touches anything, "left"/"right" hold the stick to one side all race long,
+## "none" never touches anything, "gas" only holds the gas button, "left"/"right" hold the stick to one side all race long,
 ## "random" mashes sticks and buttons at random.
 
 var pattern := "none"
@@ -19,6 +19,8 @@ func _read_raw(_control_mode: int) -> Dictionary:
 			return {"steer": -1.0}
 		"right":
 			return {"steer": 1.0}
+		"gas":
+			return {"accelerate": 1.0}
 		"random":
 			_timer -= 1.0 / Engine.physics_ticks_per_second
 			if _timer <= 0.0:

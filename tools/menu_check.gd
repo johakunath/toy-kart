@@ -17,6 +17,7 @@ var _wait := 0
 var _fails: Array[String] = []
 var _checks := 0
 var _game: Node
+var _driver_before := 0
 
 func _process(_delta: float) -> bool:
 	_frame += 1
@@ -51,9 +52,10 @@ func _process(_delta: float) -> bool:
 		5:
 			_expect("keyboard 2 took the second seat", _slot(1).state == JOINED)
 			_expect("the two players have different colours", _slot(0).color_index != _slot(1).color_index)
+			_driver_before = _slot(0).driver_index    # remembered picks from earlier games
 			_key(KEY_D)                              # keyboard 1: next driver
 		6:
-			_expect("left/right changes the driver", _slot(0).driver_index == 1)
+			_expect("left/right changes the driver", _slot(0).driver_index == (_driver_before + 1) % _driver_count())
 			_key(KEY_DOWN)                           # keyboard 2: down to the vehicle row
 		7:
 			_key(KEY_DOWN)                           # keyboard 2: down to the control row
@@ -103,6 +105,9 @@ func _finish() -> bool:
 	_game.quit_clean(0 if _fails.is_empty() else 1)
 	_wait = 100000
 	return false
+
+func _driver_count() -> int:
+	return (_game.get("drivers") as Array).size()
 
 func _slot(i: int) -> Object:
 	return (current_scene.get("_slots") as Array)[i]

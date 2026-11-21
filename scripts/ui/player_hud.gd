@@ -12,6 +12,8 @@ var _item: TextureRect
 var _message: Label
 var _message_left := 0.0
 var _item_pulse := 0.0
+var _keys: PanelContainer
+var _keys_left := 9.0  ## the key help shows during the countdown and a few seconds after
 
 func setup(p_racer: Racer, mode: int, total_racers: int) -> void:
 	racer = p_racer
@@ -75,6 +77,20 @@ func setup(p_racer: Racer, mode: int, total_racers: int) -> void:
 	_message.visible = false
 	add_child(_message)
 
+	# Key help for this player's device, bottom centre, at the start of the race.
+	var help := racer.source.drive_help(racer.control_mode) if racer.source else ""
+	var keys_row := CenterContainer.new()
+	UiKit.pin(keys_row, Control.PRESET_BOTTOM_WIDE, Vector2(0, -150))
+	keys_row.offset_bottom = -90
+	keys_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(keys_row)
+	_keys = PanelContainer.new()
+	_keys.add_theme_stylebox_override("panel", UiKit.box(Color(UiKit.INK, 0.6), 18))
+	_keys.add_child(UiKit.label(help, 24, Color.WHITE))
+	_keys.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_keys.visible = help != ""
+	keys_row.add_child(_keys)
+
 	racer.kart.item_changed.connect(_on_item_changed)
 
 func refresh(race_time: float, delta: float) -> void:
@@ -86,6 +102,11 @@ func refresh(race_time: float, delta: float) -> void:
 	if _item.visible:
 		_item_pulse += delta * 8.0
 		_item.scale = Vector2.ONE * (1.0 + sin(_item_pulse) * 0.08)
+	if _keys.visible:
+		_keys_left -= delta
+		_keys.modulate.a = clampf(_keys_left, 0.0, 1.0)
+		if _keys_left <= 0.0:
+			_keys.visible = false
 	if _message_left > 0.0:
 		_message_left -= delta
 		if _message_left <= 0.0:

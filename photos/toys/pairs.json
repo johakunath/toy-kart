@@ -3,25 +3,25 @@
   "toys": [
     {
       "id": "junge",
-      "name": "Junge",
+      "name": "Duplo-Mädchen",
       "front": "WhatsApp Image 2026-11-21 at 17.04.09 (1).jpeg",
       "back": "WhatsApp Image 2026-11-21 at 17.04.08 (1).jpeg"
     },
     {
       "id": "katze",
-      "name": "Katze",
+      "name": "Fuchs",
       "front": "WhatsApp Image 2026-11-21 at 17.04.11 (1).jpeg",
       "back": "WhatsApp Image 2026-11-21 at 17.04.09 (4).jpeg"
     },
     {
       "id": "loewe",
-      "name": "Löwe",
+      "name": "Koba",
       "front": "WhatsApp Image 2026-11-21 at 17.04.12 (11).jpeg",
       "back": "WhatsApp Image 2026-11-21 at 17.04.12 (9).jpeg"
     },
     {
       "id": "baer",
-      "name": "Bär",
+      "name": "Bobo",
       "front": "WhatsApp Image 2026-11-21 at 17.04.12 (1).jpeg",
       "back": "WhatsApp Image 2026-11-21 at 17.04.11 (12).jpeg",
       "crop_front": [

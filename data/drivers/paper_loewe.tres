@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1")
 id = "paper_loewe"
-display_name = "Löwe"
+display_name = "Koba"
 type = 1
 sort_order = 12
 front_texture = ExtResource("2")

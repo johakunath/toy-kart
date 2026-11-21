@@ -33,6 +33,8 @@ var _swatch: Panel
 var _ready_banner: PanelContainer
 var _ready_label: Label
 var _ready_icon: TextureRect
+var _mode_help: Label
+var _keys_help: Label
 var _time := 0.0
 var _hint := "Knopf drücken"
 
@@ -53,6 +55,17 @@ func _build() -> void:
 	_join_icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_empty_view.add_child(_join_icon)
 	_empty_view.add_child(UiKit.label(_hint, 52, Color(UiKit.INK, 0.7)))
+	# How each device joins: controller A, left keyboard Space, right keyboard Enter.
+	var ways := VBoxContainer.new()
+	ways.add_theme_constant_override("separation", 10)
+	for way: Array in [["gamepad", "Controller:  A"], ["keyboard", "W A S D:  Leertaste"], ["keyboard", "Pfeile:  Enter"]]:
+		var line := HBoxContainer.new()
+		line.alignment = BoxContainer.ALIGNMENT_CENTER
+		line.add_theme_constant_override("separation", 14)
+		line.add_child(UiKit.icon_rect(way[0], 48, Color(UiKit.INK, 0.6)))
+		line.add_child(UiKit.label(way[1], 36, Color(UiKit.INK, 0.6)))
+		ways.add_child(line)
+	_empty_view.add_child(ways)
 	add_child(_empty_view)
 
 	_joined_view = VBoxContainer.new()
@@ -103,6 +116,11 @@ func _build() -> void:
 		_row_panels.append(panel)
 		_row_labels.append(text)
 
+	_mode_help = UiKit.label("", 28, Color(UiKit.INK, 0.75))
+	_mode_help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_mode_help.custom_minimum_size = Vector2(580, 0)
+	_joined_view.add_child(_mode_help)
+
 	_ready_banner = PanelContainer.new()
 	var ready_row := HBoxContainer.new()
 	ready_row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -113,6 +131,11 @@ func _build() -> void:
 	ready_row.add_child(_ready_label)
 	_ready_banner.add_child(ready_row)
 	_joined_view.add_child(_ready_banner)
+
+	_keys_help = UiKit.label("", 26, Color(UiKit.INK, 0.6))
+	_keys_help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_keys_help.custom_minimum_size = Vector2(580, 0)
+	_joined_view.add_child(_keys_help)
 
 # --- Joining and leaving -------------------------------------------------------------------
 
@@ -157,11 +180,9 @@ func save_prefs() -> void:
 func handle(poll: Dictionary) -> void:
 	if state == SlotState.JOINED:
 		if poll.get("up", false):
-			row = posmod(row - 1, ROW_COUNT)
-			UiKit.play(self, "click")
+			_step_row(-1)
 		elif poll.get("down", false):
-			row = posmod(row + 1, ROW_COUNT)
-			UiKit.play(self, "click")
+			_step_row(1)
 		elif poll.get("left", false):
 			_change(-1)
 		elif poll.get("right", false):
@@ -179,6 +200,16 @@ func handle(poll: Dictionary) -> void:
 			state = SlotState.JOINED
 			UiKit.play(self, "click")
 			_refresh()
+
+func _step_row(step: int) -> void:
+	row = posmod(row + step, ROW_COUNT)
+	if row == 1 and _is_toy_vehicle():
+		row = posmod(row + step, ROW_COUNT)
+	UiKit.play(self, "click")
+
+## A toy that is a vehicle itself brings its own vehicle: the vehicle row is not used.
+func _is_toy_vehicle() -> bool:
+	return Game.drivers[driver_index].is_vehicle
 
 func _change(step: int) -> void:
 	UiKit.play(self, "click")
@@ -238,7 +269,8 @@ func _refresh() -> void:
 	if _preview.shown_kart != kart or _preview.shown_driver != driver:
 		_preview.show_kart(kart, driver)
 	_row_labels[0].text = driver.display_name
-	_row_labels[1].text = kart.display_name
+	var toy_vehicle := driver.is_vehicle
+	_row_labels[1].text = "fährt selbst" if toy_vehicle else kart.display_name
 	_row_labels[2].text = Game.CONTROL_NAMES[control_mode]
 	_row_labels[3].text = Game.COLOR_NAMES[color_index]
 	_mode_icon.texture = UiKit.icon("kid" if control_mode == Game.ControlMode.KID else "pro")
@@ -248,7 +280,12 @@ func _refresh() -> void:
 	for i in ROW_COUNT:
 		var selected := i == row and not is_ready
 		_row_panels[i].add_theme_stylebox_override("panel", UiKit.box(UiKit.SUN if selected else Color(UiKit.INK, 0.06), 20))
-		_row_panels[i].modulate.a = 0.45 if is_ready else 1.0
+		_row_panels[i].modulate.a = 0.45 if is_ready or (i == 1 and toy_vehicle) else 1.0
 	_ready_banner.add_theme_stylebox_override("panel", UiKit.box(UiKit.GRASS if is_ready else Color(UiKit.INK, 0.35), 22))
 	_ready_label.text = "Bereit!" if is_ready else "%s = Bereit" % source.accept_hint
+	_mode_help.text = ("Kind: fährt von selbst, nur lenken. " if control_mode == Game.ControlMode.KID 			else "Profi: Gas und Bremse selbst. ") + source.drive_help(control_mode)
+	if is_ready:
+		_keys_help.text = "%s = doch nicht" % source.back_hint
+	else:
+		_keys_help.text = "%s: hoch/runter = Zeile, links/rechts = ändern.  %s = raus" % [source.move_hint, source.back_hint]
 	_ready_icon.visible = is_ready

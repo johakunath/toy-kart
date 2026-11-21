@@ -10,8 +10,11 @@ const COUNTDOWN_SECONDS := 3.0
 const BUMP_DISTANCE := 1.25
 const AI_SKILLS: Array[float] = [0.95, 0.9, 0.86]
 ## With a kid in the race, each AI kart aims for its own spot around the slowest human:
-## one a little ahead, one just behind, one further back (metres).
-const AI_KID_GAPS: Array[float] = [10.0, -6.0, -22.0]
+## two a little ahead, one behind (metres). They wait when far ahead but only speed up a
+## little to hold their spot, so a kid who drives well (gas, good line, stars) can pass them,
+## and a kid who does nothing ends up behind.
+const AI_KID_GAPS: Array[float] = [12.0, 4.0, -14.0]
+const AI_KID_MAX_PACE := 1.0
 
 var track: Track
 var racers: Array[Racer] = []
@@ -60,13 +63,17 @@ func _use_default_setup() -> void:
 			var is_full := control == "full" or (control == "mixed" and i == 1)
 			# Full-mode test players are driven by the AI; kid test players by a fake child.
 			var source: InputSource
-			if is_full:
+			# "skilled" stands in for a kid who steers well and holds the gas: the AI line driver
+			# at the controls, still going through the kid assist.
+			if is_full or args.get("input", "none") == "skilled":
 				source = AiSource.new()
 				source.id = "bot%d" % i
 				source.label = "Test %d" % (i + 1)
+				(source as AiSource).skill = 1.0
 			else:
 				source = TestSource.new(args.get("input", "none"), i)
-			Game.players.append(Game.make_player(source, Game.ControlMode.FULL if is_full else Game.ControlMode.KID, i, i * 2, i))
+			var driver_index := int(args.get("driver", str(i * 2))) + i * 2 if args.has("driver") else i * 2
+			Game.players.append(Game.make_player(source, Game.ControlMode.FULL if is_full else Game.ControlMode.KID, i, driver_index, i))
 	else:
 		Game.mode = Game.Mode.RACE
 		Game.players.append(Game.make_player(KeyboardSource.new(0), Game.ControlMode.FULL, 0, 0, 0))
@@ -329,12 +336,19 @@ func _update_pacing(delta: float) -> void:
 		if racer.finished:
 			continue
 		var target := 0.0
+		# Anyone behind the leading AI gets a little extra top speed to catch up.
+		var ai_lead := -INF
+		for other in racers:
+			if not other.is_human:
+				ai_lead = maxf(ai_lead, other.progress.distance())
+		if ai_lead > -INF:
+			target = clampf((ai_lead - racer.progress.distance() - 8.0) / 40.0, 0.0, 1.0) * 0.12
 		if racer.assist.kid and humans.size() > 1:
 			for other in humans:
 				if other == racer:
 					continue
 				var gap := 60.0 if other.finished else other.progress.distance() - racer.progress.distance()
-				target = clampf((gap - 6.0) / 35.0, 0.0, 1.0) * 0.3
+				target = maxf(target, clampf((gap - 6.0) / 35.0, 0.0, 1.0) * 0.3)
 		racer.kart.catchup = lerpf(racer.kart.catchup, target, delta * 1.5)
 
 	var slowest := INF
@@ -352,14 +366,11 @@ func _update_pacing(delta: float) -> void:
 			var behind := fastest - racer.progress.distance()
 			if _kid_context:
 				var target_gap := AI_KID_GAPS[racer.ai_number % AI_KID_GAPS.size()]
-				# On the home stretch the AI in front eases off: a close finish for the kid.
-				var remaining := Game.LAPS * track.length - slowest
-				if remaining < 150.0:
-					target_gap = minf(target_gap, lerpf(-4.0, target_gap, clampf(remaining / 150.0, 0.0, 1.0)))
-				pace = clampf(1.0 + (target_gap - lead) / 40.0, 0.6, 1.3)
+				pace = clampf(1.0 + (target_gap - lead) / 40.0, 0.6, AI_KID_MAX_PACE)
 			else:
-				if lead > 30.0:
-					pace = lerpf(1.0, 0.9, clampf((lead - 30.0) / 60.0, 0.0, 1.0))
+				# Against grown-ups: a leading AI eases off early, a trailing one pushes a little.
+				if lead > 8.0:
+					pace = lerpf(1.0, 0.8, clampf((lead - 8.0) / 40.0, 0.0, 1.0))
 				elif behind > 30.0:
 					pace = lerpf(1.0, 1.06, clampf((behind - 30.0) / 60.0, 0.0, 1.0))
 		racer.kart.pace = lerpf(racer.kart.pace, pace, delta * 1.5)

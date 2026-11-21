@@ -6,6 +6,8 @@ var id := ""     ## stable id, used to remember colour and picks per device
 var label := ""  ## short German label for the UI
 var icon := "gamepad"
 var accept_hint := "A"  ## name of this device's "yes" button, for the UI
+var back_hint := "B"
+var move_hint := "Stick"  ## what moves through menus (up/down picks a row, left/right changes it)
 
 var _intent := Intent.new()
 var _prev_use := false
@@ -61,3 +63,7 @@ func swallow_held() -> void:
 		_menu_prev[key] = raw[key]
 	_prev_use = true
 	_prev_horn = true
+
+## Short key help for driving, shown in the player panel and at the start of a race.
+func drive_help(_control_mode: int) -> String:
+	return ""

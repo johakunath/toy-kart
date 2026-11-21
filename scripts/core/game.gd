@@ -6,7 +6,7 @@ enum Mode { FREE_DRIVE, RACE, TIME_TRIAL }
 enum SpeedClass { KID, NORMAL, FAST }
 enum ControlMode { KID, FULL }
 
-const SPEED_FACTOR: Array[float] = [0.7, 1.0, 1.3]
+const SPEED_FACTOR: Array[float] = [0.78, 1.05, 1.5]
 const SPEED_NAMES: Array[String] = ["Kind", "Normal", "Schnell"]
 const MODE_NAMES: Array[String] = ["Freie Fahrt", "Rennen", "Zeitfahren"]
 const CONTROL_NAMES: Array[String] = ["Kind", "Profi"]

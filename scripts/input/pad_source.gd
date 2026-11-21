@@ -1,6 +1,6 @@
 class_name PadSource extends InputSource
 ## Any XInput / SDL gamepad as a player device. Reads the device directly, so two pads never mix.
-## Kid mode: either stick, D-pad or LB/RB steer; any face button honks.
+## Kid mode: either stick, D-pad or LB/RB steer; A or RT = full gas; B, X, Y honk.
 ## Full mode: left stick or D-pad steer, RT or A gas, LT or B brake, RB drift, X or LB use, Y horn.
 
 const DEADZONE := 0.25
@@ -47,7 +47,8 @@ func _read_raw(control_mode: int) -> Dictionary:
 		var digital := _digital_steer(true)
 		return {
 			"steer": digital if digital != 0.0 else stick,
-			"horn": _face_any(),
+			"accelerate": maxf(Input.get_joy_axis(device, JOY_AXIS_TRIGGER_RIGHT), 1.0 if _b(JOY_BUTTON_A) else 0.0),
+			"horn": _b(JOY_BUTTON_B) or _b(JOY_BUTTON_X) or _b(JOY_BUTTON_Y),
 		}
 	var digital_full := _digital_steer(false)
 	return {
@@ -73,3 +74,8 @@ func _read_menu_raw() -> Dictionary:
 
 func any_button() -> bool:
 	return _face_any() or _b(JOY_BUTTON_START)
+
+func drive_help(control_mode: int) -> String:
+	if control_mode == Game.ControlMode.KID:
+		return "Stick lenken   A Turbo   B X Y Hupe"
+	return "Stick lenken   RT Gas   LT Bremse   RB Drift   X Stern   Y Hupe"

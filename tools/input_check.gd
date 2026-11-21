@@ -35,7 +35,11 @@ func _process(_delta: float) -> bool:
 	_button(JOY_BUTTON_LEFT_SHOULDER, true)
 	_expect("kid: LB steers left", pad.read(kid).steer == -1.0)
 	_button(JOY_BUTTON_LEFT_SHOULDER, false)
-	for face: JoyButton in [JOY_BUTTON_A, JOY_BUTTON_B, JOY_BUTTON_X, JOY_BUTTON_Y]:
+	_button(JOY_BUTTON_A, true)
+	_expect("kid: A is full gas", pad.read(kid).accelerate == 1.0)
+	_expect("kid: A does not honk", not pad.read(kid).horn)
+	_button(JOY_BUTTON_A, false)
+	for face: JoyButton in [JOY_BUTTON_B, JOY_BUTTON_X, JOY_BUTTON_Y]:
 		pad.read(kid)
 		_button(face, true)
 		var first := pad.read(kid)
@@ -45,7 +49,7 @@ func _process(_delta: float) -> bool:
 		_expect("kid: face button %d does not use items or brake" % face, not first.use and first.brake == 0.0)
 		_button(face, false)
 	_axis(JOY_AXIS_TRIGGER_RIGHT, 1.0)
-	_expect("kid: triggers do nothing (the assist accelerates)", pad.read(kid).accelerate == 0.0)
+	_expect("kid: RT is full gas", pad.read(kid).accelerate == 1.0)
 	_axis(JOY_AXIS_TRIGGER_RIGHT, 0.0)
 
 	# --- Full mode: RT/A gas, LT/B brake, RB drift, X/LB use, Y horn ---

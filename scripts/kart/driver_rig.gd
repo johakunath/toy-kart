@@ -51,6 +51,14 @@ func _build_paper(seat_scale: float) -> void:
 	_damping = 4.5
 	_lean_amount = 0.38
 	var height := def.card_height * seat_scale
+	if def.is_vehicle:
+		# The toy is the vehicle: sized by its width, and it leans like a car, not a figure.
+		_stiffness = 80.0
+		_damping = 8.0
+		_lean_amount = 0.16
+		if def.front_texture:
+			var aspect := float(def.front_texture.get_width()) / maxf(1.0, float(def.front_texture.get_height()))
+			height = def.vehicle_width / maxf(aspect, 0.01)
 	if def.front_texture:
 		_pivot.add_child(_make_card(def.front_texture, height, false))
 	var back_tex := def.back_texture if def.back_texture else def.front_texture
