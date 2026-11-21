@@ -1,6 +1,7 @@
 class_name ChaseCamera extends Camera3D
 ## Follows one kart from behind and above. One camera per player, each inside its own SubViewport.
-## Split screen uses a higher, wider setup. Kid mode gets a calm camera: no shake, no zoom kick.
+## Split screen uses a higher, wider setup. Kid mode gets a calm camera: no shake, a smaller
+## widening while boosting.
 
 var target: Kart
 var calm := false
@@ -33,7 +34,7 @@ func attach(kart: Kart) -> void:
 	target = kart
 	if not calm:
 		kart.bumped.connect(func(strength: float) -> void: _shake = maxf(_shake, strength * 0.25))
-		kart.boost_started.connect(func() -> void: _fov_kick = 9.0)
+		kart.boost_started.connect(func() -> void: _fov_kick = 14.0)
 	_started = false
 
 func _process(delta: float) -> void:
@@ -54,5 +55,8 @@ func _process(delta: float) -> void:
 		eye += Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * _shake
 		_shake = lerpf(_shake, 0.0, 1.0 - exp(-8.0 * delta))
 	look_at_from_position(eye, focus + back * look_ahead, Vector3.UP)
-	_fov_kick = lerpf(_fov_kick, 0.0, 1.0 - exp(-2.5 * delta))
+	# While boosting the view stays wide (the world rushes past), then eases back.
+	var hold := (9.0 if calm else 12.0) if target.is_boosting() else 0.0
+	var rate := 6.0 if _fov_kick < hold else 2.5
+	_fov_kick = lerpf(_fov_kick, hold, 1.0 - exp(-rate * delta)) if absf(_fov_kick - hold) > 0.01 else hold
 	fov = base_fov + _fov_kick

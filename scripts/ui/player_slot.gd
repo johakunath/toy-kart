@@ -36,11 +36,15 @@ var _ready_icon: TextureRect
 var _mode_help: Label
 var _keys_help: Label
 var _time := 0.0
-var _hint := "Knopf drücken"
+var _side_labels: Array[Label] = []
+var _way_labels: Array[Label] = []
+var _side_icon: TextureRect
+## 0 = left half of the screen, 1 = right half, -1 = the only seat (one player).
+var side := 0
 
-func _init(hint := "Knopf drücken") -> void:
-	_hint = hint
-	custom_minimum_size = Vector2(640, 820)
+func _init(p_side := 0) -> void:
+	side = p_side
+	custom_minimum_size = Vector2(640, 800)
 	_build()
 	_refresh()
 
@@ -50,20 +54,24 @@ func _build() -> void:
 	_empty_view = VBoxContainer.new()
 	(_empty_view as VBoxContainer).alignment = BoxContainer.ALIGNMENT_CENTER
 	(_empty_view as VBoxContainer).add_theme_constant_override("separation", 30)
-	_join_icon = UiKit.icon_rect("gamepad", 240, Color(UiKit.INK, 0.55))
-	_join_icon.pivot_offset = Vector2(120, 120)
+	# A big arrow pointing to this panel's side: press that direction to sit here.
+	_join_icon = UiKit.icon_rect("arrow_left", 200, Color(UiKit.INK, 0.55))
+	_join_icon.pivot_offset = Vector2(100, 100)
 	_join_icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_empty_view.add_child(_join_icon)
-	_empty_view.add_child(UiKit.label(_hint, 52, Color(UiKit.INK, 0.7)))
-	# How each device joins: controller A, left keyboard Space, right keyboard Enter.
+	_side_labels.append(UiKit.label("", 60, UiKit.INK))
+	_empty_view.add_child(_side_labels[0])
+	# How each device takes this seat.
 	var ways := VBoxContainer.new()
 	ways.add_theme_constant_override("separation", 10)
-	for way: Array in [["gamepad", "Controller:  A"], ["keyboard", "W A S D:  Leertaste"], ["keyboard", "Pfeile:  Enter"]]:
+	for icon_name: String in ["gamepad", "keyboard", "keyboard"]:
 		var line := HBoxContainer.new()
 		line.alignment = BoxContainer.ALIGNMENT_CENTER
 		line.add_theme_constant_override("separation", 14)
-		line.add_child(UiKit.icon_rect(way[0], 48, Color(UiKit.INK, 0.6)))
-		line.add_child(UiKit.label(way[1], 36, Color(UiKit.INK, 0.6)))
+		line.add_child(UiKit.icon_rect(icon_name, 48, Color(UiKit.INK, 0.6)))
+		var text := UiKit.label("", 36, Color(UiKit.INK, 0.7))
+		line.add_child(text)
+		_way_labels.append(text)
 		ways.add_child(line)
 	_empty_view.add_child(ways)
 	add_child(_empty_view)
@@ -76,6 +84,8 @@ func _build() -> void:
 	var header_row := HBoxContainer.new()
 	header_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	header_row.add_theme_constant_override("separation", 14)
+	_side_icon = UiKit.icon_rect("arrow_left", 44, Color.WHITE)
+	header_row.add_child(_side_icon)
 	_device_icon = UiKit.icon_rect("gamepad", 48, Color.WHITE)
 	header_row.add_child(_device_icon)
 	_device_label = UiKit.label("", 38, Color.WHITE)
@@ -84,7 +94,7 @@ func _build() -> void:
 	_joined_view.add_child(_header)
 
 	_preview = KartPreview.new()
-	_preview.custom_minimum_size = Vector2(580, 250)
+	_preview.custom_minimum_size = Vector2(580, 170)
 	_preview.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_joined_view.add_child(_preview)
 
@@ -252,7 +262,25 @@ func _process(delta: float) -> void:
 	if state == SlotState.EMPTY:
 		_join_icon.scale = Vector2.ONE * (1.0 + sin(_time * 4.0) * 0.07)
 
+## The side this panel stands for. Set by the menu (panels can swap sides).
+func set_side(p_side: int) -> void:
+	side = p_side
+	_refresh()
+
 func _refresh() -> void:
+	var arrow := "arrow_right" if side == 1 else "arrow_left"
+	_join_icon.texture = UiKit.icon(arrow)
+	_join_icon.visible = side >= 0
+	_side_icon.texture = UiKit.icon(arrow)
+	_side_icon.visible = side >= 0
+	_side_labels[0].text = ["Linke Seite", "Rechte Seite"][side] if side >= 0 else "Mitfahren"
+	var ways: Array[String] = ["Controller:  A", "W A S D:  Leertaste", "Pfeile:  Enter"]
+	if side == 0:
+		ways = ["Controller:  Stick nach links", "W A S D:  Taste A", "Pfeile:  Pfeil links"]
+	elif side == 1:
+		ways = ["Controller:  Stick nach rechts", "W A S D:  Taste D", "Pfeile:  Pfeil rechts"]
+	for i in ways.size():
+		_way_labels[i].text = ways[i]
 	_empty_view.visible = state == SlotState.EMPTY
 	_joined_view.visible = state != SlotState.EMPTY
 	if state == SlotState.EMPTY:
@@ -261,7 +289,7 @@ func _refresh() -> void:
 	var color := Game.PLAYER_COLORS[color_index]
 	add_theme_stylebox_override("panel", UiKit.box(UiKit.PAPER, 36, color, 14))
 	_header.add_theme_stylebox_override("panel", UiKit.box(color, 22))
-	_device_label.text = source.label
+	_device_label.text = (["Links", "Rechts"][side] + ":  " if side >= 0 else "") + source.label
 	_device_icon.texture = UiKit.icon(source.icon)
 
 	var driver := Game.drivers[driver_index]
@@ -283,7 +311,7 @@ func _refresh() -> void:
 		_row_panels[i].modulate.a = 0.45 if is_ready or (i == 1 and toy_vehicle) else 1.0
 	_ready_banner.add_theme_stylebox_override("panel", UiKit.box(UiKit.GRASS if is_ready else Color(UiKit.INK, 0.35), 22))
 	_ready_label.text = "Bereit!" if is_ready else "%s = Bereit" % source.accept_hint
-	_mode_help.text = ("Kind: fährt von selbst, nur lenken. " if control_mode == Game.ControlMode.KID 			else "Profi: Gas und Bremse selbst. ") + source.drive_help(control_mode)
+	_mode_help.text = ("Kind: fährt von selbst, du lenkst. " if control_mode == Game.ControlMode.KID 			else "Profi: Gas und Bremse selbst. ") + source.drive_help(control_mode)
 	if is_ready:
 		_keys_help.text = "%s = doch nicht" % source.back_hint
 	else:

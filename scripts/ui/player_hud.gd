@@ -22,6 +22,11 @@ func setup(p_racer: Racer, mode: int, total_racers: int) -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	theme = UiKit.theme()
 
+	# Streaks while boosting, under everything else.
+	var lines := SpeedLines.new()
+	lines.kart = racer.kart
+	add_child(lines)
+
 	# Frame in the player's colour.
 	var frame := Panel.new()
 	frame.set_anchors_preset(Control.PRESET_FULL_RECT)

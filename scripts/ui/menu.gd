@@ -24,6 +24,7 @@ var _slots: Array[PlayerSlot] = []
 var _sources: Array[InputSource] = []
 var _start_timer := -1.0
 var _start_label: Label
+var _kid_note: Control
 
 func _ready() -> void:
 	if Game.smoke:
@@ -190,6 +191,12 @@ func _build_players_page() -> void:
 	title_row.add_child(UiKit.icon_rect("gamepad", 70, Color.WHITE))
 	title_row.add_child(UiKit.label("Wer fährt mit?", 66, Color.WHITE, 18, UiKit.INK))
 	column.add_child(title_row)
+	_kid_note = HBoxContainer.new()
+	_kid_note.alignment = BoxContainer.ALIGNMENT_CENTER
+	_kid_note.add_theme_constant_override("separation", 12)
+	_kid_note.add_child(UiKit.icon_rect("kid", 40, Color.WHITE))
+	_kid_note.add_child(UiKit.label("Kind fährt immer links", 34, Color.WHITE, 10, UiKit.INK))
+	column.add_child(_kid_note)
 	_slot_row = HBoxContainer.new()
 	_slot_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	_slot_row.add_theme_constant_override("separation", 50)
@@ -204,7 +211,7 @@ func _enter_players_page() -> void:
 	_slots.clear()
 	var slot_count := 2 if Game.mode == Game.Mode.RACE else 1
 	for i in slot_count:
-		var slot := PlayerSlot.new("Knopf drücken" if i == 0 else "2. Spieler:\nKnopf drücken")
+		var slot := PlayerSlot.new(i if slot_count > 1 else -1)
 		slot.taken_colors = _colors_taken_by_others
 		_slot_row.add_child(slot)
 		_slots.append(slot)
@@ -218,6 +225,7 @@ func _enter_players_page() -> void:
 		source.swallow_held()
 	_start_timer = -1.0
 	_start_label.text = ""
+	_kid_note.visible = slot_count > 1
 
 func _colors_taken_by_others(asking: PlayerSlot) -> Array:
 	var taken := []
@@ -265,11 +273,22 @@ func _process(delta: float) -> void:
 		var slot := _slot_of(source)
 		if slot != null:
 			slot.handle(poll)
-		elif poll.get("accept", false):
-			for free_slot in _slots:
-				if free_slot.state == PlayerSlot.SlotState.EMPTY:
-					free_slot.join(source, _slots.find(free_slot))
-					break
+		else:
+			# Left or right takes the seat on that side; the join button takes the first free one.
+			var want := -1
+			if _slots.size() > 1 and poll.get("left", false):
+				want = 0
+			elif _slots.size() > 1 and poll.get("right", false):
+				want = 1
+			elif poll.get("accept", false):
+				for k in _slots.size():
+					if _slots[k].state == PlayerSlot.SlotState.EMPTY:
+						want = k
+						break
+			if want >= 0 and _slots[want].state == PlayerSlot.SlotState.EMPTY:
+				_slots[want].join(source, want)
+				source.swallow_held()
+	_keep_kid_left()
 	var all_ready := true
 	for slot in _slots:
 		if slot.state != PlayerSlot.SlotState.EMPTY:
@@ -285,6 +304,23 @@ func _process(delta: float) -> void:
 	else:
 		_start_timer = -1.0
 		_start_label.text = ""
+
+## With one Kind and one Profi player the Kind player always drives on the left half
+## (DECISIONS.md). Swap the panels as soon as that happens, so the screen shows who sits where.
+func _keep_kid_left() -> void:
+	if _slots.size() < 2:
+		return
+	var a := _slots[0]
+	var b := _slots[1]
+	if a.state == PlayerSlot.SlotState.EMPTY or b.state == PlayerSlot.SlotState.EMPTY:
+		return
+	if b.control_mode == Game.ControlMode.KID and a.control_mode == Game.ControlMode.FULL:
+		_slots[0] = b
+		_slots[1] = a
+		_slot_row.move_child(b, 0)
+		b.set_side(0)
+		a.set_side(1)
+		UiKit.play(self, "pop")
 
 func _start_race() -> void:
 	Game.players.clear()
@@ -347,6 +383,9 @@ func _dev_shot() -> void:
 	if page_name != "mode":
 		Game.mode = Game.Mode.RACE
 		_show(Page.OPTIONS)
+	if page_name == "join":
+		_show(Page.PLAYERS)
+		set_process(false)
 	if page_name == "players":
 		_show(Page.PLAYERS)
 		_slots[0].join(_sources[0], 0)

@@ -447,6 +447,9 @@ func _show_finish_screen() -> void:
 func _smoke_tick(delta: float) -> void:
 	_smoke_time += delta
 	var limit := float(Game.smoke_args.get("seconds", "240"))
+	# Dev helper: "--boost_at=S" fires a boost for the first player S seconds in (for screenshots).
+	if Game.smoke_args.has("boost_at") and _smoke_time - delta < float(Game.smoke_args["boost_at"]) and _smoke_time >= float(Game.smoke_args["boost_at"]):
+		humans[0].kart.boost(1.6, 0.4)
 	if Game.smoke_args.has("pause_shot") and _smoke_time > 5.0 and not _pause_menu.visible:
 		# Dev helper: open the pause menu and save a picture of it.
 		_pause_menu.open()

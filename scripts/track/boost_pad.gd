@@ -52,7 +52,7 @@ func _on_body_entered(body: Node) -> void:
 	if now - float(_last_hit.get(kart.get_instance_id(), -10.0)) < COOLDOWN:
 		return
 	_last_hit[kart.get_instance_id()] = now
-	kart.call("boost", 0.9, 0.4)
+	kart.call("boost", 1.0, 0.3)
 
 ## Three chevrons pointing forward (+Z) on a dark plate.
 static func _build_mesh() -> ArrayMesh:

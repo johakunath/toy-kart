@@ -17,6 +17,9 @@ const STEER_RESPONSE := 7.0      ## how fast the steering reaches its target (1/
 const GRIP := 0.85               ## 1 = drives on rails, 0 = the kit's free-rolling ball
 const DRIFT_GRIP := 0.45
 const DRIFT_BOOST_AFTER := 1.0   ## seconds of drifting that earn a mini boost
+const BOOST_KICK := 3.5          ## m/s added at once when a boost starts
+const BOOST_PUSH := 22.0         ## m/s² pushing the kart up to its boost speed
+const BALL_RADIUS := 0.5
 
 @onready var sphere: RigidBody3D = $Sphere
 @onready var raycast: RayCast3D = $Ground
@@ -58,6 +61,8 @@ var drifting := false
 
 var _boost_left := 0.0
 var _boost_strength := 0.0
+var _boost_target := 0.0
+var _flames: GPUParticles3D         ## m/s the kart is pushed to while boosting
 var _drift_time := 0.0
 var _prev_position := Vector3.ZERO
 var _normal := Vector3.UP
@@ -68,6 +73,7 @@ func _ready() -> void:
 	sphere.body_entered.connect(_on_sphere_body_entered)
 	sparkles.emitting = false
 	marker.visible = false
+	_build_flames()
 
 # --- Setup ---------------------------------------------------------------------------------
 
@@ -139,14 +145,77 @@ func is_boosting() -> bool:
 # --- Actions -------------------------------------------------------------------------------
 
 func boost(duration := 1.6, strength := 0.5) -> void:
+	# The ball alone takes too long to spin up, so a boost pushes the kart directly:
+	# a kick at once, then a steady push up to (top speed x (1 + strength)).
+	# Measured from the normal top speed, so boosts never stack on top of each other.
+	var cruise := top_speed() * pace * (1.0 + catchup)
+	_boost_target = maxf(_boost_target if _boost_left > 0.0 else 0.0, cruise * (1.0 + strength))
+	_push_forward(BOOST_KICK)
 	_boost_left = maxf(_boost_left, duration)
 	_boost_strength = maxf(strength, _boost_strength if _boost_left > 0.0 else 0.0)
 	linear_speed = maxf(linear_speed, 1.0)
 	sparkles.emitting = true
+	_flames.emitting = true
 	boost_sound.play()
 	if visual.driver:
 		visual.driver.hop(0.8)
 	boost_started.emit()
+
+## Orange-blue flames out of the back while boosting: the boost must be seen, not only felt.
+func _build_flames() -> void:
+	_flames = GPUParticles3D.new()
+	_flames.name = "BoostFlames"
+	_flames.amount = 48
+	_flames.lifetime = 0.35
+	_flames.fixed_fps = 60
+	_flames.emitting = false
+	_flames.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_flames.position = Vector3(0, 0.35, -0.55)
+	var process := ParticleProcessMaterial.new()
+	process.direction = Vector3(0, 0.15, -1)
+	process.spread = 12.0
+	process.initial_velocity_min = 3.0
+	process.initial_velocity_max = 5.0
+	process.gravity = Vector3.ZERO
+	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
+	process.emission_sphere_radius = 0.12
+	process.scale_min = 0.6
+	process.scale_max = 1.0
+	var shrink := Curve.new()
+	shrink.add_point(Vector2(0, 1))
+	shrink.add_point(Vector2(1, 0.15))
+	var shrink_tex := CurveTexture.new()
+	shrink_tex.curve = shrink
+	process.scale_curve = shrink_tex
+	var ramp := Gradient.new()
+	ramp.set_color(0, Color(1.0, 0.85, 0.2, 1.0))
+	ramp.add_point(0.35, Color(1.0, 0.4, 0.05, 0.95))
+	ramp.set_color(ramp.get_point_count() - 1, Color(0.3, 0.5, 1.0, 0.0))
+	var ramp_tex := GradientTexture1D.new()
+	ramp_tex.gradient = ramp
+	process.color_ramp = ramp_tex
+	_flames.process_material = process
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.6, 0.6)
+	var mat := StandardMaterial3D.new()
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.vertex_color_use_as_albedo = true
+	mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	mat.albedo_texture = load("res://assets/fx/sparkle.png")
+	quad.material = mat
+	_flames.draw_pass_1 = quad
+	container.add_child(_flames)
+
+## Adds speed along the kart's nose and spins the ball to match, so it does not brake it.
+func _push_forward(dv: float) -> void:
+	var fwd := container.global_basis.z
+	fwd.y = 0.0
+	if fwd.length_squared() < 0.0001:
+		return
+	fwd = fwd.normalized()
+	sphere.linear_velocity += fwd * dv
+	sphere.angular_velocity += container.global_basis.x * (dv / BALL_RADIUS)
 
 func give_item() -> void:
 	if not has_item:
@@ -157,7 +226,7 @@ func use_item() -> void:
 	if has_item:
 		has_item = false
 		item_changed.emit(false)
-		boost()
+		boost(1.6, 0.4)
 
 func honk() -> void:
 	horn_sound.play()
@@ -233,10 +302,14 @@ func _physics_process(delta: float) -> void:
 	_prev_position = container.position
 
 	if _boost_left > 0.0:
+		var missing := _boost_target - speed()
+		if missing > 0.0 and colliding:
+			_push_forward(minf(missing, BOOST_PUSH * delta))
 		_boost_left -= delta
 		if _boost_left <= 0.0:
 			_boost_strength = 0.0
 			sparkles.emitting = false
+			_flames.emitting = false
 
 	_effect_engine(delta)
 	_effect_body(delta)
@@ -263,7 +336,7 @@ func _handle_intent(delta: float) -> void:
 		_drift_time += delta
 	else:
 		if drifting and _drift_time >= DRIFT_BOOST_AFTER:
-			boost(0.7, 0.3)
+			boost(0.8, 0.25)
 		_drift_time = 0.0
 	drifting = want_drift
 
