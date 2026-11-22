@@ -167,7 +167,7 @@ Claude Code runs on your gaming PC and does all installs, code and git; you keep
 | Tuning, new toys, small fixes | Opus 5.5 low or medium, or Sonnet 5.5 | Cheap iterations once the structure stands |
 | Drawn toy pictures for the cards | Codex (image generation), brief in `docs/ART_BRIEF.md`, prompt in `docs/CODEX_TOY_ART.md` | Claude does not generate images |
 | 3D models: blocky toys (Duplo) | Claude in Blender (scripted, from the photos) | Bricks are simple shapes; no outside tool needed |
-| 3D models: plush and the book character | Tripo or Meshy, from the drawn front/back/side views | Organic shapes need an image-to-3D tool |
+| 3D models: plush and the book character | Pixal3D in local ComfyUI, from front/left/back/right views | Organic shapes need an image-to-3D tool; Tripo's free plan has no downloads |
 
 Front-load the Fable sprint while you are on Max, and check your remaining usage before each long session. Once you are back on Pro, the foundation is done and new toys or tracks are small, cheap changes.
 
@@ -184,7 +184,7 @@ two keyboard halves.
 | --- | --- | --- | --- | --- |
 | 1 | Foundation | Kart feel, input and assists, modes, AI, split screen, Windows export | Your test drive: it drives well, kid mode is neither automatic nor frustrating | **Passed** 21 Nov 2026 (your test drive). Kid couch test postponed |
 | 2 | Your toys and polish | Toys in the game (done), toy vehicles (done), more tracks and turbo arrows (done), sound and music (done), drawn toy pictures (Codex: 4 of 8 done), driver portraits, graphics presets, scenery | You enjoy a race on the projector with sound on, and the toys look like *his* toys | **In progress** |
-| 3 | 3D toys and art pass | Toys as 3D models (Duplo toys built in Blender by Claude; plush and the book character via Tripo or Meshy), toon look, a themed track (living room) | The 3D toys are recognisable and feel alive | **Started**: Koba first, via Tripo ([MODELS_3D.md](MODELS_3D.md)) |
+| 3 | 3D toys and art pass | Toys as 3D models (Duplo toys built in Blender by Claude; plush and the book character via Pixal3D, run locally), toon look, a themed track (living room) | The 3D toys are recognisable and feel alive | **Started**: Koba is in the game as a 3D model ([MODELS_3D.md](MODELS_3D.md)) |
 | 4 | More game | Battle mode, cups of three races, aimed items | You want to play it yourself | Not started |
 | 5 | His turn | Second controller, the 5-minute couch test with him, tuning from what he does | He asks for a third race | When you say he is ready |
 
@@ -217,10 +217,10 @@ Decided on 21 Nov 2026. When a decision changes, change its row here, so Claude 
 | Kid mode | Auto-accelerate, smart steering, left and right only, catch-up, soft walls | The same assists as Mario Kart |
 | Language | Icons plus short German labels | Readable for adults; the kid always plays with you |
 | Drivers | Ready-made CC0 characters plus toy photo cut-outs; 3D toys in milestone 3 | Fast now, clear upgrade path |
-| Toy photos | Front and back per toy in photos/toys; left and right for later 3D | Paper drivers now, Tripo multiview later |
+| Toy photos | Front and back per toy in photos/toys; left and right for later 3D | Paper drivers now, Pixal3D multiview (front, left, back, right) for 3D |
 | Karts | Template karts for the prototype | Your toy cars come later |
 | Controllers | Wireless Xbox pad for you, smaller pad for him | The keyboard doesn't reach the couch |
-| 3D generation | Tripo or Meshy in the cloud | Local tools need 24 GB or exclude the EU |
+| 3D generation | Pixal3D in a local ComfyUI on the RTX 4070 (MIT, free, nothing uploaded); see docs/MODELS_3D.md | Changed 22 Nov 2026 on Johannes' request: Tripo's free plan does not allow downloads. Pixal3D (built on TRELLIS.2) runs in 12 GB with its 8-bit model |
 | Models | Fable 5.2 for milestone 1, Opus 5.5 after, Sonnet for small tweaks | Spend the Max budget on the foundation |
 | Repo | CLAUDE.md is the index, AGENTS.md points to it, GitHub | One file to maintain, token-efficient |
 | Family | Only the 4-year-old plays; the 1-year-old gets no screen time | Your call |
@@ -239,7 +239,7 @@ No purchase now: the smaller pad for him waits until he is ready (milestone 5).
 | USB extension cable | Only with a wired pad | If the cable doesn't reach the couch |
 | Claude Code on the gaming PC | Install if missing | Claude then installs Godot, Git, Node.js and the Godot MCP server itself |
 | GitHub account | Have | Claude creates the private repo |
-| Tripo free account | Milestone 3 | Multiview 3D models from toy photos |
+| ComfyUI + Pixal3D (local, installed) | Milestone 3 | Multiview 3D models from toy views; no account |
 | ChatGPT Plus | Have | Stylised reference images |
 | Blender | Milestone 3, optional | Claude installs and scripts it |
 
@@ -264,7 +264,7 @@ Everything here waits until milestone 2 is fun; pick by what the kids ask for.
 | Platforms | Android tablet: touch zones left and right; split screen with one player per side | Later |
 | Platforms | itch.io page, installer | Before sharing |
 | Art | Art pass: toon shading, outlines, bright palette | Milestone 3 |
-| Art | 3D toys via Tripo multiview; living-room photo textures | Milestone 3 |
+| Art | More 3D toys via Pixal3D (Bobo, Fuchs next); living-room photo textures | Milestone 3 |
 | Art | Blender basics for you: move, scale and recolour a model | Optional backup |
 | Tech | Graphics presets for projector and 1440p 144 Hz | Milestone 2 |
 | Tech | Save file for unlocks | With unlocks |

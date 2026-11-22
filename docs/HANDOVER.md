@@ -1,6 +1,6 @@
 # Handover
 
-Updated 22 Nov 2026, fifth round: fewer boosts, Codex drawings in, the 3D toy pipeline ready.
+Updated 22 Nov 2026, sixth round: Koba drives as a real 3D model, made on this PC.
 
 ## Where it stands
 
@@ -11,6 +11,17 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## New in the sixth round (Koba in 3D)
+
+- **Koba is 3D:** a real 3D lion in the kart instead of the card, with ears, back and tail
+  visible from the chase camera. Made from four views (front, both sides, back) taken from your
+  Tripo screen recording, turned into a model by Pixal3D on this PC (9 minutes on the RTX 4070),
+  then cleaned and sized in Blender.
+- **New local tools (no account, nothing uploaded):** ComfyUI with Pixal3D in
+  `C:\Users\Johannes\AI projects Local\ComfyUI` (about 20 GB with models), and
+  `tools/comfy/run_pixal3d.py`. Tripo dropped: its free plan has no downloads (decision updated).
+- Not checked yet: Koba from the front in the menu preview, and on the projector.
 
 ## New in the fifth round (your feedback on boosts, first drawings, 3D start)
 
@@ -191,8 +202,9 @@ Tell Claude the answers by voice; they become the tuning list.
 
 ## What is next
 
-1. You: Koba on tripo3d.ai (`docs/MODELS_3D.md`, step 1), then Claude brings it in.
-2. Claude: the Duplo-Flieger as a 3D model built in Blender.
+1. You: a race as Koba. Does he look like Koba? Colours right, size right in the kart?
+2. Claude: the Duplo-Flieger as a 3D model built in Blender; then Bobo and the fox via Pixal3D
+   (Codex turnaround drawings make the best input).
 3. You: a race to check the boosts now feel special, not constant.
 4. Codex: the other four drawings (Fuchs, Duplo-Mädchen, Motorrad, Duplo-Flieger).
 5. Rest of milestone 2: driver portraits, graphics presets for projector and monitor, scenery.

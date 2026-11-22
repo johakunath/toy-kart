@@ -15,11 +15,11 @@ Claude builds from this file. Change a row only with Johannes' OK, and change it
 | Kid mode | Auto-accelerate, steering with a helper near the edge, one gas button for full speed, soft walls, catch-up | The same assists as Mario Kart; changed 21 Nov 2026 at Johannes' request: the first version won by itself |
 | Language | Icons plus short German labels | Readable for adults; the kid always plays with you |
 | Drivers | Ready-made CC0 characters plus toy photo cut-outs; 3D toys in milestone 3 | Fast now, clear upgrade path |
-| Toy photos | Front and back per toy in `photos/toys`; left and right for later 3D | Paper drivers now, Tripo multiview later |
+| Toy photos | Front and back per toy in `photos/toys`; left and right for later 3D | Paper drivers now, Pixal3D multiview (front, left, back, right) for 3D |
 | Karts | Open go-karts the drivers sit inside (Kenney Car Kit); the kit's trucks stay selectable | Asked for by Johannes on 21 Nov 2026: Mario Kart-style karts, not pickups with the toy on top |
 | Look | Stronger light and shadow, a sky that lights the shade, haze, clouds, things floating in the air; a different mood per track | Asked for by Johannes on 21 Nov 2026: the first version looked flat |
 | Controllers | Wireless Xbox pad for you, smaller pad for him | The keyboard doesn't reach the couch |
-| 3D generation | Tripo or Meshy in the cloud | Local tools need 24 GB or exclude the EU |
+| 3D generation | Pixal3D in a local ComfyUI on the RTX 4070 (MIT, free, nothing uploaded); see docs/MODELS_3D.md | Changed 22 Nov 2026 on Johannes' request: Tripo's free plan does not allow downloads. Pixal3D (built on TRELLIS.2) runs in 12 GB with its 8-bit model |
 | Models | Fable 5.2 for milestone 1, Opus 5.5 after, Sonnet for small tweaks | Spend the Max budget on the foundation |
 | Repo | CLAUDE.md is the index, AGENTS.md points to it, GitHub, no Actions | One file to maintain, token-efficient |
 | Family | Only the 4-year-old plays; the 1-year-old gets no screen time | Your call |
