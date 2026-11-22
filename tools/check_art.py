@@ -65,7 +65,45 @@ def main():
                 print("  FAIL     %s-%s.png %s: %s" % (toy["id"], side, size, "; ".join(problems)))
             else:
                 print("  ok       %s-%s.png %s" % (toy["id"], side, size))
-    print("ART CHECK: %s (%d drawings, %d with problems)" % ("FAIL" if failed else "PASS", found, failed))
+    # Turnaround sets for 3D (docs/CODEX_TURNAROUND.md): four views that must match each other.
+    turn_dir = os.path.join(ART, "turnaround")
+    for toy in toys:
+        paths = {v: os.path.join(turn_dir, "%s-%s.png" % (toy["id"], v)) for v in ("front", "left", "back", "right")}
+        present = [v for v, p in paths.items() if os.path.exists(p)]
+        if not present:
+            continue
+        problems = []
+        if len(present) < 4:
+            problems.append("missing " + ", ".join(v for v in paths if v not in present))
+        boxes = {}
+        for v in present:
+            img = Image.open(paths[v])
+            own, size = check(paths[v])
+            problems += ["%s: %s" % (v, p) for p in own]
+            if img.size[0] != img.size[1]:
+                problems.append("%s: not square %s" % (v, img.size))
+            if img.mode == "RGBA":
+                a = np.array(img.getchannel("A"))
+                ys, xs = np.where(a > 128)
+                if len(ys):
+                    boxes[v] = (ys.max() - ys.min(), ys.max() / a.shape[0], img.size)
+        if len({b[2] for b in boxes.values()}) > 1:
+            problems.append("views have different canvas sizes")
+        if boxes:
+            hs = [b[0] for b in boxes.values()]
+            if max(hs) > 1.08 * min(hs):
+                problems.append("toy height differs between views by %.0f %% (same scale needed)"
+                                % (100 * (max(hs) / min(hs) - 1)))
+            grounds = [b[1] for b in boxes.values()]
+            if max(grounds) - min(grounds) > 0.03:
+                problems.append("the toy stands on a different ground line in different views")
+        found += 1
+        if problems:
+            failed += 1
+            print("  FAIL     turnaround %s: %s" % (toy["id"], "; ".join(problems)))
+        else:
+            print("  ok       turnaround %s (4 views)" % toy["id"])
+    print("ART CHECK: %s (%d drawings and sets, %d with problems)" % ("FAIL" if failed else "PASS", found, failed))
     return 1 if failed else 0
 
 

@@ -33,9 +33,11 @@ Required, for every toy:
 - `art/toys/<id>-front.png`: the toy seen straight from the front.
 - `art/toys/<id>-back.png`: the same toy seen straight from behind.
 
-Optional, for the 3D models later (milestone 3):
+For the 3D models (milestone 3), per toy: four matching views in `art/toys/turnaround/`
+(`<id>-front.png`, `-left.png`, `-back.png`, `-right.png`). Exact rules and the Codex prompt:
+`docs/CODEX_TURNAROUND.md`. `tools/make_3d_toy.py --id <id>` turns them into the game model.
 
-- `art/toys/turnaround/<id>-left.png`, `-right.png`, `-top.png`: same style, same scale.
+Optional:
 - `art/toys/portraits/<id>.png`: a square head-and-shoulders portrait (512 x 512) for the
   driver selection screen.
 

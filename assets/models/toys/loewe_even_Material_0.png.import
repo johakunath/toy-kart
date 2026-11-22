@@ -2,19 +2,19 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bsja1oxhu34do"
-path="res://.godot/imported/loewe_tex1.png-3441c4f809d563daf0b9af995bba8a9c.ctex"
+uid="uid://rmjw73vsyox3"
+path="res://.godot/imported/loewe_even_Material_0.png-cc86da01fc0920562c2297b3fda6586e.ctex"
 metadata={
 "vram_texture": false
 }
 generator_parameters={
-"md5": "90f528bead46f114284f1265725cdb63"
+"md5": "109b6f4ed888285b5505431d2b02f6dc"
 }
 
 [deps]
 
-source_file="res://assets/models/toys/loewe_tex1.png"
-dest_files=["res://.godot/imported/loewe_tex1.png-3441c4f809d563daf0b9af995bba8a9c.ctex"]
+source_file="res://assets/models/toys/loewe_even_Material_0.png"
+dest_files=["res://.godot/imported/loewe_even_Material_0.png-cc86da01fc0920562c2297b3fda6586e.ctex"]
 
 [params]
 

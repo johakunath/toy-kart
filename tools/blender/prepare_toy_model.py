@@ -29,10 +29,15 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--in", dest="src", required=True)
 ap.add_argument("--out", required=True)
 ap.add_argument("--height", type=float, default=0.7)
+ap.add_argument("--width", type=float, default=0.0, help="size by width instead (toy vehicles)")
 ap.add_argument("--tris", type=int, default=12000)
 ap.add_argument("--tex", type=int, default=1024)
 ap.add_argument("--turn", type=float, default=0.0)
 ap.add_argument("--sheet", default="")
+ap.add_argument("--matte", action="store_true", help="plush look: no shadow map, not metallic, soft")
+ap.add_argument("--even", type=float, default=0.0,
+                help="0..1: lift darker patches of the main colour toward it (nose and eyes stay)")
+ap.add_argument("--blend", default="", help="also save a .blend of the finished model, for hand edits")
 args = ap.parse_args(argv)
 
 
@@ -53,8 +58,15 @@ def select_only(obj):
     bpy.context.view_layer.objects.active = obj
 
 
-bpy.ops.wm.read_factory_settings(use_empty=True)
-bpy.ops.import_scene.gltf(filepath=os.path.abspath(args.src))
+if args.src.lower().endswith(".blend"):
+    # A model Johannes edited by hand: take it as it is (it was prepared before).
+    bpy.ops.wm.open_mainfile(filepath=os.path.abspath(args.src))
+    for o in list(bpy.context.scene.objects):
+        if o.type in ("CAMERA", "LIGHT"):
+            bpy.data.objects.remove(o, do_unlink=True)
+else:
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    bpy.ops.import_scene.gltf(filepath=os.path.abspath(args.src))
 
 meshes = [o for o in bpy.context.scene.objects if o.type == "MESH"]
 if not meshes:
@@ -101,7 +113,7 @@ if triangles(obj) > args.tris:
 
 lo, hi = world_bounds(obj)
 size = hi - lo
-factor = args.height / max(size.z, 1e-6)
+factor = args.width / max(size.x, 1e-6) if args.width > 0 else args.height / max(size.z, 1e-6)
 obj.scale = (factor, factor, factor)
 bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 lo, hi = world_bounds(obj)
@@ -124,6 +136,66 @@ for i, img in enumerate(list(bpy.data.images)):
         img.user_remap(small)
         small.name = img.name
 
+def repack(img, tag):
+    path = os.path.join(tmp, "%s.png" % tag)
+    img.save(filepath=path)
+    fresh = bpy.data.images.load(path)
+    fresh.pack()
+    img.user_remap(fresh)
+    fresh.name = img.name
+    return fresh
+
+
+def principled_nodes():
+    for mat in bpy.data.materials:
+        if mat.use_nodes:
+            for node in mat.node_tree.nodes:
+                if node.type == "BSDF_PRINCIPLED":
+                    yield mat, node
+
+
+if args.matte:
+    for mat, bsdf in principled_nodes():
+        tree = mat.node_tree
+        for link in list(tree.links):
+            if link.to_node == bsdf and link.to_socket.name in ("Metallic", "Roughness"):
+                tree.links.remove(link)
+            elif link.to_socket.name == "Occlusion":
+                tree.links.remove(link)
+        bsdf.inputs["Metallic"].default_value = 0.0
+        bsdf.inputs["Roughness"].default_value = 0.85
+
+if args.even > 0.0:
+    import numpy as np
+    for mat, bsdf in principled_nodes():
+        links = bsdf.inputs["Base Color"].links
+        if not links or links[0].from_node.type != "TEX_IMAGE":
+            continue
+        img = links[0].from_node.image
+        w, h = img.size
+        px = np.array(img.pixels[:], dtype=np.float32).reshape(-1, 4)
+        rgb = px[:, :3]
+        hi_c, lo_c = rgb.max(axis=1), rgb.min(axis=1)
+        sat = (hi_c - lo_c) / np.maximum(hi_c, 1e-4)
+        lum = rgb @ np.array([0.299, 0.587, 0.114], dtype=np.float32)
+        # The main colour: the bright, saturated majority. Features (nose, eyes) are much darker.
+        body = (sat > 0.25) & (lum > 0.3)
+        target = float(np.percentile(lum[body], 70)) if body.any() else 0.0
+        hue_ref = np.median(rgb[body] / np.maximum(lum[body, None], 1e-4), axis=0) if body.any() else None
+        lift = body & (lum < target) & (lum > 0.3)
+        if lift.any():
+            new_lum = lum[lift] + (target - lum[lift]) * args.even
+            k = (new_lum / np.maximum(lum[lift], 1e-4))[:, None]
+            # Also pull the hue a little toward the main colour (removes olive and brown blotches).
+            towards = hue_ref[None, :] * new_lum[:, None]
+            rgb[lift] = (rgb[lift] * k) * (1 - 0.5 * args.even) + towards * (0.5 * args.even)
+        px[:, :3] = np.clip(rgb, 0.0, 1.0)
+        img.pixels.foreach_set(px.ravel())
+        img.update()
+        repack(img, "even_%s" % mat.name)
+        print("PREPARE EVEN: %s main brightness %.2f, %d %% of pixels lifted" % (
+            mat.name, target, 100.0 * lift.mean()))
+
 out = os.path.abspath(args.out)
 os.makedirs(os.path.dirname(out), exist_ok=True)
 bpy.ops.export_scene.gltf(
@@ -132,6 +204,9 @@ bpy.ops.export_scene.gltf(
 )
 lo, hi = world_bounds(obj)
 size = hi - lo
+if args.blend:
+    os.makedirs(os.path.dirname(os.path.abspath(args.blend)), exist_ok=True)
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(args.blend), compress=True)
 print("PREPARE OK: %s  triangles %d -> %d  size %.2f x %.2f x %.2f m (w x d x h)" % (
     out, tris_before, triangles(obj), size.x, size.y, size.z))
 
