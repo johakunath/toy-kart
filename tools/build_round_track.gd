@@ -58,9 +58,7 @@ const ROAD_Y := -0.15        # kart models sit 0.15 m below the physics floor (K
 const STEP := 0.75           # one slice of road every 0.75 m
 const TREE_CLEARANCE := 10.5 # trees keep this far from the centre line, so cameras see past them
 const BANK_PER_CURVATURE := 2.6  # bank angle (rad) per 1/m of smoothed curvature: tight corners bank ~8°
-## Banking is off: banked corners made the rolling-ball karts slide out (22 Nov 2026, see
-## docs/ROADMAP.md). The code stays; 0.16 (~9°) is the value to try with new kart physics.
-const MAX_BANK := 0.0            # radians (~9°)
+const MAX_BANK := 0.16           # radians (~9°)
 const BANK_SMOOTH := 10          # slices averaged on each side, so banking eases in and out
 const JUMP_RISE := 12.0          # metres of ramp up to the lip
 const JUMP_HEIGHT := 1.3         # metres

@@ -1,6 +1,6 @@
 # Handover
 
-Updated 23 Nov 2026, twelfth round: hills, a jump with tricks, and arrow boards (roadmap phase B).
+Updated 23 Nov 2026, twelfth round: hills, banked corners, a jump with tricks, and arrow boards (roadmap phase B).
 
 ## Where it stands
 
@@ -28,9 +28,11 @@ The couch test below is the gate for milestone 1.
   Kurvenkurs, 32 on Riesenrunde).
 - **Road collision from the road itself:** a road floor built from the same data as the road
   mesh (hills and ramp), so the generator stays the only source.
-- **Banked corners: tried and switched off.** With the road tilted, the rolling-ball karts slid
-  out of corners and spun. The code is in the generator (`MAX_BANK`, set to 0); it needs kart
-  physics work first (ROADMAP phase B).
+- **Banked corners** (up to about 9°, outside high) on both round tracks; none on the start
+  straight and the jump. A first try looked broken (karts spun); the cause was the kart's ground
+  ray, which ignores the underside of a surface and missed the new road floor. Fixed by winding
+  the floor the right way; banking then passed every race.
+![Riesenrunde: banked corner](img/riesenrunde-banked-corner.png)
 - Turbo pads glow a little less (they looked pale).
 - Waldkurs (Kenney tiles) is unchanged: still flat.
 - Tests: all kid races still at zero resets and zero wall hits.

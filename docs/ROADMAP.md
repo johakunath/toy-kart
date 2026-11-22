@@ -51,7 +51,7 @@ later: a helper icon that lights up when the kid assist steers (Nintendo's glowi
 | Hills (road floor collider from the road data, embankments, hill assist) | #14 | Done on both round tracks |
 | One jump per track, trick boost, guaranteed landing for the kid | #15 | Done on both round tracks |
 | Corner arrow boards | research tracks #8 | Done |
-| Automatic banking | #14 | **Tried, off**: karts slid out and spun. Needs kart physics that handles tilted ground (the rolling ball drives around a tilted axis). Generator code ready (`MAX_BANK`) |
+| Automatic banking (up to ~9°, from the curvature) | #14 | Done on both round tracks |
 | Width per point and corner rhythm in the generator | #21 | Open: needs `Track.half_width` per point through assist, AI and resets |
 | One signature moment per track (cushion jump, toy train, tunnel) | #17 | Open: best together with the living-room world (phase E) |
 | Hills and a jump on Waldkurs | | Open: Kenney tiles have no slope collision |
