@@ -90,3 +90,4 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1       # builds\ToyKart
 - [docs/DECISIONS.md](docs/DECISIONS.md): decisions; change only with the owner's OK.
 - [docs/BACKLOG.md](docs/BACKLOG.md): everything that waits.
 - [docs/HANDOVER.md](docs/HANDOVER.md): what works, what is next, the couch test.
+- [docs/RESEARCH.md](docs/RESEARCH.md): ranked research on reaching Mario Kart quality (notes in `docs/research/`).
