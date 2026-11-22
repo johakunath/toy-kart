@@ -7,7 +7,7 @@
 | Mini Characters 2.0 (8 of the characters) | `assets/characters/kenney_mini/` | kenney.nl/assets/mini-characters | CC0 | `kenney-mini-characters-License.txt` |
 | Car Kit 3.1 (5 karts, racing car) | `assets/kenney_car_kit/` | kenney.nl/assets/car-kit | CC0 | `kenney-car-kit-License.txt` |
 | Toy Car Kit 1.2 (oldtimer, trees, gates, cone) | `assets/kenney_toy_car_kit/` | kenney.nl/assets/toy-car-kit | CC0 | `kenney-toy-car-kit-License.txt` |
-| Bobo and plane 3D models | `assets/models/toys/baer.glb`, `flieger.glb` | Made locally with Pixal3D (MIT) from Codex turnaround drawings | Pixal3D: MIT; drawings made for this project | this file |
+| Toy 3D models (Bobo, plane, fox, motorbike, police car) | `assets/models/toys/*.glb` | Made locally with Pixal3D (MIT) from Codex turnaround drawings | Pixal3D: MIT; drawings made for this project | this file |
 | Bobo portrait (not yet in the game) | `art/toys/portraits/baer.png` | Made locally with FLUX.2 [klein] 4B (Black Forest Labs) | Model: Apache 2.0 | this file |
 | Koba 3D model | `assets/models/toys/loewe.glb` | Made locally with Pixal3D (TencentARC, MIT) from views of a Tripo AI preview of the Codex drawing (`photos/toys/Bildschirmaufnahme 2026-11-22 005633.mp4`) | Pixal3D: MIT. The Tripo preview was a free-plan generation (Tripo's free outputs are CC BY 4.0): credit "Tripo AI" | this file |
 | Godot Engine 4.7.2 | the exported game | godotengine.org | MIT | godotengine.org/license |

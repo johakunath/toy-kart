@@ -1,6 +1,6 @@
 # Handover
 
-Updated 22 Nov 2026, eighth round: Bobo and the plane in 3D, first local image model (FLUX.2).
+Updated 22 Nov 2026, ninth round: all toys but the Duplo girl are 3D; Bobo smiles.
 
 ## Where it stands
 
@@ -11,6 +11,17 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## New in the ninth round (the 3D cast)
+
+- **3D now:** fox, police motorbike, police car (from Codex views), plus Koba, Bobo, plane and the
+  Duplo plane. Only the Duplo girl is still a card. Cars and bikes are sized nose to tail like a
+  kart (`--length`). The colour match only brightens now (it darkened the motorbike before).
+- **Bobo smiles:** a FLUX.2 edit of Codex's front view (original kept in
+  `art/toys/turnaround/originals/`), then a new 3D run.
+- **FLUX.2 turnaround sheets do not work** (side views come out as three-quarter back views);
+  Codex keeps that job. FLUX is for portraits, textures and small edits.
+- Known: the police car's "POLICE" lettering is a little scrambled (AI texture).
 
 ## New in the eighth round (Bobo and plane in 3D, local pictures)
 
@@ -226,8 +237,7 @@ Tell Claude the answers by voice; they become the tuning list.
 ## What is next
 
 1. You: a race as Koba and as Duplo-Flieger. Colours, size, does it look like the toy?
-2. Codex: turnaround views for the police car (`docs/CODEX_TURNAROUND.md`), then Claude runs
-   `tools/make_3d_toy.py --id polizei --apply`.
+2. Codex: turnaround views for the Duplo girl (`junge`), then `make_3d_toy.py --id junge --apply`.
 3. Driver portraits in the menu, made with FLUX.2 (milestone 2).
 3. You: a race to check the boosts now feel special, not constant.
 4. Codex: the other four drawings (Fuchs, Duplo-Mädchen, Motorrad, Duplo-Flieger).

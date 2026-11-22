@@ -112,6 +112,8 @@ def prepare(toy_id, raw_glb, args):
         width = re.search(r"^vehicle_width = ([\d.]+)", s, re.M)
         if re.search(r"^is_vehicle = true", s, re.M):
             size = ["--width", width.group(1) if width else "1.0"]  # a toy vehicle: as wide as its card
+    if args.length > 0:
+        size = ["--length", str(args.length)]
     cmd = [BLENDER, "-b", "--python", os.path.join(ROOT, "tools", "blender", "prepare_toy_model.py"), "--",
            "--in", raw_glb, "--out", os.path.join(ROOT, "assets", "models", "toys", "%s.glb" % toy_id),
            *size, "--matte", "--even", str(args.even), "--turn", str(args.turn),
@@ -154,6 +156,7 @@ def main():
     ap.add_argument("--height", type=float, default=0.7)
     ap.add_argument("--even", type=float, default=0.7)
     ap.add_argument("--turn", type=float, default=0.0)
+    ap.add_argument("--length", type=float, default=0.0, help="size by length (cars, bikes); kart is about 1.3")
     ap.add_argument("--resolution", type=int, default=0)
     ap.add_argument("--skip-generate", action="store_true", help="reuse art/models/<id>_pixal3d.glb")
     args = ap.parse_args()

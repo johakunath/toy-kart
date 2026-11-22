@@ -30,6 +30,7 @@ ap.add_argument("--in", dest="src", required=True)
 ap.add_argument("--out", required=True)
 ap.add_argument("--height", type=float, default=0.7)
 ap.add_argument("--width", type=float, default=0.0, help="size by width instead (toy vehicles)")
+ap.add_argument("--length", type=float, default=0.0, help="size by length, nose to tail (cars, bikes)")
 ap.add_argument("--tris", type=int, default=12000)
 ap.add_argument("--tex", type=int, default=1024)
 ap.add_argument("--turn", type=float, default=0.0)
@@ -114,7 +115,8 @@ if triangles(obj) > args.tris:
 
 lo, hi = world_bounds(obj)
 size = hi - lo
-factor = args.width / max(size.x, 1e-6) if args.width > 0 else args.height / max(size.z, 1e-6)
+factor = (args.length / max(size.y, 1e-6) if args.length > 0 else
+          args.width / max(size.x, 1e-6) if args.width > 0 else args.height / max(size.z, 1e-6))
 obj.scale = (factor, factor, factor)
 bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 lo, hi = world_bounds(obj)
@@ -221,7 +223,7 @@ if args.match:
         img = links[0].from_node.image
         px = np.array(img.pixels[:], dtype=np.float32).reshape(-1, 4)
         tex_lum, tex_sat = stats(px[:, :3])
-        gain = float(np.clip(ref_lum / max(tex_lum, 1e-3), 0.8, 1.6))
+        gain = float(np.clip(ref_lum / max(tex_lum, 1e-3), 1.0, 1.6))  # Pixal3D textures are darker: only brighten
         satk = float(np.clip(ref_sat / max(tex_sat, 1e-3), 0.8, 1.4))
         rgb = px[:, :3] * gain
         lum = (rgb @ W)[:, None]
