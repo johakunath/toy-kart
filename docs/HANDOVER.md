@@ -1,6 +1,6 @@
 # Handover
 
-Updated 22 Nov 2026, tenth round: driver faces in the menu; stronger colours.
+Updated 22 Nov 2026, eleventh round: research, roadmap and the first quick wins for feel and look.
 
 ## Where it stands
 
@@ -11,6 +11,37 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## New in the eleventh round (research, roadmap, quick wins)
+
+- **Research and roadmap:** `docs/RESEARCH.md` ranks 39 ideas from five research passes (feel,
+  gameplay and kid design, Godot tech, tracks, code audit; notes in `docs/research/`).
+  `docs/ROADMAP.md` orders them in phases A to G with your answers (his delight first, friendly
+  items, build for 2, both screens, no playtest gate). Phase A is done except the items below.
+- **After his first 2 minutes (autopilot too strong, too slow, not flashy enough):**
+  Kid speed 0.78 -> 0.92, cruise 85 -> 90 %, the helping hand in the middle of the road
+  30 -> 15 %, the stick reaches the wheels 55 -> 80 %. Tests: hands off = 3rd, steering well = 1st,
+  still no wall hits and no resets.
+- **Drift sparks:** blue after 0.5 s, orange after 1 s, purple after 2 s (Profi only), each with a
+  ding and a rumble tick; letting go gives a bigger boost per colour. **For him: steering hard in
+  the middle of the road charges blue and orange sparks too**, letting go of the stick boosts.
+  Near the edge the charge is dropped, never fired.
+- **Boosts fade out** over 0.8 s instead of stopping hard. **Start boost:** gas held when "Los!"
+  comes (kid mode always gets it). **Walls glance off:** only the speed into the wall is lost and
+  the nose turns along the wall. **Bumping is fun:** you two touching gives both a small boost;
+  his kart is hardly pushed.
+- **Controller rumble** on boosts, sparks, walls and bumps (softer for him). "Rütteln an / aus"
+  on the options page.
+- **Toy look:** rim light on karts and drivers, clear-coat shine on karts, glowing stars,
+  pulsing turbo pads.
+- **HUD he can read:** the place digit is gold, silver or bronze, a column of faces shows the race
+  order (your own face big), and in kid mode the laps are dots.
+- **Tech:** MSAA 4x plus SMAA in split screen, 2 shadow splits in split screen (split screen went
+  from 140 to 162 fps on the RTX 4070), exclusive fullscreen for 144 Hz, shader baker on in export.
+![New HUD: medal place, face column, lap dots](img/race-hud-faces.png)
+
+- **Not checked yet:** a real pad's rumble strength (no pad was connected), and the look on the
+  projector.
 
 ## New in the tenth round (faces and colours)
 

@@ -56,13 +56,14 @@ func _ready() -> void:
 	_load_catalog()
 	track = track_by_id(smoke_args.get("track", _settings.get_value("options", "track", "")))
 	if not OS.has_feature("editor") and not smoke and not OS.get_cmdline_user_args().has("--windowed"):
-		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+		# Exclusive fullscreen: lowest input lag and smooth 144 Hz on the monitor.
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN)
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key and key.pressed and not key.echo and key.keycode == KEY_F11:
-		var full := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
-		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if full else DisplayServer.WINDOW_MODE_FULLSCREEN)
+		var full := DisplayServer.window_get_mode() >= DisplayServer.WINDOW_MODE_FULLSCREEN
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if full else DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN)
 
 # --- Catalog -------------------------------------------------------------------------------
 

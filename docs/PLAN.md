@@ -189,6 +189,7 @@ two keyboard halves.
 | 5 | His turn | Second controller, the 5-minute couch test with him, tuning from what he does | He asks for a third race | When you say he is ready |
 
 There are no dates: I expect one or two sessions per milestone, and the gate decides when to move on.
+Since 22 Nov 2026 the order of work inside the milestones is [ROADMAP.md](ROADMAP.md).
 
 ## Open decisions for you
 

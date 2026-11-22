@@ -25,7 +25,10 @@ car, and the car was very slow. He loves looking at his toys, but it was not bri
 enough. He loves playing together, even on the keyboard. So: faster kid mode, a lighter hand,
 much more feedback (sparks, rumble, sounds), brighter and shinier.
 
-## Phase A: quick wins (now)
+## Phase A: quick wins (done 22 Nov 2026, eleventh round)
+
+Open from A: feel the rumble on a real pad and judge the look on the projector. Small add-on for
+later: a helper icon that lights up when the kid assist steers (Nintendo's glowing antenna).
 
 | Item | Research |
 | --- | --- |
@@ -41,7 +44,7 @@ much more feedback (sparks, rumble, sounds), brighter and shinier.
 | Kid-readable HUD: face + medal colour, lap dots, face strip | #8 |
 | MSAA 4x + SMAA, shadow budget in split screen, 144 Hz frame pacing | #10 |
 
-## Phase B: tracks with moments
+## Phase B: tracks with moments (next)
 
 | Item | Research |
 | --- | --- |

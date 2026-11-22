@@ -1,5 +1,7 @@
 # Backlog
 
+The ordered plan is [ROADMAP.md](ROADMAP.md) (from the research in RESEARCH.md); this page keeps the loose items.
+
 Milestone 1 passed on your test drive (21 Nov 2026); the couch test with him waits until he is
 ready (PLAN.md, milestone 5). Pick by what you want to play.
 
@@ -17,7 +19,6 @@ ready (PLAN.md, milestone 5). Pick by what you want to play.
 | Sound | Volume slider instead of only music on/off | If needed |
 | UI | Mouse support on the player selection page | If needed |
 | UI | 3D podium on the finish screen | Later |
-| Input | Controller rumble on boost and bumps (full mode only) | Later |
 | Karts | More vehicles already in `assets/` and not wired up yet: future racer, speedster, two racers, drag racer | When he wants more |
 | Look | More weather: rain with a wet road, snow, night with headlights | Later |
 | Look | A weather or time-of-day choice per track instead of one fixed mood | Later |

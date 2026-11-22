@@ -50,6 +50,8 @@ func _ready() -> void:
 	_spawn_racers()
 	_build_views()
 	_build_overlay()
+	if humans.size() > 1:
+		_split_screen_shadows()
 	Music.stop(0.6)  # quiet for the countdown; the race tune starts with "Los!"
 	if humans.size() > 1:
 		# Two listeners hear every engine twice in split screen: turn the human karts down a bit.
@@ -166,6 +168,14 @@ func _make_racer(kart_def: KartDef, driver: DriverDef, slot: int) -> Racer:
 	racers.append(racer)
 	return racer
 
+## Split screen draws the world twice: the sun's shadows get 2 splits and a shorter reach,
+## which costs much less and is hard to tell apart on a half screen.
+func _split_screen_shadows() -> void:
+	var sun := _world.find_child("Sun", true, false) as DirectionalLight3D
+	if sun:
+		sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+		sun.directional_shadow_max_distance = 70.0
+
 ## Controller vibration for a human on a gamepad (off switch on the options page).
 func _wire_rumble(racer: Racer) -> void:
 	var pad := racer.source as PadSource
@@ -221,7 +231,9 @@ func _build_views() -> void:
 		container.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		view.add_child(container)
 		var viewport := SubViewport.new()
-		viewport.msaa_3d = Viewport.MSAA_2X
+		# MSAA for edges plus SMAA for thin lines; no TAA (it smears moving karts).
+		viewport.msaa_3d = Viewport.MSAA_4X
+		viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_SMAA
 		viewport.audio_listener_enable_3d = true
 		viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 		container.add_child(viewport)
