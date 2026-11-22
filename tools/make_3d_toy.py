@@ -116,8 +116,14 @@ def prepare(toy_id, raw_glb, args):
            "--in", raw_glb, "--out", os.path.join(ROOT, "assets", "models", "toys", "%s.glb" % toy_id),
            *size, "--matte", "--even", str(args.even), "--turn", str(args.turn),
            "--blend", os.path.join(ROOT, "art", "models", "%s_edit.blend" % toy_id), "--sheet", sheet]
+    drawing = os.path.join(ROOT, "art", "toys", "turnaround", "%s-front.png" % toy_id)
+    if os.path.exists(drawing):
+        cmd += ["--match", drawing]
     res = subprocess.run(cmd, capture_output=True, text=True)
     ok = [l for l in res.stdout.splitlines() if l.startswith("PREPARE OK")]
+    for l in res.stdout.splitlines():
+        if l.startswith("PREPARE MATCH"):
+            print("  " + l)
     if not ok:
         fail("Blender: " + (res.stdout + res.stderr)[-800:])
     print("3 " + ok[0].split(":  ", 1)[-1] + "; look at " + os.path.relpath(sheet, ROOT))

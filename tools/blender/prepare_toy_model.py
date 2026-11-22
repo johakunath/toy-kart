@@ -37,6 +37,7 @@ ap.add_argument("--sheet", default="")
 ap.add_argument("--matte", action="store_true", help="plush look: no shadow map, not metallic, soft")
 ap.add_argument("--even", type=float, default=0.0,
                 help="0..1: lift darker patches of the main colour toward it (nose and eyes stay)")
+ap.add_argument("--match", default="", help="a drawing of the toy: scale the texture colours to match it")
 ap.add_argument("--blend", default="", help="also save a .blend of the finished model, for hand edits")
 args = ap.parse_args(argv)
 
@@ -195,6 +196,40 @@ if args.even > 0.0:
         repack(img, "even_%s" % mat.name)
         print("PREPARE EVEN: %s main brightness %.2f, %d %% of pixels lifted" % (
             mat.name, target, 100.0 * lift.mean()))
+
+if args.match:
+    # Pixal3D textures come out darker than the drawings. Compare the saturated (coloured) pixels
+    # of the drawing and the texture, and scale each channel so their medians match.
+    import numpy as np
+    ref = bpy.data.images.load(os.path.abspath(args.match))
+    rp = np.array(ref.pixels[:], dtype=np.float32).reshape(-1, 4)
+    rp = rp[rp[:, 3] > 0.5][:, :3]
+    def coloured(rgb):
+        hi_c, lo_c = rgb.max(axis=1), rgb.min(axis=1)
+        return rgb[((hi_c - lo_c) / np.maximum(hi_c, 1e-4) > 0.3) & (hi_c > 0.25)]
+    W = np.array([0.299, 0.587, 0.114], dtype=np.float32)
+    def stats(rgb):
+        c = coloured(rgb)
+        lum = c @ W
+        sat = (c.max(axis=1) - c.min(axis=1)) / np.maximum(c.max(axis=1), 1e-4)
+        return float(np.median(lum)), float(np.median(sat))
+    ref_lum, ref_sat = stats(rp)
+    for mat, bsdf in principled_nodes():
+        links = bsdf.inputs["Base Color"].links
+        if not links or links[0].from_node.type != "TEX_IMAGE":
+            continue
+        img = links[0].from_node.image
+        px = np.array(img.pixels[:], dtype=np.float32).reshape(-1, 4)
+        tex_lum, tex_sat = stats(px[:, :3])
+        gain = float(np.clip(ref_lum / max(tex_lum, 1e-3), 0.8, 1.6))
+        satk = float(np.clip(ref_sat / max(tex_sat, 1e-3), 0.8, 1.4))
+        rgb = px[:, :3] * gain
+        lum = (rgb @ W)[:, None]
+        px[:, :3] = np.clip(lum + (rgb - lum) * satk, 0.0, 1.0)
+        img.pixels.foreach_set(px.ravel())
+        img.update()
+        repack(img, "match_%s" % mat.name)
+        print("PREPARE MATCH: brightness x%.2f, colour strength x%.2f" % (gain, satk))
 
 out = os.path.abspath(args.out)
 os.makedirs(os.path.dirname(out), exist_ok=True)

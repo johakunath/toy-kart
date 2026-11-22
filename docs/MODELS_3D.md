@@ -1,6 +1,7 @@
 # 3D toys
 
-How a toy becomes a 3D driver. Milestone 3. Koba (the lion) is done; Bobo and the fox are next.
+How a toy becomes a 3D driver. Milestone 3. Done: Koba (from a video), Bobo and the plane (from Codex
+turnaround views), the Duplo plane (built in Blender). Next: the police car.
 Blocky Duplo toys are built by Claude from simple shapes in Blender instead.
 
 Everything runs on this PC; nothing is uploaded and no account is needed. Johannes does nothing
@@ -73,6 +74,20 @@ Codex's turnaround drawings (`art/toys/turnaround/<id>-front|left|back|right.png
 see `docs/CODEX_TURNAROUND.md`). It starts and stops ComfyUI by itself, sizes toy vehicles by
 width, and prints one line per step. Then look at one picture, `art/models/<id>_sheet.png`, and
 take one race screenshot. `--skip-generate` redoes only the Blender step.
+
+The Blender step matches the colours to the front drawing (`--match`): Pixal3D textures come
+out darker, so brightness and colour strength are scaled to the drawing's (hue unchanged).
+Bobo took 8 minutes, the plane 5.
+
+## Local pictures: FLUX.2 [klein] 4B
+
+`tools\.venv\Scripts\python.exe tools\comfyun_flux_klein.py --prompt "..." --out <png> [--ref <png>] [--count 2]`
+makes a picture from text, or edits from reference pictures ("the character in image 1 as a
+portrait"). Apache 2.0, about 16 GB of model files in ComfyUI, a few seconds per picture.
+First test (22 Nov 2026): driver portraits of Bobo were very good (`art/toys/portraits/baer.png`);
+a ruin brick texture was good and tiled almost seamlessly; a side view of the police car was
+well drawn but not exactly the same car as the drawings, so turnaround views stay with Codex.
+All generated pictures also stay in `ComfyUI\output`.
 
 ## Duplo toys: built in Blender, no AI
 
