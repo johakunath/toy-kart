@@ -45,11 +45,10 @@ ready (PLAN.md, milestone 5). Pick by what you want to play.
 | Platforms | Android tablet: touch zones left and right; split screen with one player per side | Later |
 | Platforms | itch.io page, installer | Before sharing |
 | Art | Art pass: toon shading, outlines (strong colours done in round ten; tune with `tools/make_strong_colors.py --strength`) | Milestone 3 |
-| Art | New toys: photos, Codex turnaround views, `make_3d_toy.py`, `make_portraits.py` (see `.claude/skills/toy-to-game`); living-room photo textures made with FLUX | When he brings a new toy |
+| Art | New toys: photos, Codex turnaround views, `make_3d_toy.py`, `make_portraits.py` (see `docs/MODELS_3D.md`); living-room photo textures made with FLUX | When he brings a new toy |
 | Art | Blender basics for you: move, scale and recolour a model | Optional backup |
 | Tech | Graphics presets for projector and 1440p 144 Hz | Milestone 2 |
 | UI | The player panel is at its height limit at 1080p: a new row needs space taken elsewhere | With the next menu change |
-| Tidy | `art/toys/portraits/baer.png` (first FLUX test) is unused; delete with your OK | Any time |
 | Tech | Save file for unlocks | With unlocks |
 | Tech | Git LFS once model and texture files grow | When the repo grows |
 | Legal | Replace branded toys (Lego, licensed plush, picture-book characters) before a public release | Before sharing |

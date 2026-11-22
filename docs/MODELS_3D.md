@@ -84,7 +84,7 @@ Bobo took 8 minutes, the plane 5.
 `tools\.venv\Scripts\python.exe tools\comfy\run_flux_klein.py --prompt "..." --out <png> [--ref <png>] [--count 2]`
 makes a picture from text, or edits from reference pictures ("the character in image 1 as a
 portrait"). Apache 2.0, about 16 GB of model files in ComfyUI, a few seconds per picture.
-First test (22 Nov 2026): driver portraits of Bobo were very good (`art/toys/portraits/baer.png`);
+First test (22 Nov 2026): driver portraits of Bobo were very good;
 a ruin brick texture was good and tiled almost seamlessly; a side view of the police car was
 well drawn but not exactly the same car as the drawings. A four-view turnaround sheet of Bobo on
 one wide canvas failed: the "side" views came out as three-quarter back views and the clothes

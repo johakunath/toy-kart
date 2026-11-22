@@ -25,8 +25,7 @@ The couch test below is the gate for milestone 1.
   grass, blue barriers, red kerbs. Turbo pads were washed out (colours read as linear); now
   strong blue and yellow. Light: AgX contrast up, saturation up, less haze in the evening.
   Johannes' own toys are unchanged except for that light.
-- The old test portrait `art/toys/portraits/baer.png` is now unused (Bobo's portrait is
-  `paper_baer.png`); delete it when you like.
+- Global skill `local-game-assets` with all asset lessons, usable in every project.
 
 ## New in the ninth round (the 3D cast)
 
@@ -273,7 +272,8 @@ Tell Claude the answers by voice; they become the tuning list.
 
 ### Lessons from the art rounds (6 to 10)
 
-- The toy workflow is a project skill: `.claude/skills/toy-to-game/SKILL.md`.
+- The asset lessons are also in the global skill `local-game-assets` (`~/.claude/skills/`, outside
+  the repo, with copies of the reusable scripts) so other games benefit. Add new lessons there too.
 - Pick the tool by the job: Codex for four matching views; Pixal3D (local ComfyUI) for round,
   soft toys; Blender from simple shapes for blocky Duplo toys; FLUX.2 klein (local) for
   portraits, textures and small edits of one view. FLUX turnaround sheets fail.
