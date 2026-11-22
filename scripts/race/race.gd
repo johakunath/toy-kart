@@ -239,7 +239,7 @@ func _build_views() -> void:
 
 		var hud := PlayerHud.new()
 		view.add_child(hud)
-		hud.setup(racer, Game.mode, racers.size())
+		hud.setup(racer, Game.mode, racers.size(), racers)
 		huds.append(hud)
 
 func _build_overlay() -> void:

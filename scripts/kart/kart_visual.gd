@@ -72,6 +72,8 @@ func build(p_kart: KartDef, p_driver: DriverDef) -> void:
 	driver.rotation.y = -model.rotation.y
 	driver.scale = Vector3.ONE / kart_def.model_scale
 	driver.build(driver_def, kart_def.seat_scale)
+	ToyLook.apply(model, ToyLook.Kind.KART)
+	ToyLook.apply(driver, ToyLook.Kind.DRIVER)
 
 ## A toy vehicle stands in for the whole kart: no kart model, the toy sits on the ground.
 func _build_toy_vehicle() -> void:
@@ -83,6 +85,7 @@ func _build_toy_vehicle() -> void:
 	model.add_child(driver)
 	driver.position = Vector3(0, 0.02 + driver_def.vehicle_hover, 0)
 	driver.build(driver_def, 1.0)
+	ToyLook.apply(driver, ToyLook.Kind.KART)
 	# The toy itself pitches, leans and slides like a kart body.
 	body = model
 	body_rest = Vector3.ZERO

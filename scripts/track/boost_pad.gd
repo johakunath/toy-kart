@@ -45,8 +45,9 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
-	# A gentle pulse so the pad reads as "something happens here".
-	_material.emission_energy_multiplier = 0.3 + 0.5 * (0.5 + 0.5 * sin(_time * 6.0))
+	# A pulse so the pad reads as "something happens here": above 1.0 the colours glow (bloom).
+	var glow := 1.0 + 0.6 * (0.5 + 0.5 * sin(_time * 6.0))
+	_material.albedo_color = Color(glow, glow, glow)
 
 func _on_body_entered(body: Node) -> void:
 	# Not typed as Kart: track builder tools load this script before the Game autoload exists.
