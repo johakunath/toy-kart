@@ -34,6 +34,7 @@ ready (PLAN.md, milestone 5). Pick by what you want to play.
 | Gameplay | 3 to 4 players | When needed |
 | Gameplay | Unlocks, outfits, levelling; a few per session, no streaks | Later |
 | Vehicles | More vehicle types, for example a space shuttle | Later |
+| Vehicles | Toys only in fitting karts, so a figure never floats above a pickup: a "fits these karts" list per driver (or per kart: which seat style). For paper cards, a Codex picture of toy + kart together is an option; 3D toys mostly solve it. Johannes' idea, 22 Nov 2026 | Milestone 3, after more 3D toys |
 | Kids | Simple track editor or track colouring for him | Later |
 | Input | Learner mode: stick steering plus a pickup button, lighter smart steering | When kid mode gets boring |
 | Input | Tilt steering with a motion-sensor pad | Later |
@@ -42,7 +43,7 @@ ready (PLAN.md, milestone 5). Pick by what you want to play.
 | Platforms | Android tablet: touch zones left and right; split screen with one player per side | Later |
 | Platforms | itch.io page, installer | Before sharing |
 | Art | Art pass: toon shading, outlines, bright palette | Milestone 3 |
-| Art | More 3D toys via Pixal3D (Bobo, Fuchs next); living-room photo textures | Milestone 3 |
+| Art | More 3D toys via Pixal3D: Bobo, then the plane, then the police car (Codex turnaround views first); living-room photo textures | Milestone 3 |
 | Art | Blender basics for you: move, scale and recolour a model | Optional backup |
 | Tech | Graphics presets for projector and 1440p 144 Hz | Milestone 2 |
 | Tech | Save file for unlocks | With unlocks |

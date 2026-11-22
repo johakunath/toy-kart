@@ -1,6 +1,6 @@
 # Handover
 
-Updated 22 Nov 2026, sixth round: Koba drives as a real 3D model, made on this PC.
+Updated 22 Nov 2026, seventh round: brighter Koba, Duplo plane in 3D, one-command 3D pipeline.
 
 ## Where it stands
 
@@ -11,6 +11,19 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## New in the seventh round (3D toys, part 2)
+
+- **Koba brighter:** matte plush material (no baked shadow map), darker patches lifted toward his
+  main yellow. Face shape unchanged: better input views (Codex turnarounds) or a hand edit in
+  `art/models/loewe_edit.blend` are the ways to improve it.
+- **Duplo-Flieger in 3D, built in Blender without AI:** brick by brick after the photos, with
+  studs, slopes, wheels and the two leaf pieces. It is now a toy vehicle (replaces the kart).
+- **One command per toy:** `tools/make_3d_toy.py --id <id> --apply` (Codex views -> Pixal3D ->
+  Blender -> game). `check_art.py` checks turnaround sets. Codex prompt: `docs/CODEX_TURNAROUND.md`
+  (Bobo, then the plane, then the police car).
+- **ComfyUI for you:** desktop shortcut "ComfyUI (3D-Modelle)"; steps in `docs/MODELS_3D.md`.
+- Backlog: toys only in fitting karts (your idea).
 
 ## New in the sixth round (Koba in 3D)
 
@@ -202,9 +215,9 @@ Tell Claude the answers by voice; they become the tuning list.
 
 ## What is next
 
-1. You: a race as Koba. Does he look like Koba? Colours right, size right in the kart?
-2. Claude: the Duplo-Flieger as a 3D model built in Blender; then Bobo and the fox via Pixal3D
-   (Codex turnaround drawings make the best input).
+1. You: a race as Koba and as Duplo-Flieger. Colours, size, does it look like the toy?
+2. Codex: turnaround views for Bobo (`docs/CODEX_TURNAROUND.md`), then Claude runs
+   `tools/make_3d_toy.py --id baer --apply`. Then the plane, then the police car.
 3. You: a race to check the boosts now feel special, not constant.
 4. Codex: the other four drawings (Fuchs, Duplo-Mädchen, Motorrad, Duplo-Flieger).
 5. Rest of milestone 2: driver portraits, graphics presets for projector and monitor, scenery.

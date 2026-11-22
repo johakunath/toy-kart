@@ -264,7 +264,7 @@ Everything here waits until milestone 2 is fun; pick by what the kids ask for.
 | Platforms | Android tablet: touch zones left and right; split screen with one player per side | Later |
 | Platforms | itch.io page, installer | Before sharing |
 | Art | Art pass: toon shading, outlines, bright palette | Milestone 3 |
-| Art | More 3D toys via Pixal3D (Bobo, Fuchs next); living-room photo textures | Milestone 3 |
+| Art | More 3D toys via Pixal3D: Bobo, then the plane, then the police car (Codex turnaround views first); living-room photo textures | Milestone 3 |
 | Art | Blender basics for you: move, scale and recolour a model | Optional backup |
 | Tech | Graphics presets for projector and 1440p 144 Hz | Milestone 2 |
 | Tech | Save file for unlocks | With unlocks |

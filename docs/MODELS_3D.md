@@ -65,3 +65,41 @@ run again with `--turn 180`. `--height` is the seated height in metres; paper ca
 
 Edit the driver `.tres`, `godot --headless --import`, a race screenshot with that driver
 (`--driver=N`), then `tools\check.ps1`.
+
+## Faster: one command per toy
+
+`tools\.venv\Scripts\python.exe tools\make_3d_toy.py --id <id> --apply` does steps 2 to 4 from
+Codex's turnaround drawings (`art/toys/turnaround/<id>-front|left|back|right.png`, transparent,
+see `docs/CODEX_TURNAROUND.md`). It starts and stops ComfyUI by itself, sizes toy vehicles by
+width, and prints one line per step. Then look at one picture, `art/models/<id>_sheet.png`, and
+take one race screenshot. `--skip-generate` redoes only the Blender step.
+
+## Duplo toys: built in Blender, no AI
+
+`tools/blender/build_duplo_plane.py` builds the Duplo plane brick by brick (Duplo units: a stud
+is 1, a layer 1.2) after the photos, then `prepare_toy_model.py --width 1.3`. The plane is a toy
+vehicle (it has the red Duplo car base with wheels), so it replaces the kart.
+
+## Using ComfyUI yourself (Johannes)
+
+Desktop shortcut **ComfyUI (3D-Modelle)**: a black window starts, then the browser opens ComfyUI.
+Closing the black window stops it (do that before playing: it holds the graphics card).
+In ComfyUI: **Templates** (left) -> search "Pixal3D" -> "Pixal3D Multi-views to 3D", then
+**Run**: it builds the example character (about 10 minutes), and you can turn the result in the
+3D preview. Results are saved in `ComfyUI\outputd`.
+For your own toys, let Claude run it: the template cuts its input sheet at fixed positions made
+for its example picture, so another picture needs the four crop boxes changed.
+`tools/make_3d_toy.py` feeds the four views in directly instead.
+
+## Changing proportions by hand (Johannes, in Blender)
+
+Each prepared toy is also saved as `art/models/<id>_edit.blend` (Koba: `loewe_edit.blend`).
+
+1. Double-click the file; Blender opens with the toy.
+2. Click the toy. Top left, switch **Object Mode** to **Sculpt Mode**.
+3. Press **G** for the Grab brush. **F** and moving the mouse sets the brush size (big = gentle,
+   whole-area changes). Drag on the model to pull or push. Symmetry left/right is on by default.
+   Hold **Shift** while dragging to smooth. **Ctrl+Z** undoes.
+4. Middle mouse button turns the view, mouse wheel zooms.
+5. **Ctrl+S** saves. Tell Claude; Claude runs `prepare_toy_model.py --in art/models/<id>_edit.blend
+   --even 0 ...` and the change is in the game.
