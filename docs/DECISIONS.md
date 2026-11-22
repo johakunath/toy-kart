@@ -24,6 +24,12 @@ Claude builds from this file. Change a row only with Johannes' OK, and change it
 | Repo | CLAUDE.md is the index, AGENTS.md points to it, GitHub, no Actions | One file to maintain, token-efficient |
 | Family | Only the 4-year-old plays; the 1-year-old gets no screen time | Your call |
 | Scope | 3 tracks (Kurvenkurs, Waldkurs, Riesenrunde with 2 laps); boost stars and turbo arrows | Johannes asked for longer tracks with more to do on 21 Nov 2026 (second round) |
+| Goal | His delight first, a real race for dad close second; public release parked. Roadmap in `docs/ROADMAP.md` | Johannes, 22 Nov 2026, after the research in `docs/RESEARCH.md` |
+| Playtests | No gate: development goes on, he plays whenever there is time | Johannes, 22 Nov 2026 |
+| Items | Friendly only: boosts, shield bubble, silly hits that cost no real time; no blue shell | Johannes, 22 Nov 2026 |
+| Players | Build for 2, never block 4 (HUD and camera code viewport-agnostic) | Johannes, 22 Nov 2026 |
+| Assets | Free and local by default; CC0 or cheap recorded sound effects allowed, each purchase approved by Johannes | Johannes, 22 Nov 2026 |
+| Screens | Both: 1080p projector (steady 60 fps in split screen) and 1440p 144 Hz monitor | Johannes, 22 Nov 2026 |
 
 ## Build decisions made in milestone 1 (by Claude; tell me if you want any changed)
 

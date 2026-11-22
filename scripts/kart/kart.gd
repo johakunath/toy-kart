@@ -7,6 +7,9 @@ signal bumped(strength: float)
 signal boost_started
 signal honked
 signal item_changed(has_item: bool)
+signal spark_tier_changed(tier: int)
+## A request for controller vibration (only human karts on a pad listen to it).
+signal rumble_requested(weak: float, strong: float, seconds: float)
 
 const BASE_DRIVE := 100.0        ## kit value: ball spin-up per unit of throttle
 const BASE_TOP_SPEED := 12.5     ## m/s reached at speed multiplier 1.0
@@ -16,7 +19,17 @@ const DRIFT_STEER := 1.45
 const STEER_RESPONSE := 7.0      ## how fast the steering reaches its target (1/s)
 const GRIP := 0.85               ## 1 = drives on rails, 0 = the kit's free-rolling ball
 const DRIFT_GRIP := 0.45
-const DRIFT_BOOST_AFTER := 1.0   ## seconds of drifting that earn a mini boost
+## Drift levels: seconds of drifting for blue, orange and purple sparks. Letting go fires a
+## boost that grows with the level (Mario Kart style: the sparks show before the boost is ready).
+const SPARK_TIERS: Array[float] = [0.5, 1.0, 2.0]
+const SPARK_BOOST_SECONDS: Array[float] = [0.5, 0.9, 1.4]
+const SPARK_BOOST_STRENGTH: Array[float] = [0.18, 0.26, 0.34]
+const SPARK_COLORS: Array[Color] = [Color(0.25, 0.65, 1.0), Color(1.0, 0.55, 0.08), Color(0.85, 0.3, 1.0)]
+const BOOST_FADE := 0.8          ## seconds a boost takes to fade back to normal speed
+const START_BOOST_SECONDS := 1.0 ## gas held when "Los!" comes: a start boost, never a stall
+const START_BOOST_STRENGTH := 0.3
+const WALL_BOUNCE := 0.25        ## share of the speed into a wall that bounces back
+const WALL_STEER := 0.5          ## how much a glancing wall hit turns the nose along the wall
 const BOOST_KICK := 3.5          ## m/s added at once when a boost starts
 const STAR_BOOST_SECONDS := 1.3  ## a used star: 40 % faster for this long
 const BOOST_PUSH := 22.0         ## m/s² pushing the kart up to its boost speed
@@ -40,12 +53,17 @@ const BALL_RADIUS := 0.5
 var intent := Intent.new()
 
 var frozen := true               ## true until the countdown ends
-var class_factor := 1.0          ## speed class: Kid 0.7, Normal 1.0, Fast 1.3
+var class_factor := 1.0          ## speed class: Game.SPEED_FACTOR
 var pace := 1.0                  ## AI pacing
 var catchup := 0.0               ## 0..0.3 extra top speed for a kid who is behind
 var engine_db_offset := 0.0      ## AI karts are quieter
 var has_item := false
 var wall_hits := 0              ## how often the kart hit a wall hard (for the checks)
+## Kid mode: steering hard (intent.spark) charges sparks too, up to this level.
+var max_spark_tier := 3
+## Kid mode: a start boost even without gas.
+var free_start_boost := false
+var spark_tier := 0
 
 var kart_def: KartDef
 var driver_def: DriverDef
@@ -68,6 +86,11 @@ var _flames: GPUParticles3D
 var _rumble: AudioStreamPlayer3D
 var on_kerb := false             ## set by the assist; plays the kerb rumble         ## m/s the kart is pushed to while boosting
 var _drift_time := 0.0
+var _fade_left := 0.0
+var _start_gas := false
+var _was_frozen := true
+var _sparks: Array[GPUParticles3D] = []
+var _spark_sound: AudioStreamPlayer3D
 var _prev_position := Vector3.ZERO
 var _normal := Vector3.UP
 var _marker_time := 0.0
@@ -78,6 +101,13 @@ func _ready() -> void:
 	sparkles.emitting = false
 	marker.visible = false
 	_build_flames()
+	_build_sparks()
+	_spark_sound = AudioStreamPlayer3D.new()
+	_spark_sound.name = "SparkSound"
+	_spark_sound.stream = load("res://assets/sfx/select.wav")
+	_spark_sound.bus = &"Effects"
+	_spark_sound.max_distance = 30.0
+	container.add_child(_spark_sound)
 	_rumble = AudioStreamPlayer3D.new()
 	_rumble.name = "RumbleSound"
 	var rumble_stream := load("res://assets/sfx/rumble.wav") as AudioStreamWAV
@@ -146,7 +176,7 @@ func speed() -> float:
 
 func speed_multiplier() -> float:
 	var stat := kart_def.top_speed if kart_def else 1.0
-	var boost := _boost_strength if _boost_left > 0.0 else 0.0
+	var boost := _boost_factor()
 	return class_factor * stat * pace * (1.0 + catchup) * (1.0 + boost)
 
 ## Turn rate in rad/s at full steer.
@@ -160,6 +190,14 @@ func top_speed() -> float:
 func is_boosting() -> bool:
 	return _boost_left > 0.0
 
+## Extra top speed from a boost; after the boost it fades out instead of stopping hard.
+func _boost_factor() -> float:
+	if _boost_left > 0.0:
+		return _boost_strength
+	if _fade_left > 0.0:
+		return _boost_strength * (_fade_left / BOOST_FADE)
+	return 0.0
+
 # --- Actions -------------------------------------------------------------------------------
 
 func boost(duration := 1.6, strength := 0.5) -> void:
@@ -169,15 +207,67 @@ func boost(duration := 1.6, strength := 0.5) -> void:
 	var cruise := top_speed() * pace * (1.0 + catchup)
 	_boost_target = maxf(_boost_target if _boost_left > 0.0 else 0.0, cruise * (1.0 + strength))
 	_push_forward(BOOST_KICK)
-	_boost_left = maxf(_boost_left, duration)
 	_boost_strength = maxf(strength, _boost_strength if _boost_left > 0.0 else 0.0)
+	_boost_left = maxf(_boost_left, duration)
+	_fade_left = 0.0
 	linear_speed = maxf(linear_speed, 1.0)
 	sparkles.emitting = true
 	_flames.emitting = true
 	boost_sound.play()
 	if visual.driver:
 		visual.driver.hop(0.8)
+	rumble_requested.emit(0.5, 0.7, 0.18)
 	boost_started.emit()
+
+## Blue, orange and purple sparks from the back wheels while a drift charges.
+func _build_sparks() -> void:
+	for side in [-1.0, 1.0]:
+		var p := GPUParticles3D.new()
+		p.name = "Sparks%s" % ("L" if side < 0.0 else "R")
+		p.amount = 24
+		p.lifetime = 0.25
+		p.fixed_fps = 60
+		p.emitting = false
+		p.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		p.position = Vector3(0.38 * side, 0.12, -0.5)
+		var process := ParticleProcessMaterial.new()
+		process.direction = Vector3(0.6 * side, 0.9, -0.6)
+		process.spread = 35.0
+		process.initial_velocity_min = 2.0
+		process.initial_velocity_max = 4.0
+		process.gravity = Vector3(0, -9.0, 0)
+		process.scale_min = 0.25
+		process.scale_max = 0.5
+		process.color = SPARK_COLORS[0]
+		p.process_material = process
+		var quad := QuadMesh.new()
+		quad.size = Vector2(0.4, 0.4)
+		var mat := StandardMaterial3D.new()
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.vertex_color_use_as_albedo = true
+		mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+		mat.albedo_texture = load("res://assets/fx/sparkle.png")
+		quad.material = mat
+		p.draw_pass_1 = quad
+		container.add_child(p)
+		_sparks.append(p)
+
+func _set_spark_tier(tier: int) -> void:
+	if tier == spark_tier:
+		return
+	spark_tier = tier
+	for p in _sparks:
+		p.emitting = tier > 0
+		if tier > 0:
+			(p.process_material as ParticleProcessMaterial).color = SPARK_COLORS[tier - 1] * 2.5
+			p.amount_ratio = 0.5 + 0.25 * tier
+	if tier > 0:
+		_spark_sound.pitch_scale = 0.9 + 0.3 * tier
+		_spark_sound.play()
+		rumble_requested.emit(0.25 + 0.1 * tier, 0.0, 0.08)
+	spark_tier_changed.emit(tier)
 
 ## Orange-blue flames out of the back while boosting: the boost must be seen, not only felt.
 func _build_flames() -> void:
@@ -326,9 +416,15 @@ func _physics_process(delta: float) -> void:
 		_boost_left -= delta
 		boost_time += delta
 		if _boost_left <= 0.0:
-			_boost_strength = 0.0
+			_fade_left = BOOST_FADE
 			sparkles.emitting = false
 			_flames.emitting = false
+	elif _fade_left > 0.0:
+		_fade_left -= delta
+		if _fade_left <= 0.0:
+			_boost_strength = 0.0
+
+	_glance_off_walls()
 
 	_effect_engine(delta)
 	_effect_rumble(delta)
@@ -341,9 +437,16 @@ func _handle_intent(delta: float) -> void:
 	if frozen:
 		input = Vector3(intent.steer, 0.0, 0.0)
 		drifting = false
+		_start_gas = intent.accelerate > 0.3
+		_was_frozen = true
 		if intent.horn:
 			honk()
 		return
+	if _was_frozen:
+		_was_frozen = false
+		if _start_gas or free_start_boost:
+			boost(START_BOOST_SECONDS, START_BOOST_STRENGTH)
+			rumble_requested.emit(0.6, 1.0, 0.3)
 	if raycast.is_colliding():
 		input.x = intent.steer
 		input.z = intent.accelerate - intent.brake
@@ -352,12 +455,23 @@ func _handle_intent(delta: float) -> void:
 	if intent.use:
 		use_item()
 	var want_drift := intent.drift and colliding and absf(input.x) > 0.25 and linear_speed > 0.4
-	if want_drift:
-		_drift_time += delta
-	else:
-		if drifting and _drift_time >= DRIFT_BOOST_AFTER:
-			boost(0.8, 0.25)
+	# Kid mode: steering hard charges the sparks without sliding.
+	var charging := want_drift or (intent.spark and colliding and linear_speed > 0.4)
+	if intent.spark_cancel:
 		_drift_time = 0.0
+		_set_spark_tier(0)
+	elif charging:
+		_drift_time += delta
+		var tier := 0
+		for t in SPARK_TIERS.size():
+			if _drift_time >= SPARK_TIERS[t] and t < max_spark_tier:
+				tier = t + 1
+		_set_spark_tier(tier)
+	else:
+		if spark_tier > 0:
+			boost(SPARK_BOOST_SECONDS[spark_tier - 1], SPARK_BOOST_STRENGTH[spark_tier - 1])
+		_drift_time = 0.0
+		_set_spark_tier(0)
 	drifting = want_drift
 
 # --- Effects (from the Kenney kit, extended) -----------------------------------------------
@@ -434,10 +548,44 @@ func _align_with_y(xform: Transform3D, new_y: Vector3) -> Transform3D:
 	xform.basis = xform.basis.orthonormalized()
 	return xform
 
+## Walls take away only the speed going into them: the kart glances off and keeps rolling
+## along the wall with its nose turned that way, instead of stopping dead.
+func _glance_off_walls() -> void:
+	var state := PhysicsServer3D.body_get_direct_state(sphere.get_rid())
+	if state == null:
+		return
+	var center := sphere.global_position
+	for i in state.get_contact_count():
+		var contact := state.get_contact_local_position(i)
+		if contact.y < center.y - BALL_RADIUS * 0.5:
+			continue  # the ground
+		var n := center - contact
+		n.y = 0.0
+		if n.length_squared() < 0.0001:
+			continue
+		n = n.normalized()
+		var v := sphere.linear_velocity
+		var into := v.dot(n)
+		if into >= 0.0:
+			continue
+		v -= n * into * (1.0 + WALL_BOUNCE)
+		sphere.linear_velocity = v
+		# Spin the ball to match, so it does not roll back into the wall.
+		sphere.angular_velocity = Vector3(v.z / BALL_RADIUS, sphere.angular_velocity.y, -v.x / BALL_RADIUS)
+		var along := Vector3(v.x, 0.0, v.z)
+		if along.length() > 1.0:
+			var fwd := container.global_basis.z
+			var yaw_now := atan2(fwd.x, fwd.z)
+			var yaw_wall := atan2(along.x, along.z)
+			var diff := wrapf(yaw_wall - yaw_now, -PI, PI)
+			if absf(diff) < PI * 0.5:
+				container.rotate_y(diff * WALL_STEER)
+
 func _on_sphere_body_entered(_body: Node) -> void:
 	var impact := absf(linear_velocity.dot(container.global_basis.z))
 	if impact < 1.0:
 		return
+	rumble_requested.emit(clampf(impact / 8.0, 0.2, 0.6), clampf(impact / 6.0, 0.2, 1.0), 0.12)
 	wall_hits += 1
 	if not impact_sound.playing:
 		impact_sound.volume_db = clampf(remap(impact, 0.0, 6.0, -20.0, 0.0), -20.0, 0.0) + engine_db_offset

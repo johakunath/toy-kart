@@ -9,6 +9,9 @@ class_name Assist extends RefCounted
 ##     light hand on the wheel. Hands off, the kart drifts wide in curves. Near the edge the
 ##     assist takes over and steers back, and the edge strip slows the kart down.
 ##   - Soft walls: an invisible cushion pushes the kart back before it reaches a real wall.
+##   - Steering hard in the middle of the road charges drift sparks (blue, then orange);
+##     letting go fires a boost. Near the edge the charge is dropped, never fired.
+##   - A start boost every time, bigger feeling with gas held.
 ##   - Pickups fire by themselves.
 ##   - Reset onto the track after 2 s off course, or when stuck.
 ## Full mode and AI: the intent passes through; only a rescue when lost or stuck.
@@ -19,11 +22,12 @@ const OTHER_RESCUE_SECONDS := 4.0
 const AUTO_USE_DELAY := 0.35
 const WALL_MARGIN := 1.3         ## the assist steers back to this far from the walls
 const EDGE_ZONE := 2.6           ## metres from the wall where the assist starts to take over
-const LIGHT_HAND := 0.3          ## how much the assist helps in the middle of the road (0..1)
-const STICK_FEEL := 0.55         ## share of the stick that reaches the wheels
+const LIGHT_HAND := 0.15         ## how much the assist helps in the middle of the road (0..1)
+const STICK_FEEL := 0.8          ## share of the stick that reaches the wheels
 const LOOK_AHEAD := 0.6         ## seconds the assist looks ahead for the walls
-const KID_CRUISE := 0.85         ## share of top speed without gas
+const KID_CRUISE := 0.9          ## share of top speed without gas
 const EDGE_SLOW := 0.7           ## throttle on the edge strip
+const SPARK_STICK := 0.5         ## kid: this much stick charges sparks
 
 var kid := false
 var is_ai := false
@@ -38,6 +42,7 @@ var _off_time := 0.0
 var _stuck_time := 0.0
 var _stuck_ref := 0.0
 var _use_timer := 0.0
+var _edge := 0.0
 
 func apply(raw: Intent, racer: Racer, track: Track, racing: bool, delta: float) -> Intent:
 	_out.copy_from(raw)
@@ -45,8 +50,9 @@ func apply(raw: Intent, racer: Racer, track: Track, racing: bool, delta: float) 
 		_lane = racer.progress.lateral
 		_lane_known = true
 	if not racing:
-		_out.accelerate = 0.0
+		# Gas during the countdown is kept: the kart reads it for the start boost.
 		_out.brake = 0.0
+		_out.spark = false
 		_out.drift = false
 		_out.use = false
 		_off_time = 0.0
@@ -62,6 +68,8 @@ func apply(raw: Intent, racer: Racer, track: Track, racing: bool, delta: float) 
 		_out.accelerate = _auto_accelerate(raw.accelerate, racer, track)
 		_out.brake = 0.0
 		_out.drift = false
+		_out.spark = absf(raw.steer) >= SPARK_STICK and _edge <= 0.0
+		_out.spark_cancel = _edge > 0.3
 		_soft_walls(racer, track)
 		_out.use = false
 		if racer.kart.has_item:
@@ -92,6 +100,7 @@ func _smart_steer(stick: float, racer: Racer, track: Track, _delta: float) -> fl
 	var near := ahead if absf(ahead) > absf(progress.lateral) else progress.lateral
 	# 0 in the middle of the road, 1 at the wall cushion.
 	var edge := clampf((absf(near) - (track.half_width - EDGE_ZONE)) / (EDGE_ZONE - WALL_MARGIN + 0.5), 0.0, 1.0)
+	_edge = edge
 	# The assist's line: where the kart is now, kept inside the safe band.
 	_lane = clampf(progress.lateral, -safe, safe)
 	if edge > 0.0:

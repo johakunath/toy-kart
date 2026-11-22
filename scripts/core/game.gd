@@ -6,7 +6,7 @@ enum Mode { FREE_DRIVE, RACE, TIME_TRIAL }
 enum SpeedClass { KID, NORMAL, FAST }
 enum ControlMode { KID, FULL }
 
-const SPEED_FACTOR: Array[float] = [0.78, 1.05, 1.5]
+const SPEED_FACTOR: Array[float] = [0.92, 1.05, 1.5]
 const SPEED_NAMES: Array[String] = ["Kind", "Normal", "Schnell"]
 const MODE_NAMES: Array[String] = ["Freie Fahrt", "Rennen", "Zeitfahren"]
 const CONTROL_NAMES: Array[String] = ["Kind", "Profi"]
@@ -28,6 +28,7 @@ var ai_count := MAX_AI
 var players: Array[PlayerConfig] = []
 var track: TrackDef
 var music_on := true
+var rumble_on := true
 
 var drivers: Array[DriverDef] = []
 var karts: Array[KartDef] = []
@@ -51,6 +52,7 @@ func _ready() -> void:
 	speed_class = clampi(_settings.get_value("options", "speed_class", SpeedClass.KID), 0, 2) as SpeedClass
 	ai_count = clampi(_settings.get_value("options", "ai_count", MAX_AI), 0, MAX_AI)
 	music_on = _settings.get_value("options", "music", true)
+	rumble_on = _settings.get_value("options", "rumble", true)
 	_load_catalog()
 	track = track_by_id(smoke_args.get("track", _settings.get_value("options", "track", "")))
 	if not OS.has_feature("editor") and not smoke and not OS.get_cmdline_user_args().has("--windowed"):
@@ -126,6 +128,7 @@ func save_options() -> void:
 	_settings.set_value("options", "speed_class", speed_class)
 	_settings.set_value("options", "ai_count", ai_count)
 	_settings.set_value("options", "music", music_on)
+	_settings.set_value("options", "rumble", rumble_on)
 	_settings.set_value("options", "track", track.id if track else "")
 	_save()
 

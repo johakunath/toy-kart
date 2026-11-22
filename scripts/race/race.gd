@@ -15,6 +15,11 @@ const AI_SKILLS: Array[float] = [0.95, 0.9, 0.86]
 ## and a kid who does nothing ends up behind.
 const AI_KID_GAPS: Array[float] = [12.0, 4.0, -14.0]
 const AI_KID_MAX_PACE := 1.0
+## Bumping into each other is fun: both karts get a small boost (at most every few seconds).
+const BUMP_BOOST_SECONDS := 0.4
+const BUMP_BOOST_STRENGTH := 0.12
+const BUMP_BOOST_COOLDOWN := 2.5
+const KID_RUMBLE := 0.7          ## kid pads vibrate a little softer
 
 var track: Track
 var racers: Array[Racer] = []
@@ -36,6 +41,7 @@ var _smoke_time := 0.0
 var _resets := 0
 var _shot_wait := 0.0
 var _perf_frames: Array[float] = []
+var _bump_ready_at := {}         ## Kart -> race time when it can get the next bump boost
 
 func _ready() -> void:
 	if Game.players.is_empty():
@@ -109,6 +115,10 @@ func _spawn_racers() -> void:
 		racer.color = cfg.color()
 		racer.display_name = cfg.driver.display_name if cfg.driver else "Spieler %d" % (i + 1)
 		racer.assist.kid = cfg.control_mode == Game.ControlMode.KID
+		if racer.assist.kid:
+			racer.kart.max_spark_tier = 2
+			racer.kart.free_start_boost = true
+		_wire_rumble(racer)
 		if cfg.source is AiSource:
 			_wire_ai(cfg.source as AiSource, racer, 0.93)
 		racer.kart.set_marker_color(racer.color)
@@ -155,6 +165,17 @@ func _make_racer(kart_def: KartDef, driver: DriverDef, slot: int) -> Racer:
 	racer.progress.lap = -1
 	racers.append(racer)
 	return racer
+
+## Controller vibration for a human on a gamepad (off switch on the options page).
+func _wire_rumble(racer: Racer) -> void:
+	var pad := racer.source as PadSource
+	if pad == null:
+		return
+	var device := pad.device
+	var scale := KID_RUMBLE if racer.assist.kid else 1.0
+	racer.kart.rumble_requested.connect(func(weak: float, strong: float, seconds: float) -> void:
+		if Game.rumble_on and state != State.FINISHED:
+			Input.start_joy_vibration(device, clampf(weak * scale, 0.0, 1.0), clampf(strong * scale, 0.0, 1.0), seconds))
 
 func _wire_ai(ai: AiSource, racer: Racer, skill: float) -> void:
 	# The AI gets the kart and progress, not the racer itself: no reference cycle.
@@ -397,11 +418,26 @@ func _soft_bumps() -> void:
 			var n := d / dist
 			var closing := -(b.sphere.linear_velocity - a.sphere.linear_velocity).dot(n)
 			var dv := (BUMP_DISTANCE - dist) * 6.0 + maxf(closing, 0.0) * 0.5
-			a.push(-n * dv * 0.5)
-			b.push(n * dv * 0.5)
-			if closing > 2.5:
+			# A kid's kart is hardly moved: the other kart takes most of the push.
+			var share_a := 0.5
+			if racers[i].assist.kid != racers[j].assist.kid:
+				share_a = 0.2 if racers[i].assist.kid else 0.8
+			a.push(-n * dv * share_a)
+			b.push(n * dv * (1.0 - share_a))
+			if closing > 1.5:
 				a.bumped.emit(clampf(closing / 10.0, 0.0, 0.6))
 				b.bumped.emit(clampf(closing / 10.0, 0.0, 0.6))
+				if racers[i].is_human or racers[j].is_human:
+					_bump_boost(a)
+					_bump_boost(b)
+
+func _bump_boost(kart: Kart) -> void:
+	if race_time < float(_bump_ready_at.get(kart, 0.0)):
+		return
+	_bump_ready_at[kart] = race_time + BUMP_BOOST_COOLDOWN
+	kart.rumble_requested.emit(0.4, 0.3, 0.1)
+	if not kart.is_boosting():
+		kart.boost(BUMP_BOOST_SECONDS, BUMP_BOOST_STRENGTH)
 
 func _reset_racer(racer: Racer) -> void:
 	var safe := track.half_width - 1.3

@@ -26,6 +26,7 @@ var _start_timer := -1.0
 var _start_label: Label
 var _kid_note: Control
 var _music_button: Button
+var _rumble_button: Button
 
 func _ready() -> void:
 	if Game.smoke:
@@ -147,6 +148,16 @@ func _build_options_page() -> void:
 		Music.refresh("menu"))
 	nav.add_child(_music_button)
 	_refresh_music_button()
+	_rumble_button = UiKit.pill_button("gamepad", "", Vector2(280, 100))
+	_rumble_button.pressed.connect(func() -> void:
+		Game.rumble_on = not Game.rumble_on
+		Game.save_options()
+		_refresh_rumble_button()
+		if Game.rumble_on:
+			for pad in Input.get_connected_joypads():
+				Input.start_joy_vibration(pad, 0.4, 0.6, 0.25))
+	nav.add_child(_rumble_button)
+	_refresh_rumble_button()
 	_next_button = UiKit.pill_button("arrow_right", "Weiter", Vector2(420, 112))
 	_next_button.add_theme_font_size_override("font_size", 56)
 	_next_button.pressed.connect(func() -> void:
@@ -154,6 +165,10 @@ func _build_options_page() -> void:
 		UiKit.play(self, "select")
 		_show(Page.PLAYERS))
 	nav.add_child(_next_button)
+
+func _refresh_rumble_button() -> void:
+	_rumble_button.text = "Rütteln an" if Game.rumble_on else "Rütteln aus"
+	_rumble_button.modulate = Color.WHITE if Game.rumble_on else Color(1, 1, 1, 0.55)
 
 func _refresh_music_button() -> void:
 	_music_button.icon = UiKit.icon("music" if Game.music_on else "music_off")
