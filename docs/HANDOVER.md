@@ -253,7 +253,8 @@ Tell Claude the answers by voice; they become the tuning list.
 ## What is next
 
 1. You: a race as Koba and as Duplo-Flieger. Colours, size, does it look like the toy?
-2. Codex: turnaround views for the Duplo girl (`junge`), then `make_3d_toy.py --id junge --apply`.
+2. Claude: the Duplo girl in 3D, built in Blender like the Duplo plane (photos from all sides are
+   in `photos/toys/`). She is the last paper card; all 8 toys already have a portrait.
 3. You: on the projector, are the colours strong enough now (or too strong)? Can he pick his
    driver by face? Do the boosts feel special, not constant?
 4. Rest of milestone 2: graphics presets for projector and monitor, scenery; faces also on the
@@ -269,3 +270,23 @@ Tell Claude the answers by voice; they become the tuning list.
   playing; they are not script errors and the checks ignore them.
 - `tools/.venv` and `tools/.cache` (1.1 GB of cut-out models) are not in git. Recreate with
   `python -m uv venv tools/.venv --python 3.12` and `uv pip install "rembg[cpu]" pillow numpy`.
+
+### Lessons from the art rounds (6 to 10)
+
+- The toy workflow is a project skill: `.claude/skills/toy-to-game/SKILL.md`.
+- Pick the tool by the job: Codex for four matching views; Pixal3D (local ComfyUI) for round,
+  soft toys; Blender from simple shapes for blocky Duplo toys; FLUX.2 klein (local) for
+  portraits, textures and small edits of one view. FLUX turnaround sheets fail.
+- FLUX follows the reference picture closely. A wrong-looking result usually means the
+  reference looks like that (the "fox" is a brown plush). Add a word hint only where the name
+  matters (`HINTS` in `make_portraits.py`). Put transparent references on white first.
+- ComfyUI scripts use a server that is already running. If Johannes has ComfyUI open and closes
+  it, the run dies halfway: rerun only the missing ids.
+- FLUX takes about 40 s per 768 px picture on the RTX 4070 (it swaps the text encoder);
+  Pixal3D 5 to 10 minutes per model. Run them one after another, never two GPU jobs at once.
+- Pixal3D textures come out dark: the colour match only brightens. Vehicles are sized by length.
+- Godot: vertex colours need `vertex_color_is_srgb = true`, or they look washed out. AgX at its
+  default contrast makes everything pastel. Kenney kits colour everything through one
+  `Textures/colormap.png` per kit.
+- Never read photos directly: contact sheets are enough to see what is in them. The 37 photos
+  in `photos/toys/` show 8 toys; the unlisted ones are side and top views (good references).

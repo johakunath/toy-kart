@@ -76,6 +76,7 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1       # builds\ToyKart
 ## Common jobs
 - New toy photos: put `<name>-front.jpg` / `<name>-back.jpg` in `photos/toys/` (or add to `pairs.json`),
   run `tools\.venv\Scripts\python.exe tools\make_paper_drivers.py`, then import and check.
+  3D model and menu portrait: the skill `.claude/skills/toy-to-game` (docs/MODELS_3D.md).
 - Rebuild a track: `godot --headless --path . --script res://tools/build_round_track.gd` (all round tracks,
   or `-- --track=<id>`), or `build_track.gd` (Waldkurs). After adding a `class_name`, run `godot --headless --import` once.
 - Light, sky, clouds and weather per track: the looks in `scripts/track/atmosphere.gd`.
