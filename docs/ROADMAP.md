@@ -44,17 +44,19 @@ later: a helper icon that lights up when the kid assist steers (Nintendo's glowi
 | Kid-readable HUD: face + medal colour, lap dots, face strip | #8 |
 | MSAA 4x + SMAA, shadow budget in split screen, 144 Hz frame pacing | #10 |
 
-## Phase B: tracks with moments (next)
+## Phase B: tracks with moments (mostly done 23 Nov 2026, twelfth round)
 
-| Item | Research |
-| --- | --- |
-| Width per point and corner rhythm in the generator | #21 |
-| Hills and automatic banking (sloped collision from the road mesh) | #14 |
-| One jump per track, trick boost, guaranteed landing for the kid | #15 |
-| One signature moment per track (cushion jump, toy train, tunnel) | #17 |
-| Landmarks, corner chevrons, finish arch | research tracks #8 |
+| Item | Research | Status |
+| --- | --- | --- |
+| Hills (road floor collider from the road data, embankments, hill assist) | #14 | Done on both round tracks |
+| One jump per track, trick boost, guaranteed landing for the kid | #15 | Done on both round tracks |
+| Corner arrow boards | research tracks #8 | Done |
+| Automatic banking | #14 | **Tried, off**: karts slid out and spun. Needs kart physics that handles tilted ground (the rolling ball drives around a tilted axis). Generator code ready (`MAX_BANK`) |
+| Width per point and corner rhythm in the generator | #21 | Open: needs `Track.half_width` per point through assist, AI and resets |
+| One signature moment per track (cushion jump, toy train, tunnel) | #17 | Open: best together with the living-room world (phase E) |
+| Hills and a jump on Waldkurs | | Open: Kenney tiles have no slope collision |
 
-## Phase C: playing together
+## Phase C: playing together (next)
 
 | Item | Research |
 | --- | --- |

@@ -1,6 +1,6 @@
 # Handover
 
-Updated 22 Nov 2026, eleventh round: research, roadmap and the first quick wins for feel and look.
+Updated 23 Nov 2026, twelfth round: hills, a jump with tricks, and arrow boards (roadmap phase B).
 
 ## Where it stands
 
@@ -11,6 +11,29 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## New in the twelfth round (phase B: tracks with moments)
+
+![Kurvenkurs: the jump ramp](img/kurvenkurs-jump.png)
+![Kurvenkurs: hill and arrow boards](img/kurvenkurs-hill-arrows.png)
+
+- **Hills:** Kurvenkurs has one (2.2 m), Riesenrunde two (2.6 m and 1.8 m). The road stands on
+  grass embankments. Karts get an arcade hill assist (80 % of the pull along a slope is
+  cancelled), so nobody stalls uphill or runs away downhill.
+- **A jump on the home straight** of both round tracks: a yellow-black striped ramp, 1.3 m high,
+  and a long downhill landing that catches every kart at every speed.
+- **Tricks:** in the air, press drift, item or horn and the kart spins once; landing gives a short
+  boost. In kid mode (and for the AI) the trick happens by itself.
+- **Arrow boards:** red boards with white arrows on the outside of tight corners (22 on
+  Kurvenkurs, 32 on Riesenrunde).
+- **Road collision from the road itself:** a road floor built from the same data as the road
+  mesh (hills and ramp), so the generator stays the only source.
+- **Banked corners: tried and switched off.** With the road tilted, the rolling-ball karts slid
+  out of corners and spun. The code is in the generator (`MAX_BANK`, set to 0); it needs kart
+  physics work first (ROADMAP phase B).
+- Turbo pads glow a little less (they looked pale).
+- Waldkurs (Kenney tiles) is unchanged: still flat.
+- Tests: all kid races still at zero resets and zero wall hits.
 
 ## New in the eleventh round (research, roadmap, quick wins)
 

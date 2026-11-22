@@ -120,6 +120,7 @@ func _spawn_racers() -> void:
 		if racer.assist.kid:
 			racer.kart.max_spark_tier = 2
 			racer.kart.free_start_boost = true
+			racer.kart.auto_trick = true
 		_wire_rumble(racer)
 		if cfg.source is AiSource:
 			_wire_ai(cfg.source as AiSource, racer, 0.93)
@@ -146,6 +147,7 @@ func _spawn_racers() -> void:
 		racer.ai_number = i
 		racer.source = ai
 		racer.assist.is_ai = true
+		racer.kart.auto_trick = true
 		racer.color = Color(0.75, 0.78, 0.85)
 		racer.display_name = driver.display_name if driver else "Computer %d" % (i + 1)
 		racer.kart.engine_db_offset = -9.0
@@ -348,6 +350,7 @@ func _finish_racer(racer: Racer) -> void:
 		racer.source = auto
 		racer.assist.kid = false
 		racer.assist.is_ai = true
+		racer.kart.auto_trick = true
 		racer.kart.catchup = 0.0
 		if racer.kart.visual.driver:
 			racer.kart.visual.driver.set_cheering(true)
@@ -531,7 +534,7 @@ func _smoke_tick(delta: float) -> void:
 		var from := float(Game.smoke_args["trace"])
 		if _smoke_time >= from and _smoke_time < from + 6.0:
 			var r := humans[0]
-			print("TRACE t=%.1f s=%.0f lat=%+.2f head=%+.2f v=%.1f steer=%+.2f" % [_smoke_time, r.progress.s(), r.progress.lateral, r.progress.heading_error, r.kart.speed(), r.kart.intent.steer])
+			print("TRACE t=%.1f s=%.0f lat=%+.2f head=%+.2f v=%.1f steer=%+.2f y=%.2f ground=%s" % [_smoke_time, r.progress.s(), r.progress.lateral, r.progress.heading_error, r.kart.speed(), r.kart.intent.steer, r.kart.sphere.global_position.y, r.kart.colliding])
 	var done := state == State.FINISHED and not Game.smoke_args.has("shot")
 	if Game.mode == Game.Mode.FREE_DRIVE:
 		done = _smoke_time >= minf(limit, 25.0)
@@ -540,10 +543,11 @@ func _smoke_tick(delta: float) -> void:
 	var ok := true
 	print("SMOKE track=%s mode=%s speed=%s time=%.1fs resets=%d" % [Game.track.id, Game.MODE_NAMES[Game.mode], Game.SPEED_NAMES[Game.speed_class], _smoke_time, _resets])
 	for racer in racers:
-		print("SMOKE   %-12s human=%s place=%d laps=%d finished=%s time=%.1f dist=%.0fm wall_hits=%d boosted=%.0f%%" % [
+		print("SMOKE   %-12s human=%s place=%d laps=%d finished=%s time=%.1f dist=%.0fm wall_hits=%d boosted=%.0f%% tricks=%d" % [
 			racer.display_name, racer.is_human, racer.place, maxi(racer.progress.lap, 0), racer.finished,
 			racer.finish_time, racer.progress.distance(), racer.kart.wall_hits,
-			100.0 * racer.kart.boost_time / maxf(racer.finish_time if racer.finished else _smoke_time, 0.1)])
+			100.0 * racer.kart.boost_time / maxf(racer.finish_time if racer.finished else _smoke_time, 0.1),
+			racer.kart.tricks])
 		if racer.is_human:
 			if Game.mode == Game.Mode.FREE_DRIVE:
 				ok = ok and racer.progress.distance() > 60.0

@@ -13,6 +13,9 @@ extends SceneTree
 ## Each track: points of the road's centre in metres (x to the east, y to the south), in
 ## driving order. The first point is the start/finish line; the line runs smoothly through all.
 ## Stars and turbo arrows: [metres after the start line, [sideways offsets in metres]].
+## Hills: [metres where the hill starts, where it ends, height in metres] (smooth, at most ~8 %).
+## Jump: metres after the start line where the ramp's lip is (a striped ramp, then a long
+## downhill landing that catches every kart at every speed). Corners bank by themselves.
 const TRACKS := [
 	{
 		"id": "kurvenkurs", "name": "Kurvenkurs", "sort": 10, "laps": 3, "look": Atmosphere.Look.SUNNY_DAY,
@@ -24,6 +27,8 @@ const TRACKS := [
 		],
 		"stars": [[58.0, [-1.8, 0.0, 1.8]], [124.0, [-1.4]], [186.0, [-1.8, 0.0, 1.8]], [240.0, [1.6]]],
 		"pads": [[12.0, [-1.4, 1.4]], [106.0, [0.0]], [200.0, [1.2]]],
+		"hills": [[112.0, 182.0, 2.2]],
+		"jump": 24.0,
 	},
 	{
 		# The long one: a big loop with an S, a wide hairpin and a long home straight. Two laps.
@@ -42,6 +47,8 @@ const TRACKS := [
 			[395.0, [-1.4]], [480.0, [-1.8, 0.0, 1.8]]],
 		"pads": [[16.0, [-1.4, 1.4]], [120.0, [1.2]], [235.0, [0.0]], [325.0, [0.0]], [420.0, [-1.2]],
 			[505.0, [-1.4, 1.4]]],
+		"hills": [[150.0, 230.0, 2.6], [330.0, 400.0, 1.8]],
+		"jump": 46.0,
 	},
 ]
 
@@ -50,6 +57,16 @@ const ASPHALT := 3.0         # centre line to where the kerb starts
 const ROAD_Y := -0.15        # kart models sit 0.15 m below the physics floor (Kenney kit)
 const STEP := 0.75           # one slice of road every 0.75 m
 const TREE_CLEARANCE := 10.5 # trees keep this far from the centre line, so cameras see past them
+const BANK_PER_CURVATURE := 2.6  # bank angle (rad) per 1/m of smoothed curvature: tight corners bank ~8°
+## Banking is off: banked corners made the rolling-ball karts slide out (22 Nov 2026, see
+## docs/ROADMAP.md). The code stays; 0.16 (~9°) is the value to try with new kart physics.
+const MAX_BANK := 0.0            # radians (~9°)
+const BANK_SMOOTH := 10          # slices averaged on each side, so banking eases in and out
+const JUMP_RISE := 12.0          # metres of ramp up to the lip
+const JUMP_HEIGHT := 1.3         # metres
+const JUMP_FALL := 18.0          # metres of downhill landing after the lip
+const SKIRT_SLOPE := 1.5         # embankment: metres outward per metre of height
+const CHEVRON_CURVATURE := 1.0 / 24.0  # corners tighter than this get arrow boards
 
 const C_ASPHALT := Color("4a4c5a")
 const C_LINE := Color("e9ecf5")
@@ -58,6 +75,7 @@ const C_KERB_WHITE := Color("f3f4f8")
 const C_BARRIER := Color("2f7fe8")
 const C_GRASS := Color("3fb44a")
 const C_BLACK := Color("2a2b33")
+const C_RAMP := Color("ffc81e")
 
 ## Barrier cross-section: [metres outward from the wall face, metres above the road].
 const BARRIER: Array[Vector2] = [
@@ -70,6 +88,11 @@ var _points: Array = []
 var _pos := PackedVector3Array()
 var _right := PackedVector3Array()
 var _count := 0
+var _h := PackedFloat32Array()     # height of the centre line per slice (physics floor)
+var _bank := PackedFloat32Array()  # tan(bank angle) per slice: + = left side higher
+var _curv := PackedFloat32Array()  # smoothed signed curvature per slice, + = bends right
+var _ramp_from := -1               # slices of the jump ramp (striped)
+var _ramp_to := -1
 
 func _process(_delta: float) -> bool:
 	# "-- --track=<id>" builds one track; without it, all of them.
@@ -134,6 +157,8 @@ func _build(cfg: Dictionary) -> Error:
 		push_error("A corner is tighter than the road is wide.")
 		return ERR_INVALID_DATA
 
+	_profile(cfg, length)
+
 	var root := Track.new()
 	root.name = "Track"
 	root.half_width = HALF_WIDTH
@@ -154,13 +179,28 @@ func _build(cfg: Dictionary) -> Error:
 	_add_trees(root, lo, hi)
 	_add_gate(root)
 
+	# The racing line follows the hills: one point every 3 m on the floor's centre line.
+	var line := Curve3D.new()
+	line.bake_interval = 0.2
+	# Smooth handles (like the original line), so curvature has no spikes at the points.
+	var picks: Array[int] = []
+	for i in range(0, _count, 4):
+		picks.append(i)
+	var m := picks.size()
+	for j in m + 1:
+		var p := _pos[picks[j % m]]
+		var handle := (_pos[picks[(j + 1) % m]] - _pos[picks[(j - 1 + m) % m]]) / 6.0
+		line.add_point(p, -handle, handle)
+	curve = line
+	_add_floor(root)
+
 	var path := Path3D.new()
 	path.name = "RacingLine"
 	path.curve = curve
 	root.add_child(path)
 	path.owner = root
 	var star_count := TrackBuildCommon.add_stars(root, curve, cfg["stars"])
-	var pad_count := TrackBuildCommon.add_pads(root, curve, cfg["pads"], ROAD_Y)
+	var pad_count := TrackBuildCommon.add_pads(root, curve, cfg["pads"], ROAD_Y, _bank_at_s)
 
 	var err := TrackBuildCommon.save_scene(root, _id)
 	if err == OK:
@@ -169,16 +209,91 @@ func _build(cfg: Dictionary) -> Error:
 	root.free()
 	return err
 
+# --- Height, banking ------------------------------------------------------------------------
+
+## Fills the heights (hills, jump) and banking of every slice and lifts the centre line.
+func _profile(cfg: Dictionary, length: float) -> void:
+	_h.resize(_count)
+	_bank.resize(_count)
+	_curv.resize(_count)
+	var raw := PackedFloat32Array()
+	raw.resize(_count)
+	for i in _count:
+		var d0 := _pos[i] - _pos[(i - 3 + _count) % _count]
+		var d1 := _pos[(i + 3) % _count] - _pos[i]
+		d0.y = 0.0
+		d1.y = 0.0
+		raw[i] = d0.normalized().signed_angle_to(d1.normalized(), Vector3.DOWN) / (3.0 * STEP)
+	for i in _count:
+		var sum := 0.0
+		for k in range(-BANK_SMOOTH, BANK_SMOOTH + 1):
+			sum += raw[(i + k + _count) % _count]
+		_curv[i] = sum / (2 * BANK_SMOOTH + 1)
+	var lip: float = cfg.get("jump", -1000.0)
+	_ramp_from = -1
+	_ramp_to = -1
+	for i in _count:
+		var s := length * i / _count
+		var h := 0.0
+		for hill: Array in cfg.get("hills", []):
+			var s0: float = hill[0]
+			var s1: float = hill[1]
+			if s >= s0 and s <= s1:
+				h += float(hill[2]) * 0.5 * (1.0 - cos(TAU * (s - s0) / (s1 - s0)))
+		if s >= lip - JUMP_RISE and s <= lip:
+			var u := (s - (lip - JUMP_RISE)) / JUMP_RISE
+			h += JUMP_HEIGHT * u * u
+			if _ramp_from < 0:
+				_ramp_from = i
+			_ramp_to = i
+		elif s > lip and s <= lip + JUMP_FALL:
+			var u := (s - lip) / JUMP_FALL
+			h += JUMP_HEIGHT * (1.0 - u) * (1.0 - u)
+		# No banking on the start straight (grid, gate) and on the jump.
+		var calm := s < 12.0 or s > length - 32.0 or (s > lip - JUMP_RISE - 8.0 and s < lip + JUMP_FALL + 4.0)
+		var angle := 0.0 if calm else clampf(_curv[i] * BANK_PER_CURVATURE, -MAX_BANK, MAX_BANK)
+		_bank[i] = tan(angle)
+		_h[i] = h
+	# Ease the bank in and out once more, then lift the road so its low edge never dips
+	# under the flat ground.
+	var eased := PackedFloat32Array()
+	eased.resize(_count)
+	for i in _count:
+		var sum := 0.0
+		for k in range(-BANK_SMOOTH, BANK_SMOOTH + 1):
+			sum += _bank[(i + k + _count) % _count]
+		eased[i] = sum / (2 * BANK_SMOOTH + 1)
+	_bank = eased
+	var top := 0.0
+	for i in _count:
+		_h[i] += (HALF_WIDTH + 0.6) * absf(_bank[i])
+		_pos[i].y = _h[i]
+		top = maxf(top, _h[i])
+	print("%s profile: highest point %.1f m, steepest bank %.1f°" % [_id, top, rad_to_deg(atan(_max_abs(_bank)))])
+
+static func _max_abs(values: PackedFloat32Array) -> float:
+	var m := 0.0
+	for v in values:
+		m = maxf(m, absf(v))
+	return m
+
+## Bank (as tan) at a distance along the line, for placing turbo arrows flat on the road.
+func _bank_at_s(s: float) -> float:
+	var length := _count * STEP
+	return _bank[posmod(int(round(s / length * _count)), _count)]
+
 # --- Geometry helpers ----------------------------------------------------------------------
 
 ## A point of road slice i: `d` metres to the right of the centre line, `h` metres above the road.
+## Follows the slice's height and bank.
 func _at(i: int, d: float, h: float) -> Vector3:
 	var k := posmod(i, _count)
-	return _pos[k] + _right[k] * d + Vector3(0, ROAD_Y + h, 0)
+	return _pos[k] + _right[k] * d + Vector3(0, ROAD_Y + h - d * _bank[k], 0)
 
 ## A surface normal of slice i from a cross-section normal (sideways part, upward part).
 func _normal(i: int, sideways: float, up: float) -> Vector3:
-	return (_right[posmod(i, _count)] * sideways + Vector3.UP * up).normalized()
+	var k := posmod(i, _count)
+	return (_right[k] * (sideways + up * _bank[k]) + Vector3.UP * up).normalized()
 
 func _quad(st: SurfaceTool, v: Array[Vector3], normals: Array[Vector3], color: Color) -> void:
 	# Godot shows the side where the corners run clockwise. Flip the order if the face would
@@ -209,7 +324,10 @@ func _add_road(root: Node3D) -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var up := Vector2(0, 1)
-	_ribbon(st, -ASPHALT, 0.0, up, ASPHALT, 0.0, up, func(_i: int) -> Color: return C_ASPHALT)
+	_ribbon(st, -ASPHALT, 0.0, up, ASPHALT, 0.0, up, func(i: int) -> Color:
+		if i >= _ramp_from and i <= _ramp_to and _ramp_from >= 0:
+			return C_RAMP if (i >> 1) % 2 == 0 else C_BLACK
+		return C_ASPHALT)
 	# Edge lines and a dashed centre line.
 	for side: float in [-1.0, 1.0]:
 		_ribbon(st, side * (ASPHALT - 0.3), 0.012, up, side * (ASPHALT - 0.14), 0.012, up, func(_i: int) -> Color: return C_LINE)
@@ -245,6 +363,8 @@ func _add_road(root: Node3D) -> void:
 			_ribbon(st, side * (HALF_WIDTH + p0.x), p0.y, Vector2(side * point_normals[k].x, point_normals[k].y),
 				side * (HALF_WIDTH + p1.x), p1.y, Vector2(side * point_normals[k + 1].x, point_normals[k + 1].y),
 				func(_i: int) -> Color: return C_BARRIER)
+	_add_skirts(st)
+	_add_chevrons(st)
 	st.index()
 	var material := StandardMaterial3D.new()
 	material.vertex_color_use_as_albedo = true
@@ -261,6 +381,82 @@ func _add_road(root: Node3D) -> void:
 	root.add_child(road)
 	road.owner = root
 	print("road mesh: %d vertices" % mesh.surface_get_array_len(0))
+
+## Grass embankments from the barriers down to the lawn wherever the road is raised.
+func _add_skirts(st: SurfaceTool) -> void:
+	var edge := HALF_WIDTH + BARRIER[BARRIER.size() - 1].x
+	for side: float in [-1.0, 1.0]:
+		for i in _count:
+			var a := _at(i, side * edge, -0.1)
+			var b := _at(i + 1, side * edge, -0.1)
+			var rise_a := a.y - (ROAD_Y - 0.03)
+			var rise_b := b.y - (ROAD_Y - 0.03)
+			if rise_a < 0.05 and rise_b < 0.05:
+				continue
+			var ka := posmod(i, _count)
+			var kb := posmod(i + 1, _count)
+			var a_low := Vector3(_pos[ka].x, ROAD_Y - 0.03, _pos[ka].z) + _right[ka] * side * (edge + maxf(rise_a, 0.0) * SKIRT_SLOPE)
+			var b_low := Vector3(_pos[kb].x, ROAD_Y - 0.03, _pos[kb].z) + _right[kb] * side * (edge + maxf(rise_b, 0.0) * SKIRT_SLOPE)
+			var n := (_right[ka] * side + Vector3.UP * SKIRT_SLOPE).normalized()
+			var v: Array[Vector3] = [a, a_low, b_low, b]
+			var normals: Array[Vector3] = [n, n, n, n]
+			_quad(st, v, normals, C_GRASS)
+
+## Red boards with white arrows on the outside of tight corners, pointing the way.
+func _add_chevrons(st: SurfaceTool) -> void:
+	var last := -100
+	var boards := 0
+	for i in _count:
+		if absf(_curv[i]) < CHEVRON_CURVATURE or i - last < 8:
+			continue
+		last = i
+		boards += 1
+		var out := -signf(_curv[i])  # right bend: the outside is the left side
+		var center := _at(i, out * (HALF_WIDTH + 1.1), 1.05)
+		var tangent := (_pos[(i + 1) % _count] - _pos[(i - 1 + _count) % _count])
+		tangent.y = 0.0
+		tangent = tangent.normalized()
+		var inward := -_right[i] * out
+		var n := (-tangent * 0.8 + inward * 0.6).normalized()  # faces karts coming into the corner
+		var across := Vector3.UP.cross(n).normalized()
+		if across.dot(inward) < 0.0:
+			across = -across  # arrows point toward the inside of the corner
+		var normals: Array[Vector3] = [n, n, n, n]
+		var corner := func(u: float, v: float, lift: float) -> Vector3:
+			return center + across * u + Vector3.UP * v + n * lift
+		_quad(st, [corner.call(-0.75, -0.45, 0.0), corner.call(0.75, -0.45, 0.0), corner.call(0.75, 0.45, 0.0), corner.call(-0.75, 0.45, 0.0)], normals, C_KERB_RED)
+		for u0: float in [-0.5, -0.05]:
+			_quad(st, [corner.call(u0, -0.35, 0.02), corner.call(u0 + 0.16, -0.35, 0.02), corner.call(u0 + 0.46, 0.0, 0.02), corner.call(u0 + 0.3, 0.0, 0.02)], normals, C_KERB_WHITE)
+			_quad(st, [corner.call(u0 + 0.3, 0.0, 0.02), corner.call(u0 + 0.46, 0.0, 0.02), corner.call(u0 + 0.16, 0.35, 0.02), corner.call(u0, 0.35, 0.02)], normals, C_KERB_WHITE)
+		# Post down to the ground.
+		var foot := Vector3(center.x, ROAD_Y - 0.03, center.z)
+		_quad(st, [foot - across * 0.06, foot + across * 0.06, center + across * 0.06 - Vector3.UP * 0.45, center - across * 0.06 - Vector3.UP * 0.45], normals, C_BLACK)
+	print("arrow boards: %d" % boards)
+
+## The floor the karts drive on along the road: follows hills, jump and banking. The flat
+## ground collider stays under everything else.
+func _add_floor(root: Node3D) -> void:
+	var faces := PackedVector3Array()
+	var w := HALF_WIDTH + 0.6
+	for i in _count:
+		var a := _at(i, -w, -ROAD_Y)
+		var b := _at(i, w, -ROAD_Y)
+		var c := _at(i + 1, w, -ROAD_Y)
+		var d := _at(i + 1, -w, -ROAD_Y)
+		# Wound so the top is the front face: the kart's ground ray ignores back faces.
+		faces.append_array([a, c, b, a, d, c])
+	var shape := ConcavePolygonShape3D.new()
+	shape.backface_collision = true
+	shape.set_faces(faces)
+	var body := StaticBody3D.new()
+	body.name = "RoadFloor"
+	var collision := CollisionShape3D.new()
+	collision.name = "Shape"
+	collision.shape = shape
+	body.add_child(collision)
+	root.add_child(body)
+	body.owner = root
+	collision.owner = root
 
 ## Invisible walls the karts bounce off, at the wall face on both sides.
 func _add_walls(root: Node3D) -> void:

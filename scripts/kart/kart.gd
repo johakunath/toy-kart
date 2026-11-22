@@ -30,6 +30,12 @@ const START_BOOST_SECONDS := 1.0 ## gas held when "Los!" comes: a start boost, n
 const START_BOOST_STRENGTH := 0.3
 const WALL_BOUNCE := 0.25        ## share of the speed into a wall that bounces back
 const WALL_STEER := 0.5          ## how much a glancing wall hit turns the nose along the wall
+## Arcade hills: this share of the pull of gravity along a slope is cancelled, so karts climb
+## hills without stalling and roll down without running away.
+const HILL_ASSIST := 0.8
+const TRICK_MIN_AIR := 0.15      ## seconds in the air before a trick earns a landing boost
+const TRICK_BOOST_SECONDS := 0.6
+const TRICK_BOOST_STRENGTH := 0.2
 const BOOST_KICK := 3.5          ## m/s added at once when a boost starts
 const STAR_BOOST_SECONDS := 1.3  ## a used star: 40 % faster for this long
 const BOOST_PUSH := 22.0         ## m/s² pushing the kart up to its boost speed
@@ -63,6 +69,9 @@ var wall_hits := 0              ## how often the kart hit a wall hard (for the c
 var max_spark_tier := 3
 ## Kid mode: a start boost even without gas.
 var free_start_boost := false
+## Kid mode and AI: a trick in the air happens by itself (others press drift, use or horn).
+var auto_trick := false
+var tricks := 0                  ## landed tricks (the checks report them)
 var spark_tier := 0
 
 var kart_def: KartDef
@@ -91,6 +100,8 @@ var _start_gas := false
 var _was_frozen := true
 var _sparks: Array[GPUParticles3D] = []
 var _spark_sound: AudioStreamPlayer3D
+var _air_time := 0.0
+var _trick := false
 var _prev_position := Vector3.ZERO
 var _normal := Vector3.UP
 var _marker_time := 0.0
@@ -382,11 +393,17 @@ func _physics_process(delta: float) -> void:
 			if visual.body:
 				visual.body.position = visual.body_rest - Vector3(0, 0.1, 0)  # landing bounce
 			input.z = 0.0
+			_land()
 		_normal = raycast.get_collision_normal()
 		if _normal.dot(container.global_basis.y) > 0.5:
 			var xform := _align_with_y(container.global_transform, _normal)
 			container.global_transform = container.global_transform.interpolate_with(xform, 0.2).orthonormalized()
 	colliding = raycast.is_colliding()
+	if not colliding and not frozen:
+		_air_time += delta
+		var pressed := intent.drift or intent.use or intent.horn
+		if not _trick and _air_time > 0.08 and (auto_trick or pressed):
+			_start_trick()
 
 	var accel_stat := kart_def.acceleration if kart_def else 1.0
 	var target_speed := input.z
@@ -425,6 +442,7 @@ func _physics_process(delta: float) -> void:
 			_boost_strength = 0.0
 
 	_glance_off_walls()
+	_hill_assist()
 
 	_effect_engine(delta)
 	_effect_rumble(delta)
@@ -548,6 +566,36 @@ func _align_with_y(xform: Transform3D, new_y: Vector3) -> Transform3D:
 	xform.basis = xform.basis.orthonormalized()
 	return xform
 
+func _hill_assist() -> void:
+	if not colliding or frozen:
+		return
+	var g := Vector3(0, -ProjectSettings.get_setting("physics/3d/default_gravity", 9.8) * sphere.gravity_scale, 0)
+	var along := g - _normal * g.dot(_normal)
+	if along.length_squared() < 0.01:
+		return
+	sphere.apply_central_force(-along * sphere.mass * HILL_ASSIST)
+
+## A spin in the air: the kart turns once around, the driver jumps up in the seat.
+func _start_trick() -> void:
+	_trick = true
+	_spark_sound.pitch_scale = 1.7
+	_spark_sound.play()
+	if visual.driver:
+		visual.driver.hop(1.2)
+	var tween := create_tween()
+	tween.tween_property(visual, "rotation:y", TAU, 0.4).from(0.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(func() -> void: visual.rotation.y = 0.0)
+
+func _land() -> void:
+	if _trick and _air_time >= TRICK_MIN_AIR:
+		tricks += 1
+		boost(TRICK_BOOST_SECONDS, TRICK_BOOST_STRENGTH)
+		rumble_requested.emit(0.5, 0.6, 0.15)
+	elif _air_time > 0.2:
+		rumble_requested.emit(0.3, 0.5, 0.1)
+	_trick = false
+	_air_time = 0.0
+
 ## Walls take away only the speed going into them: the kart glances off and keeps rolling
 ## along the wall with its nose turned that way, instead of stopping dead.
 func _glance_off_walls() -> void:
@@ -581,7 +629,9 @@ func _glance_off_walls() -> void:
 			if absf(diff) < PI * 0.5:
 				container.rotate_y(diff * WALL_STEER)
 
-func _on_sphere_body_entered(_body: Node) -> void:
+func _on_sphere_body_entered(body: Node) -> void:
+	if body.name == "Ground" or body.name == "RoadFloor":
+		return  # rolling from the flat ground onto the road floor is not a bump
 	var impact := absf(linear_velocity.dot(container.global_basis.z))
 	if impact < 1.0:
 		return

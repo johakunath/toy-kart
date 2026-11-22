@@ -21,13 +21,14 @@ static func add_stars(root: Node3D, curve: Curve3D, rows: Array) -> int:
 			var star := star_scene.instantiate() as Node3D
 			star.name = "Star%d" % number
 			number += 1
-			star.position = Vector3(here.x, 0.0, here.z) + right * lateral
+			star.position = Vector3(here.x, here.y, here.z) + right * lateral
 			stars.add_child(star)
 			star.owner = root
 	return number - 1
 
 ## Adds turbo arrows on the road. `rows` holds [metres from the start, [sideways offsets]].
-static func add_pads(root: Node3D, curve: Curve3D, rows: Array, road_y: float) -> int:
+## `bank_at` (optional) gives tan(bank) at a distance, so the arrows lie flat on banked road.
+static func add_pads(root: Node3D, curve: Curve3D, rows: Array, road_y: float, bank_at := Callable()) -> int:
 	var pads := Node3D.new()
 	pads.name = "BoostPads"
 	root.add_child(pads)
@@ -45,8 +46,14 @@ static func add_pads(root: Node3D, curve: Curve3D, rows: Array, road_y: float) -
 			var pad := BoostPad.new()
 			pad.name = "Pad%d" % number
 			number += 1
-			var origin := Vector3(here.x, road_y + 0.15, here.z) + right * lateral
-			pad.transform = Transform3D(Basis(Vector3.UP.cross(dir), Vector3.UP, dir), origin)
+			var bank: float = bank_at.call(s) if bank_at.is_valid() else 0.0
+			var slope := (ahead - here)
+			var forward := slope.normalized() if slope.length() > 0.001 else dir
+			var origin := Vector3(here.x, here.y + road_y + 0.15 - lateral * bank, here.z) + right * lateral
+			var up := (forward.cross(right) * -1.0).normalized()
+			up = (up + right * bank).normalized()
+			var side := up.cross(forward).normalized()
+			pad.transform = Transform3D(Basis(side, up, up.cross(side) * -1.0).orthonormalized(), origin)
 			pads.add_child(pad)
 			pad.owner = root
 	return number - 1
