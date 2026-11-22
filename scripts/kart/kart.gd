@@ -6,7 +6,10 @@ class_name Kart extends Node3D
 signal bumped(strength: float)
 signal boost_started
 signal honked
-signal item_changed(has_item: bool)
+signal item_changed(item: int)
+## The kart used a tickle bubble: the race picks the target and flies the bubble.
+signal tickle_thrown
+signal bricks_changed(count: int)
 signal spark_tier_changed(tier: int)
 ## A request for controller vibration (only human karts on a pad listen to it).
 signal rumble_requested(weak: float, strong: float, seconds: float)
@@ -37,7 +40,15 @@ const TRICK_MIN_AIR := 0.15      ## seconds in the air before a trick earns a la
 const TRICK_BOOST_SECONDS := 0.6
 const TRICK_BOOST_STRENGTH := 0.2
 const BOOST_KICK := 3.5          ## m/s added at once when a boost starts
-const STAR_BOOST_SECONDS := 1.3  ## a used star: 40 % faster for this long
+const TURBO_SECONDS := 1.0
+const TURBO_STRENGTH := 0.35
+const SUPERSTAR_SECONDS := 2.2   ## long boost, and nothing can wobble the kart meanwhile
+const SUPERSTAR_STRENGTH := 0.45
+const BUBBLE_SECONDS := 12.0     ## a shield that pops one tickle
+const SPRING_JUMP := 5.5         ## m/s straight up
+const WOBBLE_SECONDS := 0.7
+const MAX_BRICKS := 10           ## bricks held at once; each gives 1 % more top speed
+const BRICK_SPEED := 0.01
 const BOOST_PUSH := 22.0         ## m/s² pushing the kart up to its boost speed
 const BALL_RADIUS := 0.5
 
@@ -63,7 +74,17 @@ var class_factor := 1.0          ## speed class: Game.SPEED_FACTOR
 var pace := 1.0                  ## AI pacing
 var catchup := 0.0               ## 0..0.3 extra top speed for a kid who is behind
 var engine_db_offset := 0.0      ## AI karts are quieter
-var has_item := false
+var item := Items.NONE
+var has_item: bool:
+	get:
+		return item != Items.NONE
+## Set by the race: returns the item this kart gets from a star (Items.pick with its odds).
+var item_picker := Callable()
+var wobbles := 0                 ## how often the kart was tickled (the checks report it)
+var bricks := 0                  ## held now (0..MAX_BRICKS)
+var bricks_picked := 0           ## picked up this race (for the family jar)
+## Off for AI karts in a race with a kid: their pacing around him must not be beaten by bricks.
+var brick_bonus := true
 var wall_hits := 0              ## how often the kart hit a wall hard (for the checks)
 ## Kid mode: steering hard (intent.spark) charges sparks too, up to this level.
 var max_spark_tier := 3
@@ -102,6 +123,12 @@ var _sparks: Array[GPUParticles3D] = []
 var _spark_sound: AudioStreamPlayer3D
 var _air_time := 0.0
 var _trick := false
+var _spring_trick := false
+var _shield_left := 0.0
+var _star_left := 0.0
+var _shield: MeshInstance3D
+var _star_light: OmniLight3D
+var _pop_sound: AudioStreamPlayer3D
 var _prev_position := Vector3.ZERO
 var _normal := Vector3.UP
 var _marker_time := 0.0
@@ -113,6 +140,13 @@ func _ready() -> void:
 	marker.visible = false
 	_build_flames()
 	_build_sparks()
+	_build_shield()
+	_pop_sound = AudioStreamPlayer3D.new()
+	_pop_sound.name = "PopSound"
+	_pop_sound.stream = load("res://assets/sfx/pop.wav")
+	_pop_sound.bus = &"Effects"
+	_pop_sound.max_distance = 25.0
+	container.add_child(_pop_sound)
 	_spark_sound = AudioStreamPlayer3D.new()
 	_spark_sound.name = "SparkSound"
 	_spark_sound.stream = load("res://assets/sfx/select.wav")
@@ -188,7 +222,7 @@ func speed() -> float:
 func speed_multiplier() -> float:
 	var stat := kart_def.top_speed if kart_def else 1.0
 	var boost := _boost_factor()
-	return class_factor * stat * pace * (1.0 + catchup) * (1.0 + boost)
+	return class_factor * stat * pace * (1.0 + catchup) * (1.0 + boost) * (1.0 + (bricks * BRICK_SPEED if brick_bonus else 0.0))
 
 ## Turn rate in rad/s at full steer.
 func steer_rate() -> float:
@@ -337,15 +371,113 @@ func _push_forward(dv: float) -> void:
 	sphere.angular_velocity += container.global_basis.x * (dv / BALL_RADIUS)
 
 func give_item() -> void:
-	if not has_item:
-		has_item = true
-		item_changed.emit(true)
+	if item != Items.NONE:
+		return
+	item = item_picker.call() if item_picker.is_valid() else Items.TURBO
+	item_changed.emit(item)
 
 func use_item() -> void:
-	if has_item:
-		has_item = false
-		item_changed.emit(false)
-		boost(STAR_BOOST_SECONDS, 0.4)
+	if item == Items.NONE:
+		return
+	var used := item
+	item = Items.NONE
+	item_changed.emit(Items.NONE)
+	match used:
+		Items.TURBO:
+			boost(TURBO_SECONDS, TURBO_STRENGTH)
+		Items.SUPERSTAR:
+			boost(SUPERSTAR_SECONDS, SUPERSTAR_STRENGTH)
+			_star_left = SUPERSTAR_SECONDS
+			_star_light.visible = true
+		Items.BUBBLE:
+			_shield_left = BUBBLE_SECONDS
+			_shield.visible = true
+			_spark_sound.pitch_scale = 0.8
+			_spark_sound.play()
+		Items.SPRING:
+			if colliding:
+				sphere.linear_velocity.y = SPRING_JUMP
+				_spring_trick = true
+				impact_sound.volume_db = -8.0 + engine_db_offset
+				impact_sound.pitch_scale = 1.6
+				impact_sound.play()
+		Items.TICKLE:
+			tickle_thrown.emit()
+
+## Hit by a tickle bubble: a shield pops, a superstar shrugs it off, otherwise the kart spins
+## round twice with a giggle and loses only a little speed.
+func wobble() -> void:
+	if _star_left > 0.0:
+		return
+	if _shield_left > 0.0:
+		_shield_left = 0.0
+		_shield.visible = false
+		boost_sound.pitch_scale = 1.4
+		boost_sound.play()
+		return
+	wobbles += 1
+	sphere.linear_velocity *= 0.9
+	if bricks > 0:
+		bricks -= 1
+		bricks_changed.emit(bricks)
+	if visual.driver:
+		visual.driver.knock(2.0)
+		visual.driver.hop(1.0)
+	horn_sound.play()
+	rumble_requested.emit(0.6, 0.3, 0.3)
+	var tween := create_tween()
+	tween.tween_property(visual, "rotation:y", TAU * 2.0, WOBBLE_SECONDS).from(0.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(func() -> void: visual.rotation.y = 0.0)
+
+func add_brick() -> void:
+	bricks_picked += 1
+	bricks = mini(bricks + 1, MAX_BRICKS)
+	_pop_sound.pitch_scale = 1.0 + 0.06 * bricks
+	_pop_sound.play()
+	rumble_requested.emit(0.2, 0.0, 0.05)
+	bricks_changed.emit(bricks)
+
+## After a rescue: the kart drops back onto the road from above with a bounce.
+func drop_in() -> void:
+	var tween := create_tween()
+	tween.tween_property(visual, "position:y", 0.0, 0.5).from(2.5).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	_pop_sound.pitch_scale = 0.8
+	_pop_sound.play()
+	rumble_requested.emit(0.3, 0.4, 0.15)
+
+func is_protected() -> bool:
+	return _star_left > 0.0 or _shield_left > 0.0
+
+## A see-through bubble around the kart (shield) and a warm light (superstar).
+func _build_shield() -> void:
+	_shield = MeshInstance3D.new()
+	_shield.name = "Shield"
+	var sphere_mesh := SphereMesh.new()
+	sphere_mesh.radius = 1.1
+	sphere_mesh.height = 2.0
+	var mat := StandardMaterial3D.new()
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = Color(0.55, 0.8, 1.0, 0.25)
+	mat.rim_enabled = true
+	mat.rim = 1.0
+	mat.emission_enabled = true
+	mat.emission = Color(0.4, 0.7, 1.0)
+	mat.emission_energy_multiplier = 0.4
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	sphere_mesh.material = mat
+	_shield.mesh = sphere_mesh
+	_shield.position = Vector3(0, 0.6, 0)
+	_shield.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_shield.visible = false
+	container.add_child(_shield)
+	_star_light = OmniLight3D.new()
+	_star_light.name = "StarLight"
+	_star_light.light_color = Color(1.0, 0.8, 0.3)
+	_star_light.light_energy = 3.0
+	_star_light.omni_range = 3.5
+	_star_light.position = Vector3(0, 1.2, 0)
+	_star_light.visible = false
+	container.add_child(_star_light)
 
 func honk() -> void:
 	horn_sound.play()
@@ -402,7 +534,7 @@ func _physics_process(delta: float) -> void:
 	if not colliding and not frozen:
 		_air_time += delta
 		var pressed := intent.drift or intent.use or intent.horn
-		if not _trick and _air_time > 0.08 and (auto_trick or pressed):
+		if not _trick and _air_time > 0.08 and (auto_trick or pressed or _spring_trick):
 			_start_trick()
 
 	var accel_stat := kart_def.acceleration if kart_def else 1.0
@@ -443,6 +575,13 @@ func _physics_process(delta: float) -> void:
 
 	_glance_off_walls()
 	_hill_assist()
+	if _shield_left > 0.0:
+		_shield_left -= delta
+		_shield.visible = _shield_left > 0.0 and (_shield_left > 2.0 or fmod(_shield_left, 0.3) > 0.12)
+	if _star_left > 0.0:
+		_star_left -= delta
+		_star_light.light_energy = 2.0 + sin(_star_left * 20.0) * 1.5
+		_star_light.visible = _star_left > 0.0
 
 	_effect_engine(delta)
 	_effect_rumble(delta)
@@ -594,6 +733,7 @@ func _land() -> void:
 	elif _air_time > 0.2:
 		rumble_requested.emit(0.3, 0.5, 0.1)
 	_trick = false
+	_spring_trick = false
 	_air_time = 0.0
 
 ## Walls take away only the speed going into them: the kart glances off and keeps rolling
@@ -638,6 +778,7 @@ func _on_sphere_body_entered(body: Node) -> void:
 	rumble_requested.emit(clampf(impact / 8.0, 0.2, 0.6), clampf(impact / 6.0, 0.2, 1.0), 0.12)
 	wall_hits += 1
 	if not impact_sound.playing:
+		impact_sound.pitch_scale = 1.0
 		impact_sound.volume_db = clampf(remap(impact, 0.0, 6.0, -20.0, 0.0), -20.0, 0.0) + engine_db_offset
 		impact_sound.play()
 	if visual.driver:

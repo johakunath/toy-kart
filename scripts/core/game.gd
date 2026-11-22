@@ -29,6 +29,8 @@ var players: Array[PlayerConfig] = []
 var track: TrackDef
 var music_on := true
 var rumble_on := true
+## Team race: all humans are one team against the AI toys (a race, scored by the best human).
+var team_race := false
 
 var drivers: Array[DriverDef] = []
 var karts: Array[KartDef] = []
@@ -152,6 +154,14 @@ func submit_time(speed: int, seconds: float) -> bool:
 	_settings.set_value("best_times", "%s_%d" % [track.id, speed], seconds)
 	_save()
 	return true
+
+## Bricks the family has collected in all races together (the jar on the finish screen).
+func family_bricks() -> int:
+	return _settings.get_value("family", "bricks", 0)
+
+func add_family_bricks(count: int) -> void:
+	_settings.set_value("family", "bricks", family_bricks() + count)
+	_save()
 
 func _save() -> void:
 	if save_enabled:

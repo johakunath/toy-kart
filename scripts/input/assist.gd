@@ -12,14 +12,14 @@ class_name Assist extends RefCounted
 ##   - Steering hard in the middle of the road charges drift sparks (blue, then orange);
 ##     letting go fires a boost. Near the edge the charge is dropped, never fired.
 ##   - A start boost every time, bigger feeling with gas held.
-##   - Pickups fire by themselves.
+##   - Items fire by themselves after a second (so he sees which one he got).
 ##   - Reset onto the track after 2 s off course, or when stuck.
 ## Full mode and AI: the intent passes through; only a rescue when lost or stuck.
 
 const KID_OFF_COURSE_SECONDS := 2.0
 const KID_STUCK_SECONDS := 2.5
 const OTHER_RESCUE_SECONDS := 4.0
-const AUTO_USE_DELAY := 0.35
+const AUTO_USE_DELAY := 1.0   ## the item roulette shows first, then the item fires
 const WALL_MARGIN := 1.3         ## the assist steers back to this far from the walls
 const EDGE_ZONE := 2.6           ## metres from the wall where the assist starts to take over
 const LIGHT_HAND := 0.15         ## how much the assist helps in the middle of the road (0..1)

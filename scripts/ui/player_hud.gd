@@ -17,6 +17,11 @@ var _lap_box: Control
 var _lap: Label
 var _time: Label
 var _item: TextureRect
+var _item_back: Panel
+var _roulette := 0.0             ## seconds of item roulette left
+var _roulette_tick := 0.0
+var _shown_item := Items.NONE
+var _brick_dots: Array[Panel] = []
 var _message: Label
 var _message_left := 0.0
 var _item_pulse := 0.0
@@ -91,11 +96,38 @@ func setup(p_racer: Racer, mode: int, total_racers: int, all_racers: Array[Racer
 			_faces[other] = face
 
 	# Held star, bottom centre.
-	_item = UiKit.icon_rect("star", 130, UiKit.SUN)
-	UiKit.pin(_item, Control.PRESET_CENTER_BOTTOM, Vector2(-65, -175), Vector2(130, 130))
-	_item.pivot_offset = Vector2(65, 65)
-	_item.visible = false
-	add_child(_item)
+	# Item slot, bottom centre: a white disc with the item; a short roulette when one arrives.
+	_item_back = Panel.new()
+	_item_back.add_theme_stylebox_override("panel", UiKit.box(Color(1, 1, 1, 0.85), 80, UiKit.INK, 6))
+	_item_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	UiKit.pin(_item_back, Control.PRESET_CENTER_BOTTOM, Vector2(-80, -190), Vector2(160, 160))
+	_item_back.pivot_offset = Vector2(80, 80)
+	_item_back.visible = false
+	add_child(_item_back)
+	_item = UiKit.icon_rect("item_turbo", 124, Color.WHITE)
+	_item.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_item.offset_left = 18
+	_item.offset_top = 18
+	_item.offset_right = -18
+	_item.offset_bottom = -18
+	_item_back.add_child(_item)
+
+	# Bricks: a brick and ten dots that fill up (each brick = a little more speed).
+	var brick_row := HBoxContainer.new()
+	brick_row.add_theme_constant_override("separation", 6)
+	brick_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	brick_row.add_child(UiKit.icon_rect("brick", 64, Color.WHITE))
+	for i in Kart.MAX_BRICKS:
+		var dot := Panel.new()
+		dot.custom_minimum_size = Vector2(18, 18)
+		dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		brick_row.add_child(dot)
+		_brick_dots.append(dot)
+	UiKit.pin(brick_row, Control.PRESET_BOTTOM_LEFT, Vector2(34, -190))
+	brick_row.visible = mode != Game.Mode.TIME_TRIAL
+	add_child(brick_row)
+	_on_bricks_changed(0)
 
 	# Name tag, bottom left.
 	var tag := PanelContainer.new()
@@ -126,6 +158,7 @@ func setup(p_racer: Racer, mode: int, total_racers: int, all_racers: Array[Racer
 	keys_row.add_child(_keys)
 
 	racer.kart.item_changed.connect(_on_item_changed)
+	racer.kart.bricks_changed.connect(_on_bricks_changed)
 
 func refresh(race_time: float, delta: float) -> void:
 	if _place.visible:
@@ -139,9 +172,21 @@ func refresh(race_time: float, delta: float) -> void:
 	_lap.text = "%d/%d" % [racer.display_lap(), Game.track.laps]
 	if _time.visible:
 		_time.text = UiKit.format_time(racer.finish_time if racer.finished else race_time)
-	if _item.visible:
-		_item_pulse += delta * 8.0
-		_item.scale = Vector2.ONE * (1.0 + sin(_item_pulse) * 0.08)
+	if _item_back.visible:
+		if _roulette > 0.0:
+			_roulette -= delta
+			_roulette_tick -= delta
+			if _roulette_tick <= 0.0:
+				_roulette_tick = 0.08
+				_item.texture = UiKit.icon(Items.icon(Items.ALL[randi() % Items.ALL.size()]))
+				UiKit.play(self, "click", -14.0)
+			if _roulette <= 0.0:
+				_item.texture = UiKit.icon(Items.icon(_shown_item))
+				_item_back.scale = Vector2.ONE * 1.4
+				UiKit.play(self, "select", -6.0)
+		else:
+			_item_pulse += delta * 8.0
+			_item_back.scale = _item_back.scale.lerp(Vector2.ONE * (1.0 + sin(_item_pulse) * 0.06), minf(1.0, delta * 10.0))
 	if _keys.visible:
 		_keys_left -= delta
 		_keys.modulate.a = clampf(_keys_left, 0.0, 1.0)
@@ -203,6 +248,17 @@ func hide_message() -> void:
 	_message.visible = false
 	_message_left = 0.0
 
-func _on_item_changed(has_item: bool) -> void:
-	# In kid mode the star fires by itself; show it only when the player has to press the button.
-	_item.visible = has_item and racer.control_mode == Game.ControlMode.FULL and racer.source is not AiSource
+func _on_bricks_changed(count: int) -> void:
+	for i in _brick_dots.size():
+		var on := i < count
+		_brick_dots[i].add_theme_stylebox_override("panel", UiKit.box(Color("e8483f") if on else Color(1, 1, 1, 0.35), 9, UiKit.INK, 3))
+
+func _on_item_changed(item: int) -> void:
+	_shown_item = item
+	if item == Items.NONE:
+		_item_back.visible = false
+		return
+	_item_back.visible = true
+	_roulette = 0.7
+	_roulette_tick = 0.0
+

@@ -1,8 +1,10 @@
 class_name FinishScreen extends Control
 ## The finish screen celebrates everyone: confetti, applause, every kart on show.
-## The placing is there, but small.
+## The placing is there, but small: medals for the first three. In a team race the banner shows
+## how the team did. The family brick jar shows what everyone collected together.
 
 const LOCK_SECONDS := 2.5
+const MEDALS: Array[Color] = [Color("ffc81e"), Color("dfe6ee"), Color("e0894a")]
 
 var _again: Button
 var _lock := 0.0
@@ -14,7 +16,7 @@ func _init() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	theme = UiKit.theme()
 
-func open(racers: Array[Racer], humans: Array[Racer], new_record: bool) -> void:
+func open(racers: Array[Racer], humans: Array[Racer], new_record: bool, bricks := 0, team := false) -> void:
 	visible = true
 	var dim := ColorRect.new()
 	dim.color = Color(UiKit.INK, 0.45)
@@ -27,14 +29,21 @@ func open(racers: Array[Racer], humans: Array[Racer], new_record: bool) -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 26)
+	var extra_rows := int(team) + int(bricks > 0 or Game.family_bricks() > 0)
+	column.add_theme_constant_override("separation", 26 - 6 * extra_rows)
 	center.add_child(column)
 
 	var title_row := HBoxContainer.new()
 	title_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	title_row.add_theme_constant_override("separation", 24)
 	title_row.add_child(UiKit.icon_rect("star", 110, UiKit.SUN))
-	title_row.add_child(UiKit.label("Super gemacht!", 120, Color.WHITE, 26, UiKit.INK))
+	var best_place := 99
+	for h in humans:
+		best_place = mini(best_place, h.place)
+	var title := "Super gemacht!"
+	if team:
+		title = "Team gewinnt!" if best_place == 1 else "Super, Team!"
+	title_row.add_child(UiKit.label(title, 120, Color.WHITE, 26, UiKit.INK))
 	title_row.add_child(UiKit.icon_rect("star", 110, UiKit.SUN))
 	column.add_child(title_row)
 
@@ -44,9 +53,14 @@ func open(racers: Array[Racer], humans: Array[Racer], new_record: bool) -> void:
 	cards.alignment = BoxContainer.ALIGNMENT_CENTER
 	cards.add_theme_constant_override("separation", 22)
 	column.add_child(cards)
-	var card_width := 330.0 if order.size() <= 3 else 290.0
+	var card_width := (330.0 if order.size() <= 3 else 290.0) - 30.0 * extra_rows
 	for racer: Racer in order:
 		cards.add_child(_make_card(racer, card_width, Game.mode == Game.Mode.RACE and order.size() > 1))
+
+	if team:
+		column.add_child(_team_row(humans, best_place))
+	if bricks > 0 or Game.family_bricks() > 0:
+		column.add_child(_jar_row(bricks))
 
 	if Game.mode == Game.Mode.TIME_TRIAL and not humans.is_empty():
 		var best := Game.best_time(Game.speed_class)
@@ -67,11 +81,12 @@ func open(racers: Array[Racer], humans: Array[Racer], new_record: bool) -> void:
 	_buttons.add_theme_constant_override("separation", 36)
 	_buttons.modulate.a = 0.0
 	column.add_child(_buttons)
-	_again = UiKit.card_button("restart", "Nochmal", Vector2(300, 230), 110)
+	var button_size := Vector2(300, 230 - 25 * extra_rows)
+	_again = UiKit.card_button("restart", "Nochmal", button_size, 110 - 15 * extra_rows)
 	_again.pressed.connect(func() -> void: Game.start_race())
 	_again.disabled = true
 	_buttons.add_child(_again)
-	var home := UiKit.card_button("home", "Menü", Vector2(300, 230), 110)
+	var home := UiKit.card_button("home", "Menü", button_size, 110 - 15 * extra_rows)
 	home.pressed.connect(func() -> void: Game.go_to_menu())
 	home.disabled = true
 	_buttons.add_child(home)
@@ -115,8 +130,51 @@ func _make_card(racer: Racer, width: float, show_place: bool) -> Control:
 	name_row.add_child(UiKit.label(racer.display_name, 40))
 	column.add_child(name_row)
 	if show_place:
-		column.add_child(UiKit.label("%d." % racer.place, 30, Color(UiKit.INK, 0.6)))
+		if racer.place <= MEDALS.size():
+			var medal := PanelContainer.new()
+			medal.add_theme_stylebox_override("panel", UiKit.box(MEDALS[racer.place - 1], 30, UiKit.INK, 4))
+			medal.custom_minimum_size = Vector2(64, 64)
+			medal.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			medal.add_child(UiKit.label("%d" % racer.place, 34, UiKit.INK))
+			column.add_child(medal)
+		else:
+			column.add_child(UiKit.label("%d." % racer.place, 30, Color(UiKit.INK, 0.6)))
 	return card
+
+## Team banner: the team icon, every human's face, and the team's place (its best driver's).
+func _team_row(humans: Array[Racer], best_place: int) -> Control:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", UiKit.box(Color(UiKit.INK, 0.55), 40))
+	panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 20)
+	panel.add_child(row)
+	row.add_child(UiKit.icon_rect("team", 90, Color.WHITE))
+	for h in humans:
+		var face := UiKit.rounded_picture(90, 45)
+		if h.driver and h.driver.portrait:
+			(face.get_child(0) as TextureRect).texture = h.driver.portrait
+		face.add_theme_stylebox_override("panel", UiKit.box(h.color, 45))
+		row.add_child(face)
+	var color := MEDALS[best_place - 1] if best_place <= MEDALS.size() else Color.WHITE
+	row.add_child(UiKit.icon_rect("trophy", 90, color))
+	row.add_child(UiKit.label("%d." % best_place, 80, color, 16, UiKit.INK))
+	return panel
+
+## The family jar: bricks from this race plus everything collected before.
+func _jar_row(bricks: int) -> Control:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 16)
+	row.add_child(UiKit.icon_rect("brick", 80, Color.WHITE))
+	if bricks > 0:
+		row.add_child(UiKit.label("+%d" % bricks, 64, UiKit.SUN, 16, UiKit.INK))
+	# The jar: everything the family has collected so far.
+	var jar := PanelContainer.new()
+	jar.add_theme_stylebox_override("panel", UiKit.box(Color(1, 1, 1, 0.85), 30, UiKit.INK, 5))
+	jar.add_child(UiKit.label("%d" % Game.family_bricks(), 54, UiKit.INK))
+	row.add_child(jar)
+	return row
 
 func _add_confetti() -> void:
 	var confetti := CPUParticles2D.new()

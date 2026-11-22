@@ -20,6 +20,10 @@ const BUMP_BOOST_SECONDS := 0.4
 const BUMP_BOOST_STRENGTH := 0.12
 const BUMP_BOOST_COOLDOWN := 2.5
 const KID_RUMBLE := 0.7          ## kid pads vibrate a little softer
+const TICKLE_RANGE := 45.0       ## metres ahead a tickle bubble looks for a kart
+const TICKLE_FLIGHT := 0.55      ## seconds the bubble flies
+const BRICK_ROWS := 7            ## rows of bricks per lap
+const BRICK_CLEAR := 7.0         ## metres kept free around stars, turbo pads and the start
 
 var track: Track
 var racers: Array[Racer] = []
@@ -42,12 +46,16 @@ var _resets := 0
 var _shot_wait := 0.0
 var _perf_frames: Array[float] = []
 var _bump_ready_at := {}         ## Kart -> race time when it can get the next bump boost
+var _ai_item_wait := {}          ## Racer -> seconds until the AI uses its item
+var _bubbles: Array[Dictionary] = []  ## tickle bubbles in flight
+var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	if Game.players.is_empty():
 		_use_default_setup()
 	_build_world()
 	_spawn_racers()
+	_place_bricks()
 	_build_views()
 	_build_overlay()
 	if humans.size() > 1:
@@ -70,6 +78,7 @@ func _use_default_setup() -> void:
 		Game.mode = {"free": Game.Mode.FREE_DRIVE, "trial": Game.Mode.TIME_TRIAL}.get(args.get("mode", "race"), Game.Mode.RACE)
 		Game.speed_class = clampi(int(args.get("speed", "0")), 0, 2) as Game.SpeedClass
 		Game.ai_count = clampi(int(args.get("ai", "3")), 0, Game.MAX_AI)
+		Game.team_race = args.get("team", "0") == "1"
 		# --control=kid|full|mixed   --input=none|left|right|random (what the kid "does")
 		var control: String = args.get("control", "kid")
 		for i in count:
@@ -131,6 +140,8 @@ func _spawn_racers() -> void:
 		slot += 1
 
 	var ai_count := Game.ai_count if Game.mode == Game.Mode.RACE else 0
+	if Game.mode == Game.Mode.RACE and Game.team_race:
+		ai_count = maxi(ai_count, 1)  # "us against the toys" needs toys
 	var ai_drivers := _ai_driver_pool(configs)
 	var ai_karts := Game.karts.filter(func(k: KartDef) -> bool: return k.ai_can_use)
 	if ai_karts.is_empty():
@@ -148,6 +159,7 @@ func _spawn_racers() -> void:
 		racer.source = ai
 		racer.assist.is_ai = true
 		racer.kart.auto_trick = true
+		racer.kart.brick_bonus = not _kid_context
 		racer.color = Color(0.75, 0.78, 0.85)
 		racer.display_name = driver.display_name if driver else "Computer %d" % (i + 1)
 		racer.kart.engine_db_offset = -9.0
@@ -168,7 +180,120 @@ func _make_racer(kart_def: KartDef, driver: DriverDef, slot: int) -> Racer:
 	racer.progress.snap_to(kart.ground_position())
 	racer.progress.lap = -1
 	racers.append(racer)
+	kart.item_picker = _pick_item.bind(racer)
+	kart.tickle_thrown.connect(_throw_tickle.bind(racer))
 	return racer
+
+# --- Items -------------------------------------------------------------------------------
+
+## The item a racer gets from a star: kids always get good ones, a grown-up ahead of a kid gets
+## small ones, everyone else by place (the further back, the better).
+func _pick_item(racer: Racer) -> int:
+	var ahead_of_kid := false
+	if not racer.assist.kid:
+		for other in humans:
+			if other.assist.kid and other.progress.distance() < racer.progress.distance():
+				ahead_of_kid = true
+	var behind := float(racer.place - 1) / maxf(racers.size() - 1, 1.0)
+	return Items.pick(_rng, racer.assist.kid, ahead_of_kid, behind)
+
+## Teammates in a team race (humans with humans).
+func _same_team(a: Racer, b: Racer) -> bool:
+	return Game.team_race and a.is_human and b.is_human
+
+## A tickle bubble flies to the nearest kart ahead. Kid-mode players are never a target.
+func _throw_tickle(thrower: Racer) -> void:
+	var target: Racer = null
+	var best := TICKLE_RANGE
+	for other in racers:
+		if other == thrower or other.finished or other.assist.kid or _same_team(thrower, other):
+			continue
+		var gap := other.progress.distance() - thrower.progress.distance()
+		if gap > 0.5 and gap < best:
+			best = gap
+			target = other
+	var bubble := MeshInstance3D.new()
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.35
+	mesh.height = 0.7
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(1.0, 0.56, 0.78, 0.85)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.emission_enabled = true
+	mat.emission = Color(1.0, 0.4, 0.7)
+	mat.emission_energy_multiplier = 1.5
+	mat.rim_enabled = true
+	mat.rim = 1.0
+	mesh.material = mat
+	bubble.mesh = mesh
+	bubble.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_world.add_child(bubble)
+	var start := thrower.kart.ground_position() + Vector3(0, 1.2, 0)
+	bubble.global_position = start
+	_bubbles.append({"node": bubble, "from": start, "target": target, "t": 0.0,
+		"forward": thrower.kart.forward()})
+	UiKit.play(self, "pop", -4.0)
+
+func _fly_bubbles(delta: float) -> void:
+	for i in range(_bubbles.size() - 1, -1, -1):
+		var b: Dictionary = _bubbles[i]
+		b["t"] = float(b["t"]) + delta / TICKLE_FLIGHT
+		var t: float = b["t"]
+		var node: MeshInstance3D = b["node"]
+		var target: Racer = b["target"]
+		var to: Vector3
+		if target:
+			to = target.kart.ground_position() + Vector3(0, 0.8, 0)
+		else:
+			to = (b["from"] as Vector3) + (b["forward"] as Vector3) * 20.0
+		var pos := (b["from"] as Vector3).lerp(to, minf(t, 1.0))
+		pos.y += sin(minf(t, 1.0) * PI) * 1.5
+		node.global_position = pos
+		node.scale = Vector3.ONE * (1.0 + 0.15 * sin(t * 25.0))
+		if t >= 1.0:
+			if target and not target.finished:
+				target.kart.wobble()
+			node.queue_free()
+			_bubbles.remove_at(i)
+
+# --- Bricks ------------------------------------------------------------------------------
+
+## Rows of toy bricks along the racing line, kept clear of stars, turbo pads and the start.
+func _place_bricks() -> void:
+	if Game.mode == Game.Mode.TIME_TRIAL:
+		return
+	var taken: Array[float] = [0.0, track.length]
+	for group_name in ["Stars", "BoostPads"]:
+		var group := track.get_node_or_null(group_name)
+		if group == null:
+			continue
+		for child in group.get_children():
+			taken.append(track.s_at(track.closest_index((child as Node3D).global_position)))
+	var holder := Node3D.new()
+	holder.name = "Bricks"
+	_world.add_child(holder)
+	var patterns := [[-1.6, 0.0, 1.6], [-1.2, -0.4, 0.4, 1.2], [0.8, 1.6], [-1.6, -0.8]]
+	var number := 0
+	for row in BRICK_ROWS:
+		var s := (row + 0.5) * track.length / BRICK_ROWS
+		var clear := true
+		for t in taken:
+			if absf(s - t) < BRICK_CLEAR:
+				clear = false
+		if not clear:
+			s += BRICK_CLEAR * 1.5
+			for t in taken:
+				if absf(s - t) < BRICK_CLEAR:
+					clear = false
+			if not clear:
+				continue
+			clear = true
+		for lateral: float in patterns[row % patterns.size()]:
+			var brick := Brick.new()
+			brick.name = "Brick%d" % number
+			number += 1
+			holder.add_child(brick)
+			brick.global_transform = track.transform_at(s, lateral)
 
 ## Split screen draws the world twice: the sun's shadows get 2 splits and a shorter reach,
 ## which costs much less and is hard to tell apart on a half screen.
@@ -277,7 +402,13 @@ func _physics_process(delta: float) -> void:
 	for racer in racers:
 		racer.tick(track, racing, delta)
 		if racer.source is AiSource and racer.kart.has_item:
-			racer.kart.use_item()
+			# The AI waits a moment like a person would, then uses its item.
+			if not _ai_item_wait.has(racer):
+				_ai_item_wait[racer] = _rng.randf_range(0.6, 2.5)
+			_ai_item_wait[racer] -= delta
+			if _ai_item_wait[racer] <= 0.0:
+				_ai_item_wait.erase(racer)
+				racer.kart.use_item()
 		if racer.assist.wants_reset:
 			_reset_racer(racer)
 
@@ -296,6 +427,7 @@ func _physics_process(delta: float) -> void:
 		_smoke_tick(delta)
 
 func _process(delta: float) -> void:
+	_fly_bubbles(delta)
 	for hud in huds:
 		hud.refresh(race_time, delta)
 	if Game.smoke and Game.smoke_args.has("perf") and state == State.RACING:
@@ -418,6 +550,9 @@ func _update_pacing(delta: float) -> void:
 				elif behind > 30.0:
 					pace = lerpf(1.0, 1.06, clampf((behind - 30.0) / 60.0, 0.0, 1.0))
 		racer.kart.pace = lerpf(racer.kart.pace, pace, delta * 1.5)
+		var ai := racer.source as AiSource
+		if ai:
+			ai.slow = 1.0 - racer.kart.pace
 
 ## Karts push each other apart gently instead of colliding hard.
 func _soft_bumps() -> void:
@@ -460,6 +595,7 @@ func _reset_racer(racer: Racer) -> void:
 	if absf(racer.progress.lateral) > track.half_width:
 		lateral = 0.0
 	racer.kart.place(track.transform_at(racer.progress.s(), lateral))
+	racer.kart.drop_in()
 	racer.assist.clear_timers(racer)
 	if racer.kart.visual.driver:
 		racer.kart.visual.driver.hop(1.5)
@@ -499,7 +635,12 @@ func _show_finish_screen() -> void:
 	var record := false
 	if Game.mode == Game.Mode.TIME_TRIAL and not humans.is_empty():
 		record = Game.submit_time(Game.speed_class, humans[0].finish_time)
-	_finish_screen.open(racers, humans, record)
+	var picked := 0
+	for racer in humans:
+		picked += racer.kart.bricks_picked
+	if picked > 0:
+		Game.add_family_bricks(picked)
+	_finish_screen.open(racers, humans, record, picked, Game.team_race and Game.mode == Game.Mode.RACE)
 
 # --- Headless smoke test (tools/check.ps1) -------------------------------------------------
 
@@ -541,13 +682,13 @@ func _smoke_tick(delta: float) -> void:
 	if not done and _smoke_time < limit:
 		return
 	var ok := true
-	print("SMOKE track=%s mode=%s speed=%s time=%.1fs resets=%d" % [Game.track.id, Game.MODE_NAMES[Game.mode], Game.SPEED_NAMES[Game.speed_class], _smoke_time, _resets])
+	print("SMOKE track=%s mode=%s%s speed=%s time=%.1fs resets=%d" % [Game.track.id, Game.MODE_NAMES[Game.mode], " (Team)" if Game.team_race else "", Game.SPEED_NAMES[Game.speed_class], _smoke_time, _resets])
 	for racer in racers:
-		print("SMOKE   %-12s human=%s place=%d laps=%d finished=%s time=%.1f dist=%.0fm wall_hits=%d boosted=%.0f%% tricks=%d" % [
+		print("SMOKE   %-12s human=%s place=%d laps=%d finished=%s time=%.1f dist=%.0fm wall_hits=%d boosted=%.0f%% tricks=%d bricks=%d wobbles=%d" % [
 			racer.display_name, racer.is_human, racer.place, maxi(racer.progress.lap, 0), racer.finished,
 			racer.finish_time, racer.progress.distance(), racer.kart.wall_hits,
 			100.0 * racer.kart.boost_time / maxf(racer.finish_time if racer.finished else _smoke_time, 0.1),
-			racer.kart.tricks])
+			racer.kart.tricks, racer.kart.bricks_picked, racer.kart.wobbles])
 		if racer.is_human:
 			if Game.mode == Game.Mode.FREE_DRIVE:
 				ok = ok and racer.progress.distance() > 60.0

@@ -1,6 +1,6 @@
 extends Control
 ## The menu: three pages, all usable without reading.
-##   1. Mode:    Freie Fahrt / Rennen / Zeitfahren
+##   1. Mode:    Freie Fahrt / Rennen / Team (a race: all players against the toys) / Zeitfahren
 ##   2. Options: Tempo (Kind / Normal / Schnell) and, for races, the number of AI karts
 ##   3. Players: press a button to join; each player picks driver, kart, control mode and colour
 ## Pages 1 and 2 use normal button focus (any pad or keyboard). Page 3 is per device.
@@ -12,6 +12,7 @@ const START_DELAY := 1.2
 var _page := Page.MODE
 var _pages := {}
 var _mode_buttons: Array[Button] = []
+var _team_button: Button
 var _options_title: Label
 var _options_icon: TextureRect
 var _speed_buttons: Array[Button] = []
@@ -59,10 +60,14 @@ func _build_mode_page() -> void:
 	column.add_child(row)
 	var icons := ["wheel", "flag", "clock"]
 	for i in 3:
-		var button := UiKit.card_button(icons[i], Game.MODE_NAMES[i], Vector2(450, 450), 250)
+		var button := UiKit.card_button(icons[i], Game.MODE_NAMES[i], Vector2(400, 420), 230)
 		button.pressed.connect(_on_mode_picked.bind(i))
 		row.add_child(button)
 		_mode_buttons.append(button)
+		if i == Game.Mode.RACE:
+			_team_button = UiKit.card_button("team", "Team", Vector2(400, 420), 230)
+			_team_button.pressed.connect(_on_mode_picked.bind(Game.Mode.RACE, true))
+			row.add_child(_team_button)
 	var quit_row := HBoxContainer.new()
 	quit_row.alignment = BoxContainer.ALIGNMENT_END
 	column.add_child(quit_row)
@@ -70,8 +75,9 @@ func _build_mode_page() -> void:
 	quit.pressed.connect(func() -> void: Game.quit_clean())
 	quit_row.add_child(quit)
 
-func _on_mode_picked(mode: int) -> void:
+func _on_mode_picked(mode: int, team := false) -> void:
 	Game.mode = mode as Game.Mode
+	Game.team_race = team
 	UiKit.play(self, "select")
 	_show(Page.OPTIONS)
 
@@ -374,10 +380,10 @@ func _show(page: Page) -> void:
 		(_pages[key] as Control).visible = key == page
 	match page:
 		Page.MODE:
-			_mode_buttons[Game.mode].grab_focus()
+			(_team_button if Game.team_race else _mode_buttons[Game.mode]).grab_focus()
 		Page.OPTIONS:
-			_options_title.text = Game.MODE_NAMES[Game.mode]
-			_options_icon.texture = UiKit.icon(["wheel", "flag", "clock"][Game.mode])
+			_options_title.text = "Team-Rennen" if Game.team_race else Game.MODE_NAMES[Game.mode]
+			_options_icon.texture = UiKit.icon("team" if Game.team_race else ["wheel", "flag", "clock"][Game.mode])
 			_ai_row.visible = Game.mode == Game.Mode.RACE
 			_speed_buttons[Game.speed_class].button_pressed = true
 			var track_index := Game.tracks.find(Game.track)
