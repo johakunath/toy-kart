@@ -1,6 +1,6 @@
 # Handover
 
-Updated 22 Nov 2026, ninth round: all toys but the Duplo girl are 3D; Bobo smiles.
+Updated 22 Nov 2026, tenth round: driver faces in the menu; stronger colours.
 
 ## Where it stands
 
@@ -11,6 +11,22 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## New in the tenth round (faces and colours)
+
+- **Driver faces in the menu:** each driver has a portrait drawn locally by FLUX.2 (from the toy
+  drawings and photo cut-outs; the Kenney characters from a front render). The driver row shows
+  the chosen face big and the faces before and after it small, so a child can pick by face.
+  `tools/make_portraits.py` makes two variants per driver and installs the chosen ones.
+  The kart preview above is zoomed in to make room (the kart looks bigger now).
+- **Stronger colours, toy-brick style:** the four Kenney colour palettes (karts, characters, track
+  pieces, trees) are more saturated (`tools/make_strong_colors.py`; greys, whites and skin barely
+  change; originals in `art/kenney_colors/`, `--strength 0` restores them). Round tracks: green
+  grass, blue barriers, red kerbs. Turbo pads were washed out (colours read as linear); now
+  strong blue and yellow. Light: AgX contrast up, saturation up, less haze in the evening.
+  Johannes' own toys are unchanged except for that light.
+- The old test portrait `art/toys/portraits/baer.png` is now unused (Bobo's portrait is
+  `paper_baer.png`); delete it when you like.
 
 ## New in the ninth round (the 3D cast)
 
@@ -238,10 +254,10 @@ Tell Claude the answers by voice; they become the tuning list.
 
 1. You: a race as Koba and as Duplo-Flieger. Colours, size, does it look like the toy?
 2. Codex: turnaround views for the Duplo girl (`junge`), then `make_3d_toy.py --id junge --apply`.
-3. Driver portraits in the menu, made with FLUX.2 (milestone 2).
-3. You: a race to check the boosts now feel special, not constant.
-4. Codex: the other four drawings (Fuchs, Duplo-Mädchen, Motorrad, Duplo-Flieger).
-5. Rest of milestone 2: driver portraits, graphics presets for projector and monitor, scenery.
+3. You: on the projector, are the colours strong enough now (or too strong)? Can he pick his
+   driver by face? Do the boosts feel special, not constant?
+4. Rest of milestone 2: graphics presets for projector and monitor, scenery; faces also on the
+   HUD and finish podium (backlog).
 
 ## Notes for the next Claude session
 

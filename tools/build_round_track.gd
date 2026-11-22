@@ -53,10 +53,10 @@ const TREE_CLEARANCE := 10.5 # trees keep this far from the centre line, so came
 
 const C_ASPHALT := Color("4a4c5a")
 const C_LINE := Color("e9ecf5")
-const C_KERB_RED := Color("e5544a")
+const C_KERB_RED := Color("e3241b")
 const C_KERB_WHITE := Color("f3f4f8")
-const C_BARRIER := Color("c7d1ee")
-const C_GRASS := Color("5fbf86")
+const C_BARRIER := Color("2f7fe8")
+const C_GRASS := Color("3fb44a")
 const C_BLACK := Color("2a2b33")
 
 ## Barrier cross-section: [metres outward from the wall face, metres above the road].
@@ -320,6 +320,7 @@ func _add_grass(root: Node3D, center: Vector3, size: Vector3) -> void:
 	disc.rings = 1
 	var patch_material := StandardMaterial3D.new()
 	patch_material.vertex_color_use_as_albedo = true
+	patch_material.vertex_color_is_srgb = true
 	patch_material.roughness = 0.95
 	disc.material = patch_material
 	var rng := RandomNumberGenerator.new()

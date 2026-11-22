@@ -81,8 +81,7 @@ Bobo took 8 minutes, the plane 5.
 
 ## Local pictures: FLUX.2 [klein] 4B
 
-`tools\.venv\Scripts\python.exe tools\comfy
-un_flux_klein.py --prompt "..." --out <png> [--ref <png>] [--count 2]`
+`tools\.venv\Scripts\python.exe tools\comfy\run_flux_klein.py --prompt "..." --out <png> [--ref <png>] [--count 2]`
 makes a picture from text, or edits from reference pictures ("the character in image 1 as a
 portrait"). Apache 2.0, about 16 GB of model files in ComfyUI, a few seconds per picture.
 First test (22 Nov 2026): driver portraits of Bobo were very good (`art/toys/portraits/baer.png`);
@@ -94,6 +93,13 @@ What FLUX does well here: small edits of one view. Bobo's smile is a FLUX edit o
 view (Codex's original: `art/toys/turnaround/originals/`), cut out and fitted to the exact size
 and position of the original, then the 3D model was made again.
 All generated pictures also stay in `ComfyUI\output`.
+
+**Driver portraits** (the faces in the selection menu): `tools\.venv\Scripts\python.exe
+tools\make_portraits.py` draws two variants per driver from its drawing, photo cut-out or (Kenney
+characters) a front render made by `tools/render_driver_refs.gd`, each on its own strong
+background colour, and saves a sheet to choose from (`art/toys/portraits/variants/sheet.png`,
+not in git). `--pick paper_baer=2,...` installs the chosen ones (`assets/portraits/`, 256 px,
+and `portrait` in the driver `.tres`). A new driver without a portrait simply shows no face.
 
 ## Duplo toys: built in Blender, no AI
 

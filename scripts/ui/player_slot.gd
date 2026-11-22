@@ -29,6 +29,8 @@ var _preview: KartPreview
 var _row_panels: Array[PanelContainer] = []
 var _row_labels: Array[Label] = []
 var _mode_icon: TextureRect
+## Driver faces in the first row: before, chosen, after.
+var _faces: Array[Panel] = []
 var _swatch: Panel
 var _ready_banner: PanelContainer
 var _ready_label: Label
@@ -94,7 +96,8 @@ func _build() -> void:
 	_joined_view.add_child(_header)
 
 	_preview = KartPreview.new()
-	_preview.custom_minimum_size = Vector2(580, 170)
+	_preview.custom_minimum_size = Vector2(580, 140)
+	_preview.set_view_angle(22.0, 0.55)
 	_preview.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_joined_view.add_child(_preview)
 
@@ -107,7 +110,13 @@ func _build() -> void:
 		middle.alignment = BoxContainer.ALIGNMENT_CENTER
 		middle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		middle.add_theme_constant_override("separation", 14)
-		if i == 2:
+		if i == 0:
+			# Faces: the chosen driver big, the ones before and after small, so a child picks by face.
+			for size: float in [50.0, 88.0]:
+				var face := UiKit.rounded_picture(size, int(size * 0.22))
+				middle.add_child(face)
+				_faces.append(face)
+		elif i == 2:
 			_mode_icon = UiKit.icon_rect("kid", 52, UiKit.INK)
 			middle.add_child(_mode_icon)
 		elif i == 3:
@@ -119,6 +128,10 @@ func _build() -> void:
 			middle.add_child(UiKit.icon_rect(ROW_ICONS[i], 46, Color(UiKit.INK, 0.5)))
 		var text := UiKit.label("", 38)
 		middle.add_child(text)
+		if i == 0:
+			var next_face := UiKit.rounded_picture(50.0, 11)
+			middle.add_child(next_face)
+			_faces.append(next_face)
 		line.add_child(middle)
 		line.add_child(UiKit.icon_rect("arrow_right", 40, UiKit.INK))
 		panel.add_child(line)
@@ -297,6 +310,12 @@ func _refresh() -> void:
 	if _preview.shown_kart != kart or _preview.shown_driver != driver:
 		_preview.show_kart(kart, driver)
 	_row_labels[0].text = driver.display_name
+	var count := Game.drivers.size()
+	for k in _faces.size():
+		var shown := Game.drivers[posmod(driver_index + [-1, 0, 1][k], count)]
+		_faces[k].visible = shown.portrait != null
+		(_faces[k].get_child(0) as TextureRect).texture = shown.portrait
+		_faces[k].modulate.a = 1.0 if k == 1 else 0.55
 	var toy_vehicle := driver.is_vehicle
 	_row_labels[1].text = "fährt selbst" if toy_vehicle else kart.display_name
 	_row_labels[2].text = Game.CONTROL_NAMES[control_mode]
@@ -307,7 +326,11 @@ func _refresh() -> void:
 	var is_ready := state == SlotState.READY
 	for i in ROW_COUNT:
 		var selected := i == row and not is_ready
-		_row_panels[i].add_theme_stylebox_override("panel", UiKit.box(UiKit.SUN if selected else Color(UiKit.INK, 0.06), 20))
+		var row_box := UiKit.box(UiKit.SUN if selected else Color(UiKit.INK, 0.06), 20)
+		if i == 0:
+			row_box.content_margin_top = 5
+			row_box.content_margin_bottom = 5
+		_row_panels[i].add_theme_stylebox_override("panel", row_box)
 		_row_panels[i].modulate.a = 0.45 if is_ready or (i == 1 and toy_vehicle) else 1.0
 	_ready_banner.add_theme_stylebox_override("panel", UiKit.box(UiKit.GRASS if is_ready else Color(UiKit.INK, 0.35), 22))
 	_ready_label.text = "Bereit!" if is_ready else "%s = Bereit" % source.accept_hint

@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/core/driver_def.gd" id="1"]
 [ext_resource type="PackedScene" path="res://assets/characters/kenney_mini/character-female-b.glb" id="2"]
+[ext_resource type="Texture2D" path="res://assets/portraits/model_lena.png" id="3"]
 
 [resource]
 script = ExtResource("1")
@@ -12,3 +13,4 @@ sort_order = 55
 model_scene = ExtResource("2")
 animation = "drive"
 model_scale = 0.8
+portrait = ExtResource("3")

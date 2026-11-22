@@ -10,7 +10,7 @@ ready (PLAN.md, milestone 5). Pick by what you want to play.
 | Test | Play with his small pad (only your Xbox pad and simulated pads so far) | Milestone 5 |
 | Tuning | Kid mode after watching him: how strongly the stick answers, edge strip, AI gaps, Kid speed | Milestone 5 |
 | Art | Drawn toy pictures instead of photo cut-outs (also fixes Bobo's missing hair): Codex, `docs/CODEX_TOY_ART.md` | Milestone 2, now |
-| Art | Small portraits of drivers in the selection row instead of names only (Codex can draw them) | Milestone 2 |
+| Art | Portraits also on the HUD and the finish podium (the menu has them since round ten) | Milestone 2 |
 | Sound | Listen and tune: volume of music vs. effects, rumble, turbo sound. Real recorded sounds if the generated ones feel cheap | Milestone 2 |
 | Sound | Volume slider instead of only music on/off | If needed |
 | UI | Mouse support on the player selection page | If needed |

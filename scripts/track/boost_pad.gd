@@ -26,11 +26,10 @@ func _ready() -> void:
 		_mesh = _build_mesh()
 		_material = StandardMaterial3D.new()
 		_material.vertex_color_use_as_albedo = true
+		# The colours below are meant as written (sRGB); read as linear they look washed out.
+		_material.vertex_color_is_srgb = true
 		_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		_material.cull_mode = BaseMaterial3D.CULL_DISABLED
-		_material.emission_enabled = true
-		_material.emission = Color(0.6, 0.8, 1.0)
-		_material.emission_energy_multiplier = 0.6
 	_arrows = MeshInstance3D.new()
 	_arrows.mesh = _mesh
 	_arrows.material_override = _material

@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" path="res://assets/paper/katze_front.png" id="2"]
 [ext_resource type="Texture2D" path="res://assets/paper/katze_back.png" id="3"]
 [ext_resource type="PackedScene" path="res://assets/models/toys/katze.glb" id="4"]
+[ext_resource type="Texture2D" path="res://assets/portraits/paper_katze.png" id="5"]
 
 [resource]
 script = ExtResource("1")
@@ -17,3 +18,4 @@ sort_order = 11
 front_texture = ExtResource("2")
 back_texture = ExtResource("3")
 card_height = 0.70
+portrait = ExtResource("5")

@@ -9,6 +9,7 @@ var shown_driver: DriverDef
 
 var _viewport: SubViewport
 var _visual: KartVisual
+var _camera: Camera3D
 var _time := 0.0
 
 func _init() -> void:
@@ -34,15 +35,20 @@ func _init() -> void:
 	sun.light_energy = 1.1
 	_viewport.add_child(sun)
 
-	var camera := Camera3D.new()
-	camera.fov = 30.0
-	_viewport.add_child(camera)
-	camera.look_at_from_position(Vector3(0, 1.7, 3.6), Vector3(0, 0.72, 0), Vector3.UP)
-	camera.current = true
+	_camera = Camera3D.new()
+	_camera.fov = 30.0
+	_viewport.add_child(_camera)
+	_camera.look_at_from_position(Vector3(0, 1.7, 3.6), Vector3(0, 0.72, 0), Vector3.UP)
+	_camera.current = true
 
 	_visual = KartVisual.new()
 	_visual.rotation.y = 0.6
 	_viewport.add_child(_visual)
+
+## Smaller angle = the kart fills more of a flat, wide preview.
+func set_view_angle(degrees: float, aim_height := 0.72) -> void:
+	_camera.fov = degrees
+	_camera.look_at_from_position(Vector3(0, 1.7, 3.6), Vector3(0, aim_height, 0), Vector3.UP)
 
 func show_kart(kart_def: KartDef, driver_def: DriverDef) -> void:
 	shown_kart = kart_def

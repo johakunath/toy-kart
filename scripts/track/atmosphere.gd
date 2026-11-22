@@ -14,7 +14,7 @@ const LOOKS := {
 		"fill_color": Color(0.62, 0.76, 1.0), "fill_energy": 0.28,
 		"ambient_energy": 0.8, "ambient_color": Color(0.92, 0.92, 0.96), "ambient_sky": 0.7,
 		"fog_color": Color(0.74, 0.86, 0.98), "fog_density": 0.0028, "fog_sun_scatter": 0.12,
-		"glow": 0.55, "bloom": 0.05, "saturation": 1.16, "contrast": 1.06, "exposure": 1.0,
+		"glow": 0.55, "bloom": 0.05, "saturation": 1.3, "contrast": 1.06, "exposure": 1.0, "agx_contrast": 1.5,
 		"volumetric": 0.0,
 		"cloud_color": Color(1.0, 1.0, 1.0), "cloud_glow": Color(0.75, 0.82, 0.95), "cloud_count": 16,
 		"mote_color": Color(1.0, 0.98, 0.85, 0.75),
@@ -27,8 +27,8 @@ const LOOKS := {
 		"sun_elevation": 25.0, "sun_azimuth": 248.0, "sun_color": Color(1.0, 0.76, 0.5), "sun_energy": 2.1,
 		"fill_color": Color(0.62, 0.66, 1.0), "fill_energy": 0.55,
 		"ambient_energy": 1.25, "ambient_color": Color(1.0, 0.88, 0.84), "ambient_sky": 0.5,
-		"fog_color": Color(1.0, 0.78, 0.6), "fog_density": 0.004, "fog_sun_scatter": 0.4,
-		"glow": 0.75, "bloom": 0.08, "saturation": 1.12, "contrast": 1.04, "exposure": 1.3,
+		"fog_color": Color(1.0, 0.78, 0.6), "fog_density": 0.0028, "fog_sun_scatter": 0.4,
+		"glow": 0.75, "bloom": 0.08, "saturation": 1.4, "contrast": 1.06, "exposure": 1.25, "agx_contrast": 1.5,
 		"volumetric": 0.005,
 		"cloud_color": Color(1.0, 0.82, 0.74), "cloud_glow": Color(0.9, 0.5, 0.45), "cloud_count": 12,
 		"mote_color": Color(1.0, 0.82, 0.5, 0.8),
@@ -88,6 +88,8 @@ func _build_sky_and_environment() -> void:
 	env.tonemap_mode = Environment.TONE_MAPPER_AGX
 	env.tonemap_exposure = _cfg["exposure"]
 	env.tonemap_white = 6.0
+	# Above Godot's 1.25: deeper colours, less of the washed-out pastel look.
+	env.tonemap_agx_contrast = _cfg["agx_contrast"]
 
 	env.ssao_enabled = true
 	env.ssao_radius = 1.4

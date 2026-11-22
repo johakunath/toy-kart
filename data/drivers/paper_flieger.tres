@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" path="res://assets/paper/flieger_front.png" id="2"]
 [ext_resource type="Texture2D" path="res://assets/paper/flieger_back.png" id="3"]
 [ext_resource type="PackedScene" path="res://assets/models/toys/flieger.glb" id="4"]
+[ext_resource type="Texture2D" path="res://assets/portraits/paper_flieger.png" id="5"]
 
 [resource]
 script = ExtResource("1")
@@ -20,3 +21,4 @@ card_height = 0.40
 is_vehicle = true
 vehicle_width = 1.6
 vehicle_hover = 0.35
+portrait = ExtResource("5")

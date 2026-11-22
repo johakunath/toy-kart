@@ -17,3 +17,6 @@ Thumbs.db
 
 # Raw downloads from Tripo / Meshy (large; the prepared models are in assets/models)
 art/models/
+
+# Portrait variants to choose from (the chosen ones are in art/toys/portraits and assets/portraits)
+art/toys/portraits/variants/

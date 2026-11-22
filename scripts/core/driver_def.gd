@@ -7,6 +7,8 @@ enum Type { MODEL, PAPER }
 @export var display_name := ""
 @export var type := Type.MODEL
 @export var sort_order := 100
+## Face picture for the selection menu (tools/make_portraits.py). Empty: no picture.
+@export var portrait: Texture2D
 
 @export_group("3D model driver")
 @export var model_scene: PackedScene

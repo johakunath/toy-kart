@@ -78,6 +78,22 @@ static func icon_rect(icon_name: String, size: float, color := INK) -> TextureRe
 	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return r
 
+## A square picture with round corners (a driver's face). Its child TextureRect shows the picture.
+static func rounded_picture(size: float, radius := 24) -> Panel:
+	var mask := Panel.new()
+	mask.custom_minimum_size = Vector2(size, size)
+	mask.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	mask.clip_children = CanvasItem.CLIP_CHILDREN_ONLY
+	mask.add_theme_stylebox_override("panel", box(Color.WHITE, radius))
+	mask.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var pic := TextureRect.new()
+	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	pic.stretch_mode = TextureRect.STRETCH_SCALE
+	pic.set_anchors_preset(Control.PRESET_FULL_RECT)
+	pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mask.add_child(pic)
+	return mask
+
 ## A big card button: icon on top, short label below.
 static func card_button(icon_name: String, text: String, size: Vector2, icon_size := 150) -> Button:
 	var b := Button.new()
