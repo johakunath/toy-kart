@@ -22,6 +22,7 @@ import math
 import os
 import sys
 
+import bmesh
 import bpy
 from mathutils import Matrix, Vector
 
@@ -88,6 +89,70 @@ def box(u0, u1, v0, v1, z0, z1, colour, bevel=0.12, segments=2):
     o.location = W((u0 + u1) / 2, (v0 + v1) / 2, (z0 + z1) / 2)
     bpy.ops.object.transform_apply(scale=True)
     return finish(o, colour, bevel, segments)
+
+
+def rounded_block(u0, u1, v0, v1, z0, z1, colour, radius, weights, cut_below=None, segments=6):
+    """A block with a different rounding per edge: weights(kind) gives each edge a share of
+    radius. kind: "top_front", "top_back", "top_side", "vert_front", "vert_back", "bottom_front",
+    "bottom_back", "bottom_side". With cut_below, everything under that height is cut away and the
+    bottom is left open (a shell that sits flush on the body below)."""
+    me = bpy.data.meshes.new("rblock")
+    bm = bmesh.new()
+    bmesh.ops.create_cube(bm, size=1.0)
+    for v in bm.verts:
+        u = u0 if v.co.y < 0 else u1
+        vv = v0 if v.co.x < 0 else v1
+        z = z0 if v.co.z < 0 else z1
+        v.co = W(u, vv, z)
+    lay = bm.edges.layers.float.get("bevel_weight_edge") or bm.edges.layers.float.new("bevel_weight_edge")
+    front_y, back_y = W(u0, 0, 0).y, W(u1, 0, 0).y
+    for e in bm.edges:
+        a, b = e.verts[0].co, e.verts[1].co
+        mid = (a + b) / 2
+        d = b - a
+        end = "front" if abs(mid.y - front_y) < 1e-4 else ("back" if abs(mid.y - back_y) < 1e-4 else "side")
+        if abs(d.z) > 1e-4:
+            kind = "vert_" + end
+        else:
+            kind = ("top_" if abs(mid.z - z1) < 1e-4 else "bottom_") + end
+        e[lay] = weights(kind)
+    bm.to_mesh(me)
+    bm.free()
+    o = bpy.data.objects.new("rblock", me)
+    bpy.context.scene.collection.objects.link(o)
+    bev = o.modifiers.new("Bevel", "BEVEL")
+    bev.width = radius
+    bev.segments = segments
+    bev.limit_method = "WEIGHT"
+    bpy.context.view_layer.objects.active = o
+    bpy.ops.object.select_all(action="DESELECT")
+    o.select_set(True)
+    bpy.ops.object.modifier_apply(modifier="Bevel")
+    if cut_below is not None:
+        bm = bmesh.new()
+        bm.from_mesh(o.data)
+        bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=(0, 0, cut_below),
+                               plane_no=(0, 0, 1), clear_inner=True)
+        bm.to_mesh(o.data)
+        bm.free()
+    return finish(o, colour)
+
+
+def cut(obj, u0, u1, v0, v1, z0, z1):
+    """Cut a box-shaped opening (a window) out of obj."""
+    bpy.ops.mesh.primitive_cube_add(size=1)
+    c = bpy.context.object
+    c.scale = (abs(v1 - v0), abs(u1 - u0), abs(z1 - z0))
+    c.location = W((u0 + u1) / 2, (v0 + v1) / 2, (z0 + z1) / 2)
+    m = obj.modifiers.new("Cut", "BOOLEAN")
+    m.operation = "DIFFERENCE"
+    m.solver = "EXACT"
+    m.object = c
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.select_all(action="DESELECT")
+    obj.select_set(True)
+    bpy.ops.object.modifier_apply(modifier="Cut")
+    bpy.data.objects.remove(c)
 
 
 def disc(u, v, z, r, depth, colour, axis="v", verts=20, bevel=0.0):
@@ -169,7 +234,9 @@ if args.vehicle == "krankenwagen":
     box(L - 0.6, L + 0.15, -HW + 0.1, HW - 0.1, 0.45, 1.1, "base", bevel=0.25)  # back bumper
     box(L - 0.1, L + 0.45, -0.3, 0.3, 0.55, 0.95, "base", bevel=0.1)            # tow hitch
     # white tub: a van, no bonnet. Round nose, walls round an open seat well.
-    box(0.0, 1.7, -HW, HW, 1.2, SILL, "white", bevel=0.55, segments=4)          # nose and dashboard
+    NOSE_R = 0.55                                                               # nose and dashboard:
+    rounded_block(0.0, 1.7, -HW, HW, 1.2, SILL, "white", NOSE_R,                # round corners, flat top
+                  lambda k: 1.0 if k in ("vert_front", "bottom_front") else 0.0)  # (the roof sits on it)
     box(1.2, L, -HW, -HW + 0.35, 1.2, SILL, "white", bevel=0.15)                # right wall
     box(1.2, L, HW - 0.35, HW, 1.2, SILL, "white", bevel=0.15)                  # left wall
     box(L - 0.45, L, -HW, HW, 1.2, SILL, "white", bevel=0.25, segments=3)       # back wall
@@ -195,17 +262,30 @@ if args.vehicle == "krankenwagen":
     # its own node "roof" with the origin on the hinge at the back of the tub. The game flips it
     # open like the toy (photos 11.59.29, (1), (2), (3)); --sheet-roof shows it open in the sheet.
     first = len(BODY)
-    box(0.35, L, -HW, HW, RT - 0.42, RT, "white", bevel=0.4, segments=4)        # roof
-    studs(L / 2 - 1.0, -1.0, RT, 2, 2, "white")                                 # four studs on top
-    box(0.35, 0.85, -HW, HW, SILL, SILL + 0.3, "white", bevel=0.1)              # windscreen sill
+    # One rounded hollow shell, like the toy (photos 11.59.29 (5), (8), (4), Codex top view): a big
+    # round over the front, smaller rounds over the sides and back, round corners in the plan that
+    # match the tub's nose, flat and open at the bottom so it closes flush on the tub walls.
+    R = 1.6
+    weights = {"top_front": 1.0, "top_side": 0.42, "top_back": 0.42,
+               "vert_front": NOSE_R / R, "vert_back": 0.25 / R}
+    shell = rounded_block(0.0, L, -HW, HW, SILL - 1.0, RT, "white", R,
+                          lambda k: weights.get(k, 0.0), cut_below=SILL, segments=8)
+    sol = shell.modifiers.new("Wall", "SOLIDIFY")
+    sol.thickness = 0.3
+    sol.offset = -1.0
+    sol.use_even_offset = True
+    bpy.context.view_layer.objects.active = shell
+    bpy.ops.object.select_all(action="DESELECT")
+    shell.select_set(True)
+    bpy.ops.object.modifier_apply(modifier="Wall")
+    WIN0 = SILL + 0.35                                                          # lower edge of the windows
+    cut(shell, -1.0, 1.5, -HW + 0.38, HW - 0.38, WIN0, RT - 0.38)               # windscreen, up into the round
     for side in (-1, 1):
-        v0, v1 = (HW - 0.32, HW) if side > 0 else (-HW, -HW + 0.32)
-        box(0.35, L, v0, v1, SILL, SILL + 0.32, "white", bevel=0.1)             # window sill
-        for (u0, u1) in ((0.35, 0.95), (4.0, 4.45), (L - 0.7, L)):              # pillars
-            box(u0, u1, v0, v1, SILL, RT - 0.2, "white", bevel=0.14)
-        box(L - 0.4, L, v0 - side * 0.35, v1 - side * 0.35, SILL, RT - 0.2, "white", bevel=0.1)
-    box(L - 0.4, L, -HW, HW, SILL, SILL + 0.55, "white", bevel=0.12)            # back: low band
-    box(L - 0.4, L, -HW, HW, RT - 1.0, RT - 0.2, "white", bevel=0.12)           # back: high band
+        v0, v1 = (HW - 0.6, HW + 1.0) if side > 0 else (-HW - 1.0, -HW + 0.6)
+        cut(shell, 1.35, 3.95, v0, v1, WIN0, RT - 0.6)                          # side windows
+        cut(shell, 4.45, L - 0.75, v0, v1, WIN0, RT - 0.6)
+    cut(shell, L - 0.8, L + 1.0, -HW + 0.55, HW - 0.55, RT - 1.25, RT - 0.7)    # back window slot
+    studs(L / 2 - 1.0, -1.0, RT, 2, 2, "white")                                 # four studs on top
     roof_parts(BODY[first:], L - 0.1, SILL)
     for (name, u, v) in (("wheel-front-left", 1.9, 1.95), ("wheel-front-right", 1.9, -1.95),
                          ("wheel-back-left", 6.6, 1.95), ("wheel-back-right", 6.6, -1.95)):

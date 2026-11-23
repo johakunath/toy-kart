@@ -160,7 +160,13 @@ menus; in a race shut while waiting at the start, it springs open on "go" with a
 driver honks, and leans further back with speed. `KartDef.roof_open_degrees` (100, like the toy)
 standing still, `roof_open_fast_degrees` (135) at full speed: at 100 degrees the roof stands
 behind the driver like a wall and the chase camera would see only the roof. Purely visual.
-`render_model_sheet.py --roof 100` shows it open in a sheet. The train car is tall with a round nose
+`render_model_sheet.py --roof 100` shows it open in a sheet.
+The roof shell is one rounded hollow piece like the closed toy (24 Nov, owner: "a flat box lid"):
+`rounded_block()` bevels each edge by its own weight (a big round over the front, smaller ones
+over the sides and back, plan corners matching the tub's nose), cuts it flat at the sill so it
+sits flush on the tub walls, then a solidify gives the wall and boolean cuts make the windscreen,
+side windows and back slot. The tub's nose is flat on top for the same reason. Before and after,
+closed and open next to the photo: `docs/img/toy-fixes-2026-11-24c.png`. The train car is tall with a round nose
 (two studs), a rounded roof edge round an open top, an open front between round corner posts
 (the U cut of the real front) and a wide notch in the back, so the driver shows from every side. The model has Kenney-style nodes, so the game animates it like a Kenney kart: one
 mesh `body` and four wheels `wheel-front-left` ... with their origin at the wheel centre (they
@@ -230,8 +236,21 @@ done now; junge and bauarbeiterin stay local). All were run through Pixal3D too
 | Zug | Blender | both Pixal3D trains look more like the toy but hide the driver from the chase camera (round roof, tall back): only the top of the head showed |
 | Sanitäter | Codex views + Pixal3D, `--seat-back 0.3` | clean face and print, short legs; the local-view model had a smeared face |
 | Polizei | Codex views + Pixal3D, `--length 1.5`, POLIZEI added with `add_lettering.py` | Pixal3D wrote the lettering scrambled and mirrored on one side |
-| Koba | Codex views + Pixal3D, warmer colour (`recolor_model.py --hue 20-80:-14 --sat 1.35`) | friendlier, rounder face |
+| Koba | Codex views + Pixal3D, warmer colour (`recolor_model.py --hue 20-80:-14 --sat 1.35`), nose and mouth painted from the Codex front view (`project_detail.py`, below) | friendlier, rounder face |
 | Mädchen, Bauarbeiterin | Blender (shorter legs) | no Codex views; the local-view figure test (Sanitäter) smeared the face |
+
+Koba's mouth (owner: "not quite right"): Pixal3D left a pale small nose and a thin wide line.
+`tools/blender/project_detail.py` lays the Codex front view over the model's front (both fitted
+to their outlines) and paints a soft-edged oval region into the texture, only on faces that look
+forward, with the same colour shift as the model so the muzzle matches the fur:
+
+```
+blender -b --python tools/blender/project_detail.py -- --in assets/models/toys/loewe.glb
+    --out assets/models/toys/loewe.glb --image art/toys/turnaround/loewe-front.png
+    --region 0.32,0.68,0.15,0.38 --feather 0.45 --hue-shift -14 --sat 1.35
+```
+
+Run it once on a freshly prepared and recoloured model (it paints on top of what is there).
 
 A Pixal3D run at the default upsample resolution hung for 15 minutes in the texture bake when
 the GPU memory was full (Codex tractor: 11.7 of 12 GB); `--resolution 1024` finished it.
