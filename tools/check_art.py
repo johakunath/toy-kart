@@ -17,9 +17,10 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ART = os.path.join(ROOT, "art", "toys")
 MIN_SIDE = 1024
+MIN_FILL = 0.6
 
 
-def check(path):
+def check(path, *, check_fill=True):
     problems = []
     img = Image.open(path)
     if img.format != "PNG":
@@ -36,9 +37,9 @@ def check(path):
     if (edge > 128).mean() > 0.02:
         problems.append("toy touches the image edge (leave a margin)")
     ys, xs = np.where(a > 128)
-    if len(xs):
+    if check_fill and len(xs):
         fill = max((xs.max() - xs.min()) / a.shape[1], (ys.max() - ys.min()) / a.shape[0])
-        if fill < 0.6:
+        if fill < MIN_FILL:
             problems.append("toy is small in the frame (%.0f %%), crop closer" % (fill * 100))
     # Stray specks: semi-transparent haze or bits far from the toy.
     haze = ((a > 8) & (a < 120)).mean()
@@ -76,9 +77,10 @@ def main():
         if len(present) < 4:
             problems.append("missing " + ", ".join(v for v in paths if v not in present))
         boxes = {}
+        set_fill = 0.0
         for v in present:
             img = Image.open(paths[v])
-            own, size = check(paths[v])
+            own, size = check(paths[v], check_fill=False)
             problems += ["%s: %s" % (v, p) for p in own]
             if img.size[0] != img.size[1]:
                 problems.append("%s: not square %s" % (v, img.size))
@@ -87,10 +89,16 @@ def main():
                 ys, xs = np.where(a > 128)
                 if len(ys):
                     boxes[v] = (ys.max() - ys.min(), ys.max() / a.shape[0], img.size)
+                    set_fill = max(set_fill, (xs.max() - xs.min()) / a.shape[1],
+                                   (ys.max() - ys.min()) / a.shape[0])
         if len({b[2] for b in boxes.values()}) > 1:
             problems.append("views have different canvas sizes")
         if boxes:
             hs = [b[0] for b in boxes.values()]
+            # Check framing once per set so narrower views can share the same scale.
+            if set_fill < MIN_FILL:
+                problems.append("toy is small across the turnaround set (%.0f %%), crop closer"
+                                % (100 * set_fill))
             if max(hs) > 1.08 * min(hs):
                 problems.append("toy height differs between views by %.0f %% (same scale needed)"
                                 % (100 * (max(hs) / min(hs) - 1)))
