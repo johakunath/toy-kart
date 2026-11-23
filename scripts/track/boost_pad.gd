@@ -4,6 +4,9 @@ class_name BoostPad extends Area3D
 
 const SIZE := Vector2(2.4, 3.4)   ## width across the road, length along it (metres)
 const COOLDOWN := 0.6             ## per kart, so one pass gives one boost
+const BOOST_SECONDS := 1.0        ## a clear, felt turbo (like the turbo item: 1.0 s at 0.35)
+const BOOST_STRENGTH := 0.45      ## share of extra top speed
+const KART_LAYER := 8             ## the kart balls' collision layer (scenes/kart.tscn)
 
 static var _mesh: ArrayMesh
 static var _material: StandardMaterial3D
@@ -16,6 +19,10 @@ var _sound: AudioStreamPlayer3D
 func _ready() -> void:
 	monitoring = true
 	monitorable = false
+	# The pads are made with BoostPad.new(): without this they look for layer 1 and never
+	# see a kart (the kart balls are on layer 8, like the stars and bricks expect).
+	collision_layer = 0
+	collision_mask = KART_LAYER
 	var shape := BoxShape3D.new()
 	shape.size = Vector3(SIZE.x, 1.6, SIZE.y)
 	var collision := CollisionShape3D.new()
@@ -52,13 +59,13 @@ func _process(delta: float) -> void:
 func _on_body_entered(body: Node) -> void:
 	# Not typed as Kart: track builder tools load this script before the Game autoload exists.
 	var kart := body.get_parent()
-	if kart == null or not kart.has_method("boost") or kart.get("frozen"):
+	if kart == null or not kart.has_method("pad_boost") or kart.get("frozen"):
 		return
-	var now := Time.get_ticks_msec() / 1000.0
+	var now := _time  # game time: headless checks run faster than real time
 	if now - float(_last_hit.get(kart.get_instance_id(), -10.0)) < COOLDOWN:
 		return
 	_last_hit[kart.get_instance_id()] = now
-	kart.call("boost", 0.8, 0.3)
+	kart.call("pad_boost", BOOST_SECONDS, BOOST_STRENGTH)
 	_sound.pitch_scale = randf_range(0.95, 1.08)
 	_sound.play()
 

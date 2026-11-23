@@ -15,6 +15,11 @@ class_name Track extends Node3D
 
 ## Gap between the main road's wall and the lane's wall before the island counts as one.
 const ISLAND_GAP := 0.4
+## Jump ramps are found on the racing line: a crest where a steep climb turns into a fall at
+## once. Smooth hill tops do not count.
+const LIP_CLIMB := 0.1           ## slope before the crest (rise per metre)
+const LIP_KINK := 0.18           ## slope before minus slope after
+const LIP_SPAN := 3.0            ## metres the slopes are measured over (the line is smoothed)
 
 var length := 0.0
 var count := 0
@@ -23,6 +28,8 @@ var _pos := PackedVector3Array()
 var _tan := PackedVector3Array()    # flat, normalised direction of travel
 var _right := PackedVector3Array()  # flat, normalised, to the right of travel
 var _curv := PackedFloat32Array()   # signed curvature in 1/m, positive = bends right
+## Distances (s) of the jump ramps' lips; the racer launches its kart there.
+var jump_lips: Array[float] = []
 
 func _ready() -> void:
 	_bake()
@@ -54,6 +61,21 @@ func _bake() -> void:
 		# Positive when the direction rotates to the right.
 		var turn := a.signed_angle_to(b, Vector3.DOWN)
 		_curv[i] = turn / (4.0 * step)
+	_find_jump_lips(step)
+
+func _find_jump_lips(step: float) -> void:
+	jump_lips.clear()
+	var k := maxi(1, int(round(LIP_SPAN / step)))
+	for i in count:
+		var y := _pos[i].y
+		if y < _pos[(i - 1 + count) % count].y or y < _pos[(i + 1) % count].y:
+			continue
+		var before := (y - _pos[(i - k + count) % count].y) / (k * step)
+		var after := (_pos[(i + k) % count].y - y) / (k * step)
+		if before > LIP_CLIMB and before - after > LIP_KINK:
+			var s := i * step
+			if jump_lips.is_empty() or s - jump_lips[-1] > 5.0:
+				jump_lips.append(s)
 
 # --- Lookups by sample index ---------------------------------------------------------------
 

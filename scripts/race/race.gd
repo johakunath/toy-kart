@@ -24,6 +24,11 @@ const TICKLE_RANGE := 45.0       ## metres ahead a tickle bubble looks for a kar
 const TICKLE_FLIGHT := 0.55      ## seconds the bubble flies
 const BRICK_ROWS := 7            ## rows of bricks per lap
 const BRICK_CLEAR := 7.0         ## metres kept free around stars, turbo pads and the start
+## Item odds: this many metres behind the leader start to count as "behind", this many more
+## count as last place (strong catch-up items).
+const ITEM_GAP_FROM := 10.0
+const ITEM_GAP_FULL := 50.0
+const SMOKE_MIN_AIR := 0.8       ## checks: seconds in the air off a jump ramp, at least
 
 var track: Track
 var racers: Array[Racer] = []
@@ -220,6 +225,12 @@ func _pick_item(racer: Racer) -> int:
 			if other.assist.kid and other.progress.distance() < racer.progress.distance():
 				ahead_of_kid = true
 	var behind := float(racer.place - 1) / maxf(racers.size() - 1, 1.0)
+	# Far behind the leader counts like last place, even when the others are close by.
+	var lead := -INF
+	for other in racers:
+		if not other.finished:
+			lead = maxf(lead, other.progress.distance())
+	behind = maxf(behind, clampf((lead - racer.progress.distance() - ITEM_GAP_FROM) / ITEM_GAP_FULL, 0.0, 1.0))
 	return Items.pick(_rng, racer.assist.kid, ahead_of_kid, behind)
 
 ## Teammates in a team race (humans with humans).
@@ -714,6 +725,25 @@ func _show_finish_screen() -> void:
 
 # --- Headless smoke test (tools/check.ps1) -------------------------------------------------
 
+## Turbo arrows boost, every kart gets items (also at the back), jumps fly about a second.
+func _smoke_track_features() -> bool:
+	if Game.mode != Game.Mode.RACE:
+		return true
+	var ok := true
+	var pads := 0
+	for racer in racers:
+		pads += racer.kart.pad_boosts
+		if track.has_node("Stars") and racer.kart.items_got == 0:
+			print("SMOKE   %s got no item from the stars" % racer.display_name)
+			ok = false
+		if not track.jump_lips.is_empty() and racer.is_human and (racer.kart.ramp_jumps == 0 or racer.kart.best_air < SMOKE_MIN_AIR):
+			print("SMOKE   %s never flew %.1f s off the jump" % [racer.display_name, SMOKE_MIN_AIR])
+			ok = false
+	if track.has_node("BoostPads") and pads == 0:
+		print("SMOKE   nobody got a boost from the turbo arrows")
+		ok = false
+	return ok
+
 func _smoke_tick(delta: float) -> void:
 	_smoke_time += delta
 	var limit := float(Game.smoke_args.get("seconds", "240"))
@@ -755,13 +785,14 @@ func _smoke_tick(delta: float) -> void:
 	if not done and _smoke_time < limit:
 		return
 	var ok := true
-	print("SMOKE track=%s mode=%s%s speed=%s time=%.1fs resets=%d" % [Game.track.id, Game.MODE_NAMES[Game.mode], " (Team)" if Game.team_race else "", Game.SPEED_NAMES[Game.speed_class], _smoke_time, _resets])
+	print("SMOKE track=%s mode=%s%s speed=%s time=%.1fs resets=%d jump_lips=%s" % [Game.track.id, Game.MODE_NAMES[Game.mode], " (Team)" if Game.team_race else "", Game.SPEED_NAMES[Game.speed_class], _smoke_time, _resets, track.jump_lips])
 	for racer in racers:
-		print("SMOKE   %-12s human=%s place=%d laps=%d finished=%s time=%.1f dist=%.0fm wall_hits=%d boosted=%.0f%% tricks=%d bricks=%d wobbles=%d lanes=%d" % [
+		print("SMOKE   %-12s human=%s place=%d laps=%d finished=%s time=%.1f dist=%.0fm wall_hits=%d boosted=%.0f%% tricks=%d bricks=%d wobbles=%d lanes=%d items=%d pads=%d jumps=%d air=%.2fs" % [
 			racer.display_name, racer.is_human, racer.place, maxi(racer.progress.lap, 0), racer.finished,
 			racer.finish_time, racer.progress.distance(), racer.kart.wall_hits,
 			100.0 * racer.kart.boost_time / maxf(racer.finish_time if racer.finished else _smoke_time, 0.1),
-			racer.kart.tricks, racer.kart.bricks_picked, racer.kart.wobbles, racer.side_lanes])
+			racer.kart.tricks, racer.kart.bricks_picked, racer.kart.wobbles, racer.side_lanes,
+			racer.kart.items_got, racer.kart.pad_boosts, racer.kart.ramp_jumps, racer.kart.best_air])
 		if not racer.is_human and racer.source is AiSource:
 			print("SMOKE     mood: %s" % (racer.source as AiSource).mood_report())
 		if racer.is_human:
@@ -773,6 +804,7 @@ func _smoke_tick(delta: float) -> void:
 	if Game.speed_class == Game.SpeedClass.KID and _resets > 0:
 		print("SMOKE   a kart needed a reset at Kid speed")
 		ok = false
+	ok = _smoke_track_features() and ok
 	var coop := get_node_or_null("CoopHelp") as CoopHelp
 	if coop:
 		ok = coop.smoke_report() and ok

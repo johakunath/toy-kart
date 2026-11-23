@@ -1,8 +1,11 @@
 class_name BoostStar extends Area3D
-## A spinning star on the track. Drive through it to get a boost item, with a sound and a sparkle.
-## The star comes back after a few seconds.
+## A spinning star on the track. Drive through it to get an item, with a sound and a sparkle.
+## Every kart has its own star: one kart taking it pops it for a moment, but it stays there for
+## the others, so the karts at the back get items too (Mario Kart item boxes).
 
-const RESPAWN_SECONDS := 4.0
+const PICKUP_RADIUS := 0.7       ## metres (plus the kart ball's 0.5): drive through it, not past it
+const KART_COOLDOWN := 6.0       ## seconds before the same kart can take this star again
+const REGROW_SECONDS := 0.5      ## the popped star grows back this fast for the others
 
 @onready var mesh_instance: MeshInstance3D = $Star
 @onready var burst: GPUParticles3D = $Burst
@@ -10,6 +13,7 @@ const RESPAWN_SECONDS := 4.0
 
 var _time := 0.0
 var _hidden_for := 0.0
+var _taken_at := {}              ## kart instance id -> time it took this star
 static var _shared_mesh: ArrayMesh
 
 func _ready() -> void:
@@ -17,6 +21,11 @@ func _ready() -> void:
 		_shared_mesh = _build_star_mesh(0.55, 0.25, 0.09)
 	mesh_instance.mesh = _shared_mesh
 	_time = randf() * TAU
+	var shape := ($Shape as CollisionShape3D).shape as SphereShape3D
+	if shape and shape.radius != PICKUP_RADIUS:
+		var small := shape.duplicate() as SphereShape3D
+		small.radius = PICKUP_RADIUS
+		($Shape as CollisionShape3D).shape = small
 	body_entered.connect(_on_body_entered)
 
 func _process(delta: float) -> void:
@@ -28,20 +37,22 @@ func _process(delta: float) -> void:
 		if _hidden_for <= 0.0:
 			mesh_instance.visible = true
 			mesh_instance.scale = Vector3.ONE * 0.01
-			set_deferred("monitoring", true)
 	elif mesh_instance.scale.x < 1.0:
 		mesh_instance.scale = mesh_instance.scale.lerp(Vector3.ONE, minf(1.0, delta * 8.0))
 
 func _on_body_entered(body: Node) -> void:
-	if _hidden_for > 0.0:
-		return
 	var kart := body.get_parent() as Kart
 	if kart == null:
 		return
-	kart.give_item()
+	var now := _time  # game time: headless checks run faster than real time
+	var id := kart.get_instance_id()
+	if _taken_at.has(id) and now - float(_taken_at[id]) < KART_COOLDOWN:
+		return
+	if not kart.give_item():
+		return  # hands full: the star stays for later
+	_taken_at[id] = now
 	mesh_instance.visible = false
-	set_deferred("monitoring", false)
-	_hidden_for = RESPAWN_SECONDS
+	_hidden_for = REGROW_SECONDS
 	burst.restart()
 	burst.emitting = true
 	sound.pitch_scale = randf_range(0.95, 1.08)
