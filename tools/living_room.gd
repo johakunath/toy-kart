@@ -14,7 +14,7 @@ const WALL_HEIGHT := 70.0
 const TOY := "res://assets/models/toys/%s.glb"
 const FIGURE := "res://assets/characters/kenney_mini/character-%s.glb"
 
-const C_WALL := Color("8fd0f2")
+const C_WALL := Color("6fc0ee")
 const C_SKIRTING := Color("fbf7ee")
 const C_WOOD_A := Color("c98b4f")
 const C_WOOD_B := Color("b8773f")
@@ -224,7 +224,7 @@ static func _walls(room: Node3D) -> void:
 	for k in 13:
 		var x := ROOM_LO.x + 7.0 + k * 14.0
 		for z: float in [ROOM_LO.y + 0.05, ROOM_HI.y - 0.05]:
-			var stripe := _box(walls, Vector3(5.0, WALL_HEIGHT - 6.0, 0.2), Vector3(x, 3.2, z), Color("a9dcf6"), 0.0, 0.9)
+			var stripe := _box(walls, Vector3(5.0, WALL_HEIGHT - 6.0, 0.2), Vector3(x, 3.2, z), Color("93d2f5"), 0.0, 0.9)
 			stripe.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 ## Two big windows on the north wall: bright sky in the panes, white frames, red curtains.
@@ -513,8 +513,13 @@ static func _giant_toys(room: Node3D) -> void:
 
 ## Fans on a picture book by the start line, cheering and hopping.
 static func _crowd(room: Node3D) -> void:
-	var group := _group(room, "Crowd", Vector3(-26.0, 0, 7.8))
-	_check(group.position, 1.8, "crowd")
+	_check(Vector3(-26.0, 0, 7.8), 1.8, "crowd")
+	crowd(room, Vector3(-26.0, 0, 7.8), 0.0)
+
+## A stand of cheering toy figures on a big green book. Faces -z of `yaw` (toward the road).
+static func crowd(parent: Node3D, bottom: Vector3, yaw: float) -> Node3D:
+	var group := _group(parent, "Crowd", bottom)
+	group.rotation.y = yaw
 	_box(group, Vector3(28.0, 1.2, 5.0), Vector3.ZERO, Color("3fbf5f"), 0.0, 0.6, 0.3)
 	_box(group, Vector3(27.4, 1.0, 4.6), Vector3(0, 1.2, 0), Color("fffdf5"), 0.0, 0.9)
 	_box(group, Vector3(28.0, 0.4, 5.0), Vector3(0, 2.2, 0), Color("3fbf5f"), 0.0, 0.6, 0.3)
@@ -536,6 +541,16 @@ static func _crowd(room: Node3D) -> void:
 		model.name = "Model"
 		fan.add_child(model)
 		_own(model)
+	return group
+
+## Background life for the outdoor tracks: fans by the start line and a toy plane overhead.
+static func outdoor_life(root: Node3D, crowd_bottom: Vector3, crowd_yaw: float, sky_center: Vector3, sky_radius: float) -> void:
+	_root = root
+	_materials.clear()
+	_meshes.clear()
+	var life := _group(root, "Life")
+	crowd(life, crowd_bottom, crowd_yaw)
+	_toy(life, "duploflieger", 4.5, sky_center + Vector3(0, 26.0, 0), 0.0, ToyMotion.Kind.ORBIT, 0.3, 10.0, 0.0, sky_radius)
 
 # --- Pieces placed on the road by the track builder ----------------------------------------
 

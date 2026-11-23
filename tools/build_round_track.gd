@@ -234,6 +234,7 @@ func _build(cfg: Dictionary) -> Error:
 		_add_grass(root, center, size)
 		TrackNature.add(root, self, cfg)
 		_add_trees(root, lo, hi)
+		_add_life(root, center, size)
 	_add_gate(root)
 
 	# The racing line follows the hills: one point every 3 m on the floor's centre line.
@@ -446,6 +447,22 @@ func _add_world_marks(root: Node3D, cfg: Dictionary, length: float) -> void:
 		var tangent := (_pos[(i + 1) % _count] - _pos[(i - 1 + _count) % _count])
 		tangent.y = 0.0
 		LivingRoom.brick_tower(root, _pos[i] + _right[i] * mid + Vector3(0, ROAD_Y + 0.27, 0), tangent.normalized(), 3 + t % 2 * 2, t)
+
+## Outdoors: a stand of cheering fans just before the start line (on whichever side has
+## room) and the Duplo plane circling the track high up.
+func _add_life(root: Node3D, center: Vector3, size: Vector3) -> void:
+	var i := posmod(_count - int(14.0 / STEP), _count)
+	for side: float in [1.0, -1.0]:
+		var spot := _pos[i] + _right[i] * side * (HALF_WIDTH + 4.6)
+		spot.y = ROAD_Y - 0.03
+		if not _is_clear(spot, 1.6):
+			continue
+		var tangent := _pos[(i + 1) % _count] - _pos[i]
+		# The stand's long side runs along the road; its fans face the road.
+		var yaw := atan2(-side * tangent.z, side * tangent.x)
+		LivingRoom.outdoor_life(root, spot, yaw, Vector3(center.x, 0, center.z), maxf(size.x, size.z) * 0.4)
+		return
+	push_warning("No room for the fans at the start of %s." % _id)
 
 ## Bank (as tan) at a distance along the line, for placing turbo arrows flat on the road.
 func _bank_at_s(s: float) -> float:
