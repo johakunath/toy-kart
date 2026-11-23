@@ -11,6 +11,14 @@ static func key(icon_name: String, height: float) -> TextureRect:
 	r.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return r
 
+## Short German words for the action icons, shown next to the pictures on the selection screen.
+const ACTION_WORDS := {
+	"chevron": "Gas", "brake": "Bremse", "wheel": "Lenken", "drift": "Drift",
+	"star": "Item", "horn": "Hupe", "gift": "Geschenk",
+}
+## Most controls one device has in one mode (keyboard or pad, Profi): the grid keeps room for them.
+const MAX_CONTROLS := 7
+
 ## A row of key pictures, then the icon of what they do: "[W] gas".
 static func group(keys: Array[String], action_icon: String, height: float) -> HBoxContainer:
 	var box := HBoxContainer.new()
@@ -74,7 +82,7 @@ static func driving(source: InputSource, control_mode: int) -> Array:
 		2:
 			if kid:
 				return [[["pad_stick"], "wheel"], [["pad_a"], "chevron"], [["pad_b", "pad_x", "pad_y"], "horn"]]
-			return [[["pad_stick"], "wheel"], [["pad_rt"], "chevron"], [["pad_lt"], "brake"], [["pad_rb"], "drift"],
+			return [[["pad_rt"], "chevron"], [["pad_lt"], "brake"], [["pad_stick"], "wheel"], [["pad_rb"], "drift"],
 				[["pad_x"], "star"], [["pad_y"], "horn"], [["pad_dpad"], "gift"]]
 	return []
 
@@ -86,3 +94,44 @@ static func fill_driving(flow: Container, source: InputSource, control_mode: int
 		var keys: Array[String] = []
 		keys.assign(pair[0])
 		flow.add_child(group(keys, pair[1], height))
+
+## Fills `grid` with the driving controls as a tidy table: key pictures (right-aligned), the
+## action icon, a short word. Up to four controls stand in one column, more in two.
+static func fill_driving_grid(grid: GridContainer, source: InputSource, control_mode: int, height: float, font_size: int) -> void:
+	for child in grid.get_children():
+		grid.remove_child(child)
+		child.queue_free()
+	var pairs := driving(source, control_mode)
+	var two := pairs.size() > 4
+	@warning_ignore("integer_division")
+	var per_column := (pairs.size() + 1) / 2 if two else pairs.size()
+	grid.columns = 7 if two else 3
+	# Row-major grid, column-major reading: the first column is the first half of the list.
+	for r in per_column:
+		for c in (2 if two else 1):
+			var i := r + c * per_column
+			if c == 1:
+				var gap := Control.new()
+				gap.custom_minimum_size = Vector2(26, 0)
+				grid.add_child(gap)
+			if i < pairs.size():
+				_add_control_cells(grid, pairs[i], height, font_size)
+			else:
+				for k in 3:
+					grid.add_child(Control.new())
+
+static func _add_control_cells(grid: GridContainer, pair: Array, height: float, font_size: int) -> void:
+	var keys := HBoxContainer.new()
+	keys.alignment = BoxContainer.ALIGNMENT_END
+	keys.add_theme_constant_override("separation", 3)
+	keys.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for k: String in pair[0]:
+		keys.add_child(key(k, height))
+	grid.add_child(keys)
+	var action: String = pair[1]
+	var icon := UiKit.icon_rect(action, height * 0.8, UiKit.INK)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	grid.add_child(icon)
+	var word := UiKit.label(ACTION_WORDS.get(action, ""), font_size)
+	word.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	grid.add_child(word)
