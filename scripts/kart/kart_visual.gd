@@ -83,7 +83,8 @@ func _build_toy_vehicle() -> void:
 	driver = DriverRig.new()
 	driver.name = "Driver"
 	model.add_child(driver)
-	driver.position = Vector3(0, 0.02 + driver_def.vehicle_hover, 0)
+	# The model's lowest point (its wheels) touches the road: the visual's origin is the road.
+	driver.position = Vector3(0, driver_def.vehicle_hover, 0)
 	driver.build(driver_def, 1.0)
 	ToyLook.apply(driver, ToyLook.Kind.KART)
 	# The toy itself pitches, leans and slides like a kart body.
