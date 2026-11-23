@@ -10,7 +10,7 @@ Claude builds from this file. Change a row only with Johannes' OK, and change it
 | Engine | Godot 4.7, standard build with GDScript, no C# | All project files are text; free; Kenney template exists |
 | Base | Kenney Starter Kit Racing, MIT code and CC0 assets | Arcade kart physics and tile tracks ready |
 | Platform | Windows PC first, played on the 1080p projector | Steam Deck and tablet later |
-| Screen | Side-by-side split for 2 players; the left half is the kid's | Each of you looks at the half on your side of the couch |
+| Screen | Side-by-side split for 2 players; the left player panel drives the left half | Each of you looks at the half on your side of the couch |
 | Modes | Free drive, race with 0 to 3 AI karts, time trial | Taking turns first, then racing |
 | Kid mode | Auto-accelerate, steering with a helper near the edge, one gas button for full speed, soft walls, catch-up | The same assists as Mario Kart; changed 21 Nov 2026 at Johannes' request: the first version won by itself |
 | Language | Icons plus short German labels | Readable for adults; the kid always plays with you |
@@ -37,7 +37,7 @@ Claude builds from this file. Change a row only with Johannes' OK, and change it
 | --- | --- | --- |
 | Kid steering | In the middle of the road the stick steers for real, with a light helping hand (15 %, was 30 % until 22 Nov 2026: the autopilot felt too strong to him). Near the edge the helper takes over and steers back; it looks 0.6 s ahead so a kart pointed at the wall is caught early. The edge strip slows the kart | Changed 21 Nov 2026 at Johannes' request: lane steering drove the whole track by itself, so the kid felt nothing and won by doing nothing. Tests: hands off = 3rd to 5th, holding gas = 3rd, steering well with gas = 1st; no wall hits, no resets |
 | Kid speed | Changed 22 Nov 2026 after his first try (too slow): cruises at 90 % of top speed; gas (A or RT, W or arrow up) gives 100 %. Eases off before tight corners by itself | A button that does something he can feel |
-| Kid side | With one Kind and one Profi player, the Kind player always gets the left half. The player panels swap the moment this applies | Matches "the left half is his"; the swap shows it before the race (21 Nov 2026) |
+| Kid side | Panels never move by themselves. Both on the keyboard: grown-up (Profi, W A S D) left, kid (Kind, arrow keys) right. One big swap button (or Tab / a pad's View button) switches sides; the race keeps the panel order | Owner's playtest 23 Nov 2026: the old auto-swap (kid always left, 21 Nov) moved panels while clicking |
 | Seat choice | Empty panels are "Linke Seite" / "Rechte Seite": left or right on a device takes that seat, the join button the first free one | Johannes: it was unclear who presses what first (21 Nov 2026) |
 | Kart feel | Added grip to the Kenney ball physics: the motion follows the kart's nose | The kit's free-rolling ball slid wide in every corner of a walled track |
 | Full mode buttons | RT or A gas, LT or B brake, RB drift (mini boost after 1 s), X or LB use, Y horn | Close to Mario Kart on an Xbox pad |

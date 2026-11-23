@@ -126,10 +126,9 @@ func _build_world() -> void:
 	_world.add_child(_karts)
 
 func _spawn_racers() -> void:
+	# Player order = screen order: the first player gets the left half. The menu's panel order
+	# decides it (W A S D left by default, the swap button changes it).
 	var configs: Array[PlayerConfig] = Game.players.duplicate()
-	# The kid sits on the left: with one kid-mode and one full-mode player, the kid gets the left half.
-	if configs.size() == 2 and configs[0].control_mode == Game.ControlMode.FULL and configs[1].control_mode == Game.ControlMode.KID:
-		configs.reverse()
 	var slot := 0
 	for i in configs.size():
 		var cfg := configs[i]

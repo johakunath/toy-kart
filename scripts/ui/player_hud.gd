@@ -145,18 +145,23 @@ func setup(p_racer: Racer, mode: int, total_racers: int, all_racers: Array[Racer
 	_message.visible = false
 	add_child(_message)
 
-	# Key help for this player's device, bottom centre, at the start of the race.
-	var help := racer.source.drive_help(racer.control_mode) if racer.source else ""
+	# Key help for this player's device, bottom centre, at the start of the race:
+	# pictures of the real keys, each followed by what it does.
 	var keys_row := CenterContainer.new()
-	UiKit.pin(keys_row, Control.PRESET_BOTTOM_WIDE, Vector2(0, -150))
+	UiKit.pin(keys_row, Control.PRESET_BOTTOM_WIDE, Vector2(0, -170))
 	keys_row.offset_bottom = -90
 	keys_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(keys_row)
 	_keys = PanelContainer.new()
-	_keys.add_theme_stylebox_override("panel", UiKit.box(Color(UiKit.INK, 0.6), 18))
-	_keys.add_child(UiKit.label(help, 24, Color.WHITE))
+	_keys.add_theme_stylebox_override("panel", UiKit.box(Color(UiKit.PAPER, 0.85), 18))
+	var key_pictures := HBoxContainer.new()
+	key_pictures.add_theme_constant_override("separation", 20)
+	key_pictures.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if racer.source:
+		KeyHints.fill_driving(key_pictures, racer.source, racer.control_mode, 44.0)
+	_keys.add_child(key_pictures)
 	_keys.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_keys.visible = help != ""
+	_keys.visible = key_pictures.get_child_count() > 0
 	keys_row.add_child(_keys)
 
 	racer.kart.item_changed.connect(_on_item_changed)
@@ -211,12 +216,14 @@ func show_gift_hint(on: bool, source: InputSource, delta: float) -> void:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 4)
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.add_child(UiKit.icon_rect("arrow_left", 44, Color("e8483f")))
+		# The kid sits on the other half: left of the right player, right of the left one.
+		row.add_child(UiKit.icon_rect("arrow_right" if racer.player_index == 0 else "arrow_left", 44, Color("e8483f")))
 		row.add_child(UiKit.icon_rect("gift", 80, Color.WHITE))
-		if source and source.gift_icon != "":
+		var gift_key := KeyHints.gift_key(source) if source else ""
+		if gift_key != "":
+			row.add_child(KeyHints.key(gift_key, 60))
+		elif source and source.gift_icon != "":
 			row.add_child(UiKit.icon_rect(source.gift_icon, 64, Color.WHITE))
-		elif source and source.gift_key != "":
-			row.add_child(UiKit.label(source.gift_key, 52, UiKit.INK))
 		_gift_hint.add_child(row)
 		UiKit.pin(_gift_hint, Control.PRESET_CENTER_BOTTOM, Vector2(-110, -320), Vector2(220, 110))
 		_gift_hint.pivot_offset = Vector2(110, 55)

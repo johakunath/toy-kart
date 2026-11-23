@@ -28,7 +28,7 @@ var _slots: Array[PlayerSlot] = []
 var _sources: Array[InputSource] = []
 var _start_timer := -1.0
 var _start_label: Label
-var _kid_note: Control
+var _swap_button: Button
 var _music_button: Button
 var _rumble_button: Button
 
@@ -156,10 +156,13 @@ func _build_options_page() -> void:
 	nav.alignment = BoxContainer.ALIGNMENT_CENTER
 	nav.add_theme_constant_override("separation", 40)
 	column.add_child(nav)
-	var back := UiKit.pill_button("arrow_left", "Zurück", Vector2(300, 100))
+	# Back, music and rumble are icons only; "Weiter" is the one big button with a word.
+	var back := UiKit.pill_button("arrow_left", "", Vector2(160, 100))
+	back.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	back.pressed.connect(func() -> void: _show(Page.MODE))
 	nav.add_child(back)
-	_music_button = UiKit.pill_button("music", "", Vector2(260, 100))
+	_music_button = UiKit.pill_button("music", "", Vector2(160, 100))
+	_music_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_music_button.pressed.connect(func() -> void:
 		Game.music_on = not Game.music_on
 		Game.save_options()
@@ -167,7 +170,8 @@ func _build_options_page() -> void:
 		Music.refresh("menu"))
 	nav.add_child(_music_button)
 	_refresh_music_button()
-	_rumble_button = UiKit.pill_button("gamepad", "", Vector2(280, 100))
+	_rumble_button = UiKit.pill_button("gamepad", "", Vector2(160, 100))
+	_rumble_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_rumble_button.pressed.connect(func() -> void:
 		Game.rumble_on = not Game.rumble_on
 		Game.save_options()
@@ -185,13 +189,12 @@ func _build_options_page() -> void:
 		_show(Page.PLAYERS))
 	nav.add_child(_next_button)
 
+## Icon only: a faded pad means "no rumble".
 func _refresh_rumble_button() -> void:
-	_rumble_button.text = "Rütteln an" if Game.rumble_on else "Rütteln aus"
-	_rumble_button.modulate = Color.WHITE if Game.rumble_on else Color(1, 1, 1, 0.55)
+	_rumble_button.modulate = Color.WHITE if Game.rumble_on else Color(1, 1, 1, 0.4)
 
 func _refresh_music_button() -> void:
 	_music_button.icon = UiKit.icon("music" if Game.music_on else "music_off")
-	_music_button.text = "Musik an" if Game.music_on else "Musik aus"
 
 func _option_row(parent: Control, title: String) -> HBoxContainer:
 	var block := VBoxContainer.new()
@@ -239,16 +242,22 @@ func _build_players_page() -> void:
 	title_row.add_child(UiKit.icon_rect("gamepad", 70, Color.WHITE))
 	title_row.add_child(UiKit.label("Wer fährt mit?", 66, Color.WHITE, 18, UiKit.INK))
 	column.add_child(title_row)
-	_kid_note = HBoxContainer.new()
-	_kid_note.alignment = BoxContainer.ALIGNMENT_CENTER
-	_kid_note.add_theme_constant_override("separation", 12)
-	_kid_note.add_child(UiKit.icon_rect("kid", 40, Color.WHITE))
-	_kid_note.add_child(UiKit.label("Kind fährt immer links", 34, Color.WHITE, 10, UiKit.INK))
-	column.add_child(_kid_note)
 	_slot_row = HBoxContainer.new()
 	_slot_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_slot_row.add_theme_constant_override("separation", 50)
+	_slot_row.add_theme_constant_override("separation", 30)
 	column.add_child(_slot_row)
+	# Between the two panels: one big button that swaps the sides (also Tab or a pad's View button).
+	_swap_button = Button.new()
+	_swap_button.icon = UiKit.icon("swap")
+	_swap_button.expand_icon = true
+	_swap_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_swap_button.custom_minimum_size = Vector2(150, 150)
+	_swap_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_swap_button.add_theme_constant_override("icon_max_width", 96)
+	# Never takes focus: Space or Enter must not press it by accident.
+	_swap_button.focus_mode = Control.FOCUS_NONE
+	_swap_button.pressed.connect(_swap_sides)
+	_slot_row.add_child(_swap_button)
 	_start_label = UiKit.label("", 54, UiKit.SUN, 16, UiKit.INK)
 	_start_label.custom_minimum_size = Vector2(0, 66)
 	column.add_child(_start_label)
@@ -263,6 +272,7 @@ func _enter_players_page() -> void:
 		slot.taken_colors = _colors_taken_by_others
 		_slot_row.add_child(slot)
 		_slots.append(slot)
+	_place_swap_button()
 	# Players from the last race are already in their seats.
 	var seat := 0
 	for cfg in Game.players:
@@ -273,7 +283,6 @@ func _enter_players_page() -> void:
 		source.swallow_held()
 	_start_timer = -1.0
 	_start_label.text = ""
-	_kid_note.visible = slot_count > 1
 
 func _colors_taken_by_others(asking: PlayerSlot) -> Array:
 	var taken := []
@@ -322,21 +331,25 @@ func _process(delta: float) -> void:
 		if slot != null:
 			slot.handle(poll)
 		else:
-			# Left or right takes the seat on that side; the join button takes the first free one.
+			# Left or right takes the seat on that side. The join button takes the device's home
+			# seat (W A S D left, arrow keys right), else the first free one.
 			var want := -1
 			if _slots.size() > 1 and poll.get("left", false):
 				want = 0
 			elif _slots.size() > 1 and poll.get("right", false):
 				want = 1
 			elif poll.get("accept", false):
-				for k in _slots.size():
-					if _slots[k].state == PlayerSlot.SlotState.EMPTY:
-						want = k
-						break
+				var home := _home_seat(source)
+				if home >= 0 and _slots[home].state == PlayerSlot.SlotState.EMPTY:
+					want = home
+				else:
+					for k in _slots.size():
+						if _slots[k].state == PlayerSlot.SlotState.EMPTY:
+							want = k
+							break
 			if want >= 0 and _slots[want].state == PlayerSlot.SlotState.EMPTY:
 				_slots[want].join(source, want)
 				source.swallow_held()
-	_keep_kid_left()
 	var all_ready := true
 	for slot in _slots:
 		if slot.state != PlayerSlot.SlotState.EMPTY:
@@ -353,22 +366,33 @@ func _process(delta: float) -> void:
 		_start_timer = -1.0
 		_start_label.text = ""
 
-## With one Kind and one Profi player the Kind player always drives on the left half
-## (DECISIONS.md). Swap the panels as soon as that happens, so the screen shows who sits where.
-func _keep_kid_left() -> void:
+## Two keyboard players: W A S D sits left, the arrow keys sit right (DECISIONS.md).
+func _home_seat(source: InputSource) -> int:
+	if _slots.size() > 1 and source is KeyboardSource:
+		return clampi((source as KeyboardSource).layout, 0, 1)
+	return -1
+
+## Panels stay where they are; only this swaps them (button, Tab, or a pad's View button).
+## The panel order is the screen order of the race: left panel = left half.
+func _swap_sides() -> void:
 	if _slots.size() < 2:
 		return
 	var a := _slots[0]
-	var b := _slots[1]
-	if a.state == PlayerSlot.SlotState.EMPTY or b.state == PlayerSlot.SlotState.EMPTY:
-		return
-	if b.control_mode == Game.ControlMode.KID and a.control_mode == Game.ControlMode.FULL:
-		_slots[0] = b
-		_slots[1] = a
-		_slot_row.move_child(b, 0)
-		b.set_side(0)
-		a.set_side(1)
-		UiKit.play(self, "pop")
+	_slots[0] = _slots[1]
+	_slots[1] = a
+	_slots[0].set_side(0)
+	_slots[1].set_side(1)
+	_place_swap_button()
+	_start_timer = -1.0
+	UiKit.play(self, "pop")
+
+## Order in the row: left panel, swap button, right panel. The button shows only with two seats.
+func _place_swap_button() -> void:
+	if _slots.size() > 1:
+		_slot_row.move_child(_slots[0], 0)
+		_slot_row.move_child(_swap_button, 1)
+		_slot_row.move_child(_slots[1], 2)
+	_swap_button.visible = _slots.size() > 1
 
 func _start_race() -> void:
 	Game.players.clear()
@@ -428,6 +452,19 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			_show(Page.OPTIONS)
 
+## Tab (or a pad's View button) swaps the sides. Read before the GUI, so focus moves never eat it.
+func _input(event: InputEvent) -> void:
+	if _page == Page.PLAYERS and _is_swap_press(event):
+		get_viewport().set_input_as_handled()
+		_swap_sides()
+
+func _is_swap_press(event: InputEvent) -> bool:
+	var key := event as InputEventKey
+	if key and key.pressed and not key.echo and key.keycode == KEY_TAB:
+		return true
+	var button := event as InputEventJoypadButton
+	return button != null and button.pressed and button.button_index == JOY_BUTTON_BACK
+
 # --- Dev helper: "-- --shot=<png> --page=mode|options|players" saves a picture of a page ---
 
 func _dev_shot() -> void:
@@ -440,11 +477,15 @@ func _dev_shot() -> void:
 		set_process(false)
 	if page_name == "players":
 		_show(Page.PLAYERS)
+		# Both on the keyboard, as a new family would see it: W A S D (Profi) left,
+		# arrow keys (Kind) right and ready. "--swap=1" presses the swap button.
+		Game.set("_settings", ConfigFile.new())
 		_slots[0].join(_sources[0], 0)
 		_slots[1].join(_sources[1], 1)
-		_slots[1].control_mode = Game.ControlMode.FULL
 		_slots[1].handle({"accept": true})
 		_slots[0].handle({"down": true})
+		if Game.smoke_args.get("swap", "0") == "1":
+			_swap_sides()
 		set_process(false)
 	await get_tree().create_timer(1.0).timeout
 	get_viewport().get_texture().get_image().save_png(Game.smoke_args["shot"])

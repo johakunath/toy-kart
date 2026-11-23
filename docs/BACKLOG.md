@@ -18,8 +18,8 @@ He had fun and likes it. Being fixed now unless marked "waits".
 | Vehicles | Remove pickups, trucks, buses, jeeps: keep only our own toys and open karts/cabrios/race cars a toy can sit in (changes the karts decision) | Fixing |
 | Police car | Too short and a bit small; looks like it floats (shadow/ground contact) | Size and ground: fixing. Lettering and length of the drawing: Codex, `docs/CODEX_REDO_POLIZEI_KOBA.md`, then local 3D |
 | Koba | Face looks bulky and odd: new Codex views, then rebuild the 3D model locally | Waits for Codex |
-| Menu | Two players: the panels swap sides when clicking. Both on keyboard: grown-up left with WASD, kid right with arrow keys; easy to switch | Fixing |
-| Menu | Pictures of the real keys and pad buttons instead of written key names; less text overall | Fixing |
+| Menu | Two players: the panels swap sides when clicking. Both on keyboard: grown-up left with WASD, kid right with arrow keys; easy to switch | Done: auto-swap removed, W A S D left / arrows right, swap button + Tab |
+| Menu | Pictures of the real keys and pad buttons instead of written key names; less text overall | Done: `tools/make_key_icons.py`, `KeyHints` |
 | Track | New photos: blue police station and the Duplo shop become props beside the track, not vehicles | Fixing |
 | Track | Toys that are not racing stand at the roadside and watch | Fixing |
 
