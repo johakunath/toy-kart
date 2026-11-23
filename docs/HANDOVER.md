@@ -1,6 +1,6 @@
 # Handover
 
-Updated 23 Nov 2026, after the seventeenth round: 3D station and shop, side lanes on every round track, 120 Hz physics, gifts that wait.
+Updated 24 Nov 2026, eighteenth round: welcome screen, console-style menu, moments on all tracks, X-ray; before that, the seventeenth round: 3D station and shop, side lanes on every round track, 120 Hz physics, gifts that wait.
 
 ## Where it stands
 
@@ -11,6 +11,23 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## Eighteenth round (24 Nov 2026)
+
+![Splash, mode page, players page, toy fixes](img/overview-menu-2026-11-24.jpg)
+![Pillow fort, owl tree, X-ray, Wohnzimmer](img/overview-new-2026-11-24.jpg)
+
+- **Welcome screen:** "Toy Racer" logo (3D plastic letters, exact spelling) and all 14 toys
+  instead of the Kenney splash; new app and exe icon (`tools/make_logo.py`, `make_splash.py`).
+- **Menu in console style:** big glossy mode cards with glow and bounce, logo title, page
+  fades; a live flyover of the tracks behind the menu (`MenuBackdrop`, `--backdrop=0` off).
+- **Wer fährt mit:** key pictures with short words, one control per row; all cards the same size.
+- **Signature moments on every track:** Wohnzimmer pillow fort with a cheering teddy at the
+  jump; Waldkurs owl tree gate with a hedgehog, bunny and squirrel parade.
+- **X-ray:** your own kart shows through as a silhouette in your colour when hidden.
+- **Toy fixes:** Duplo-Flieger portrait now matches the toy; Jumbo has windows and a cockpit;
+  tractor front rebuilt (bonnet, grille, lights, lowered bucket).
+- Still waiting on you: Codex redraw of the police car and Koba (`docs/CODEX_REDO_POLIZEI_KOBA.md`).
 
 ## Since the seventeenth round
 

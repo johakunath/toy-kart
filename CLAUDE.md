@@ -19,12 +19,12 @@ checks yourself. Give him steps only in the Godot editor or on websites.
 | `scripts/core/` | `game.gd` (autoload `Game`: mode, speed, track, players, catalog, settings), `music.gd` (autoload `Music`), `DriverDef`, `KartDef`, `TrackDef` |
 | `scripts/input/` | `Intent`, `InputSource` (keyboard, pad, AI, test), `Assist` (kid/full), `LineFollow` |
 | `scripts/kart/` | `Kart` (rolling-ball arcade physics, items, tricks), `KartVisual`, `DriverRig` (3D model or paper card), `Items` (item set and odds), `ToyLook` (rim light, clear coat) |
-| `scripts/track/` | `Track` (racing line lookups), `TrackProgress` (laps), `BoostStar`, `BoostPad` (turbo arrows), `Brick` (toy bricks, placed by the race), `Atmosphere` (light, sky, weather), `Scatter` (trees), `GrassField`, `Pond`, `ToyMotion` (background life), `ToyTrain`, `Tunnel` |
+| `scripts/track/` | `Track` (racing line lookups), `TrackProgress` (laps), `BoostStar`, `BoostPad` (turbo arrows), `Brick` (toy bricks, placed by the race), `Atmosphere` (light, sky, weather), `Scatter` (trees), `GrassField`, `Pond`, `ToyMotion` (background life), `Roadside` (props, watching toys), moments (`ToyTrain`, `Tunnel`, `PillowFort`, `ForestFriends`) |
 | `scripts/race/` | `race.gd` (builds the race at runtime), `Racer`, `ChaseCamera`, `CoopHelp` + `MagicRope` (rope and gifts from dad) |
-| `scripts/ui/` | `menu.gd`, `PlayerSlot`, `PlayerHud`, `FinishScreen`, `PauseMenu`, `KartPreview`, `UiKit` |
+| `scripts/ui/` | `menu.gd`, `MenuStyle` (console look), `MenuBackdrop` (track flyover), `KeyHints` (key pictures), `PlayerSlot`, `PlayerHud`, `FinishScreen`, `PauseMenu`, `KartPreview`, `UiKit` |
 | `scenes/` | `menu.tscn` (main), `race.tscn`, `kart.tscn`, `boost_star.tscn`, `tracks/kurvenkurs.tscn`, `tracks/waldkurs.tscn`, `tracks/riesenrunde.tscn`, `tracks/wohnzimmer.tscn` |
 | `data/drivers/`, `data/karts/`, `data/tracks/` | one `.tres` per driver / kart / track; the game lists these folders at start |
-| `assets/` | `kenney_racing/`, `kenney_car_kit/`, `kenney_toy_car_kit/`, `characters/`, `paper/` (toy cut-outs), `sfx/`, `fx/`, `icons/` |
+| `assets/` | `ui/` (logo, splash, icon), `props/`, `models/toys/`, `kenney_racing/`, `kenney_car_kit/`, `kenney_toy_car_kit/`, `characters/`, `paper/` (toy cut-outs), `sfx/`, `fx/`, `icons/` |
 | `photos/toys/` | toy photos + `pairs.json` (which photo is front/back). Not imported by Godot |
 | `art/toys/` | drawn toy pictures (Codex); win over the photos. Brief: `docs/ART_BRIEF.md`. Not imported |
 | `tools/` | check, export, track builders (+ `living_room.gd`, `track_nature.gd`, `track_moments.gd`, `track_overview.gd` top view), cut-out and sound generators |
