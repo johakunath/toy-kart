@@ -28,6 +28,11 @@ The couch test below is the gate for milestone 1.
 - Lesson (in `docs/MODELS_3D.md`): Codex views for figures and print, local views for hard
   vehicles, Blender where parts move or the driver must stay visible.
 - Not yet tested by hand: picking the Sanitäter in the menu selects the Krankenwagen.
+- **Follow-up fixes:** the ambulance roof is now a rounded shell, like the closed toy, and sits
+  flush when shut. Koba's nose and mouth are painted from the Codex drawing
+  (`tools/blender/project_detail.py`, `docs/img/toy-fixes-2026-11-24c.png`).
+- **Clean-up:** merged helper worktrees removed. Superseded trial models are in `_zum_loeschen/`
+  (git-ignored, Godot-ignored), for Johannes to delete.
 
 ## Eighteenth round (24 Nov 2026)
 
