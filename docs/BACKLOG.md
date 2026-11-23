@@ -15,8 +15,8 @@ He had fun and likes it. Being fixed now unless marked "waits".
 | Jumps | Jump ramps barely lift the kart: jump much higher, with a fun trick animation | Fixing |
 | Balance | The front one or two karts take all item boxes (pick-up range too big); 3rd and 4th get nothing and fall further behind | Fixing |
 | Items | A boost you collect and fire whenever you want | Fixing |
-| Vehicles | Remove pickups, trucks, buses, jeeps: keep only our own toys and open karts/cabrios/race cars a toy can sit in (changes the karts decision) | Fixing |
-| Police car | Too short and a bit small; looks like it floats (shadow/ground contact) | Size and ground: fixing. Lettering and length of the drawing: Codex, `docs/CODEX_REDO_POLIZEI_KOBA.md`, then local 3D |
+| Vehicles | Remove pickups, trucks, buses, jeeps: keep only our own toys and open karts/cabrios/race cars a toy can sit in (changes the karts decision) | Done: pickup, truck, bus and jeep removed; go-karts, racing car, oldtimer and motorcycle stay |
+| Police car | Too short and a bit small; looks like it floats (shadow/ground contact) | Size and ground: done (1.15 times bigger, 1.25 times longer, wheels stay on the road, contact shadow; also motorbike and planes; `docs/img/police-car-2026-11-23.png`). Lettering and length of the drawing: Codex, `docs/CODEX_REDO_POLIZEI_KOBA.md`, then local 3D |
 | Koba | Face looks bulky and odd: new Codex views, then rebuild the 3D model locally | Waits for Codex |
 | Menu | Two players: the panels swap sides when clicking. Both on keyboard: grown-up left with WASD, kid right with arrow keys; easy to switch | Done: auto-swap removed, W A S D left / arrows right, swap button + Tab |
 | Menu | Pictures of the real keys and pad buttons instead of written key names; less text overall | Done: `tools/make_key_icons.py`, `KeyHints` |
@@ -57,7 +57,7 @@ He had fun and likes it. Being fixed now unless marked "waits".
 | Gameplay | 3 to 4 players | When needed |
 | Gameplay | Unlocks, outfits, levelling; a few per session, no streaks | Later |
 | Vehicles | More vehicle types, for example a space shuttle | Later |
-| Vehicles | Toys only in fitting karts, so a figure never floats above a pickup: a "fits these karts" list per driver (or per kart: which seat style). For paper cards, a Codex picture of toy + kart together is an option; 3D toys mostly solve it. Johannes' idea, 22 Nov 2026 | Milestone 3, after more 3D toys |
+| Vehicles | Toys only in fitting karts, so a figure never floats above a pickup: a "fits these karts" list per driver (or per kart: which seat style). For paper cards, a Codex picture of toy + kart together is an option; 3D toys mostly solve it. Johannes' idea, 22 Nov 2026 | Solved 23 Nov 2026: the pickup, truck, bus and jeep were removed, every kart left is one a toy sits in |
 | Kids | Simple track editor or track colouring for him | Later |
 | Input | Learner mode: stick steering plus a pickup button, lighter smart steering | When kid mode gets boring |
 | Input | Tilt steering with a motion-sensor pad | Later |

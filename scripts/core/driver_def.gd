@@ -30,6 +30,11 @@ enum AiLane { ANY, MIDDLE, INSIDE, OUTSIDE }
 @export var vehicle_width := 1.0
 ## Height above the road in metres, for toys that fly.
 @export var vehicle_hover := 0.0
+## Stretch of a 3D toy vehicle along its length (1.0 = as modelled), for a toy that looks too short.
+@export var vehicle_stretch := 1.0
+## How far the toy tilts in curves, in radians at full steer and speed. A car only rocks a little
+## so its wheels stay on the road; bikes and planes lean into the curve.
+@export_range(0.0, 0.6, 0.01) var vehicle_tilt := 0.05
 
 @export_group("AI personality")
 ## How this toy drives when the computer drives it (AiSource). Style only: the race's pacing
