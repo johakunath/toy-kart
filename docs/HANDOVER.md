@@ -1,6 +1,6 @@
 # Handover
 
-Updated 23 Nov 2026, seventeenth round: fixes from the first playtest with him, six new toys.
+Updated 23 Nov 2026, after the seventeenth round: 3D station and shop, side lanes on every round track, 120 Hz physics, gifts that wait.
 
 ## Where it stands
 
@@ -457,6 +457,10 @@ Tell Claude the answers by voice; they become the tuning list.
 4. Phase G (ROADMAP.md) or the rest of milestone 2: graphics presets, side lanes on more tracks.
 
 ## Notes for the next Claude session
+
+- Seven old helper copies are still in `.claude/worktrees/` (all merged into main). Removing them
+  was blocked by the permission system on 23 Nov 2026; they are safe to delete
+  (`git worktree remove` per copy, then delete their `worktree-agent-*` branches).
 
 - Read CLAUDE.md first. The Godot MCP server is configured in `.mcp.json` and loads at session
   start; this session used the Godot command line instead.

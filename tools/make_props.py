@@ -27,8 +27,6 @@ OUT = os.path.join(ROOT, "assets", "props")
 PROPS = [
     {"id": "polizeiwache", "front": "WhatsApp Image 2026-11-23 at 11.59.27 (11).jpeg",
      "back": "WhatsApp Image 2026-11-23 at 11.59.27 (9).jpeg"},
-    {"id": "polizeiwache_turm", "front": "WhatsApp Image 2026-11-23 at 11.59.27 (10).jpeg",
-     "back": "WhatsApp Image 2026-11-23 at 11.59.27 (8).jpeg"},
     {"id": "duplo_laden", "front": "WhatsApp Image 2026-11-23 at 11.59.29 (10).jpeg",
      "back": "WhatsApp Image 2026-11-23 at 11.59.29 (12).jpeg"},
 ]
