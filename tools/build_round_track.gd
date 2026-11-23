@@ -26,11 +26,13 @@ const TRACKS := [
 			Vector2(-32, -6), Vector2(-18, -1),
 		],
 		"stars": [[58.0, [-1.8, 0.0, 1.8]], [124.0, [-1.4]], [186.0, [-1.8, 0.0, 1.8]], [240.0, [1.6]]],
-		"pads": [[12.0, [-1.4, 1.4]], [106.0, [0.0]], [200.0, [1.2]]],
+		"pads": [[12.0, [-1.4, 1.4]], [106.0, [0.0]], [200.0, [1.2]], [220.0, [-9.5]]],
 		"hills": [[112.0, 182.0, 2.2]],
 		"jump": 24.0,
 		"grass": true, "water": [[Vector2(13, -16), 7.0]],  # tools/track_nature.gd
 		"moment": {"kind": "train", "at": 68.0, "left": 18.0, "right": 20.0, "clearance": 5.0},
+		# A side lane on the inside of the west bend after the hill, round brick towers.
+		"fork": {"from": 194.0, "to": 248.0, "side": -1.0, "offset": 9.5, "lane": 2.6, "ease": 17.0},
 	},
 	{
 		# The long one: a big loop with an S, a wide hairpin and a long home straight. Two laps.

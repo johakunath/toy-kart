@@ -49,7 +49,6 @@ He had fun and likes it. Being fixed now unless marked "waits".
 | Look | A weather or time-of-day choice per track instead of one fixed mood | Later |
 | Tracks | Hills and banked curves on the generated track (needs a sloped floor collider) | Later |
 | Tracks | Scenery on Kurvenkurs: tents, signs (fans at the start exist since round 15) | Milestone 2 |
-| Tracks | Side lane on Kurvenkurs (Wohnzimmer and Riesenrunde have one; one `"fork"` entry, on flat road) | When he likes them |
 | Tracks | Toy train on Kurvenkurs looks small from far away (bigger train needs bigger portals) | If he does not notice it |
 | Tech | Wohnzimmer draws many separate furniture pieces (~200 fps vs 300+ outdoors): merge into fewer meshes if the projector PC struggles | If needed |
 | Tech | Driving on the Kenney ramp and bump tiles (the kit's tile library has no collision for them) | With new tracks |

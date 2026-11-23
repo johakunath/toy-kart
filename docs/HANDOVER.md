@@ -15,7 +15,8 @@ The couch test below is the gate for milestone 1.
 ## Since the seventeenth round
 
 - **Triple turbo on the HUD:** three small turbos next to the item slot go out one by one.
-- **Riesenrunde has a side lane** too: on the inside of the long left bend after the jump, round
+- **Kurvenkurs and Riesenrunde have side lanes** too (Kurvenkurs: inside the west bend after
+  the hill). Riesenrunde: on the inside of the long left bend after the jump, round
   brick towers, with a turbo arrow. Computer drivers now brake for the lane's own tighter curve.
   Grass and flowers keep off side lanes.
 
