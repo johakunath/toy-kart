@@ -4,7 +4,8 @@
         [--height 0.7] [--even 0.7] [--turn 0] [--resolution 0] [--skip-generate]
 
 Reads art/toys/turnaround/<id>-front.png, -left.png, -back.png, -right.png (transparent PNGs from
-Codex, see docs/CODEX_TURNAROUND.md) and:
+Codex, see docs/CODEX_TURNAROUND.md; or photo cut-outs with --views art/toys/photo_views, made by
+tools/make_photo_views.py) and:
 1. frames them for Pixal3D: square, black, one common scale, toy at 1/1.1 of the frame
    -> art/models/<id>_rig/
 2. runs Pixal3D in the local ComfyUI (starts the server if needed, stops it again afterwards)
@@ -27,7 +28,8 @@ import numpy as np
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-COMFY = os.path.join(os.path.dirname(ROOT), "ComfyUI")
+# ComfyUI sits next to the project folder (also when this runs from a git worktree).
+COMFY = os.environ.get("COMFYUI_DIR", r"C:\Users\Johannes\AI projects Local\ComfyUI")
 BLENDER = r"C:\Program Files\Blender Foundation\Blender 5.3\blender.exe"
 SERVER = "http://127.0.0.1:8188"
 VIEWS = ["front", "left", "back", "right"]
@@ -38,10 +40,10 @@ def fail(msg):
     sys.exit(1)
 
 
-def frame_views(toy_id, out_dir):
+def frame_views(toy_id, out_dir, src_dir):
     crops = {}
     for view in VIEWS:
-        path = os.path.join(ROOT, "art", "toys", "turnaround", "%s-%s.png" % (toy_id, view))
+        path = os.path.join(src_dir, "%s-%s.png" % (toy_id, view))
         if not os.path.exists(path):
             fail("missing %s" % os.path.relpath(path, ROOT))
         im = Image.open(path).convert("RGBA")
@@ -118,7 +120,7 @@ def prepare(toy_id, raw_glb, args):
            "--in", raw_glb, "--out", os.path.join(ROOT, "assets", "models", "toys", "%s.glb" % toy_id),
            *size, "--matte", "--even", str(args.even), "--turn", str(args.turn),
            "--blend", os.path.join(ROOT, "art", "models", "%s_edit.blend" % toy_id), "--sheet", sheet]
-    drawing = os.path.join(ROOT, "art", "toys", "turnaround", "%s-front.png" % toy_id)
+    drawing = os.path.join(args.views, "%s-front.png" % toy_id)
     if os.path.exists(drawing):
         cmd += ["--match", drawing]
     res = subprocess.run(cmd, capture_output=True, text=True)
@@ -158,13 +160,15 @@ def main():
     ap.add_argument("--turn", type=float, default=0.0)
     ap.add_argument("--length", type=float, default=0.0, help="size by length (cars, bikes); kart is about 1.3")
     ap.add_argument("--resolution", type=int, default=0)
+    ap.add_argument("--views", default=os.path.join(ROOT, "art", "toys", "turnaround"),
+                    help="folder with <id>-front|left|back|right.png (art/toys/photo_views for photo cut-outs)")
     ap.add_argument("--skip-generate", action="store_true", help="reuse art/models/<id>_pixal3d.glb")
     args = ap.parse_args()
     os.makedirs(os.path.join(ROOT, "art", "models"), exist_ok=True)
     rig = os.path.join(ROOT, "art", "models", "%s_rig" % args.id)
     raw = os.path.join(ROOT, "art", "models", "%s_pixal3d.glb" % args.id)
     if not args.skip_generate:
-        frame_views(args.id, rig)
+        frame_views(args.id, rig, os.path.abspath(args.views))
         generate(args.id, rig, raw, args.resolution)
     prepare(args.id, raw, args)
     if args.apply:

@@ -116,7 +116,8 @@ func _use_default_setup() -> void:
 			else:
 				source = TestSource.new(args.get("input", "none"), i)
 			var driver_index := int(args.get("driver", str(i * 2))) + i * 2 if args.has("driver") else i * 2
-			Game.players.append(Game.make_player(source, Game.ControlMode.FULL if is_full else Game.ControlMode.KID, i, driver_index, i))
+			var kart_index := int(args.get("kart", "0")) + i if args.has("kart") else i  # --kart=N (menu order)
+			Game.players.append(Game.make_player(source, Game.ControlMode.FULL if is_full else Game.ControlMode.KID, i, driver_index, kart_index))
 	else:
 		Game.mode = Game.Mode.RACE
 		Game.players.append(Game.make_player(KeyboardSource.new(0), Game.ControlMode.FULL, 0, 0, 0))

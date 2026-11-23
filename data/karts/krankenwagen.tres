@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="KartDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/kart_def.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/toys/krankenwagen.glb" id="2"]
+[ext_resource type="AudioStream" path="res://assets/kenney_racing/audio/engine.ogg" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = "krankenwagen"
+display_name = "Krankenwagen"
+sort_order = 8
+model_scene = ExtResource("2")
+model_scale = 1.0
+model_yaw_degrees = 0.0
+hide_nodes = PackedStringArray()
+seat_position = Vector3(0, 0.19, -0.06)
+seat_scale = 0.95
+top_speed = 1.0
+acceleration = 1.02
+handling = 0.99
+engine_sound = ExtResource("3")
+horn_pitch = 1.1

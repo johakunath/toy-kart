@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="DriverDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/driver_def.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/paper/duplojunge_front.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/paper/duplojunge_back.png" id="3"]
+[ext_resource type="PackedScene" path="res://assets/models/toys/duplojunge.glb" id="4"]
+[ext_resource type="Texture2D" path="res://assets/portraits/paper_duplojunge.png" id="5"]
+
+[resource]
+script = ExtResource("1")
+model_scene = ExtResource("4")
+animation = ""
+model_scale = 1.0
+id = "paper_duplojunge"
+display_name = "Duplo-Junge"
+type = 0
+sort_order = 18
+front_texture = ExtResource("2")
+back_texture = ExtResource("3")
+card_height = 0.70
+ai_lane = 2
+ai_wobble = 0.3
+ai_horn = 0.7
+ai_show_off = 0.5
+ai_friendly = 1.0
+ai_brave = 0.7
+portrait = ExtResource("5")

@@ -19,6 +19,14 @@ toy. Nothing in the game code needs to change.
 | `motorrad` | Motorrad | Toy police motorbike | The vehicle itself | " |
 | `flieger` | Flieger | Toy propeller plane | The vehicle itself (flies a bit above the road) | " |
 | `duploflieger` | Duplo-Flieger | Duplo plane built from bricks | Driver, sits in a kart | " (plus left, right, top photos) |
+| `duplojunge` | Duplo-Junge | Duplo boy: yellow overalls, light blue sleeves, dark hair (seated) | Driver, sits in a kart | `photos/toys/INVENTORY-2026-11-23.md` |
+| `bauarbeiterin` | Bauarbeiterin | Duplo builder woman: white hard hat, brown curls, light blue shirt, yellow vest, navy trousers (seated) | Driver, sits in a kart | " |
+| `traktor` | Traktor | Blue farm tractor with a black front loader | The vehicle itself | " |
+| `jumbo` | Jumbo | White four-engine airliner, blue tail | The vehicle itself (flies a bit above the road) | " |
+
+Two more toys from the 23 Nov photos are karts, not drivers: the Duplo ambulance (`krankenwagen`,
+roof left off so the driver sits inside) and the Duplo train car (`zug`). They are built in
+Blender (`tools/blender/build_duplo_vehicle.py`) and need no drawings.
 
 The ids are old names kept for file compatibility (`junge` is the Duplo girl, `katze` the fox,
 `loewe` Koba, `baer` Bobo). Use the ids for file names.
