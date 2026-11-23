@@ -62,15 +62,16 @@ func apply(raw: Intent, racer: Racer, track: Track, racing: bool, delta: float) 
 
 	_watch_for_trouble(racer, track, delta)
 	# On the kerb: the kart rumbles (a sound for every driver, a gentle "oops" for the kid).
-	racer.kart.on_kerb = absf(racer.progress.lateral) > track.half_width - WALL_MARGIN - 0.4
+	var band := track.corridor(racer.progress.s(), racer.progress.lateral)
+	racer.kart.on_kerb = _rel(racer, band) > _half(band) - WALL_MARGIN - 0.4
 	if kid:
 		_out.steer = _smart_steer(raw.steer, racer, track, delta)
-		_out.accelerate = _auto_accelerate(raw.accelerate, racer, track)
+		_out.accelerate = _auto_accelerate(raw.accelerate, racer, track, band)
 		_out.brake = 0.0
 		_out.drift = false
 		_out.spark = absf(raw.steer) >= SPARK_STICK and _edge <= 0.0
 		_out.spark_cancel = _edge > 0.3
-		_soft_walls(racer, track)
+		_soft_walls(racer, track, band)
 		_out.use = false
 		if racer.kart.has_item:
 			_use_timer += delta
@@ -93,49 +94,71 @@ func clear_timers(racer: Racer) -> void:
 
 func _smart_steer(stick: float, racer: Racer, track: Track, _delta: float) -> float:
 	var progress := racer.progress
-	var safe := track.half_width - WALL_MARGIN
+	# The lane the kart is in. At a fork the lane is chosen a moment early (where the kart
+	# will be), so the assist lines up beside the island's tip instead of into it.
+	var now := track.corridor(progress.s(), progress.lateral)
+	var soon := track.corridor(progress.s() + racer.kart.speed() * 0.9, progress.lateral)
+	var band := Vector2(maxf(now.x, soon.x), minf(now.y, soon.y))
+	if band.y - band.x < 2.0:
+		band = soon
+	var center := (band.x + band.y) * 0.5
+	var half := _half(band)
+	var rel := progress.lateral - center
+	var safe := half - WALL_MARGIN
 	# Where the kart will be in a moment if it keeps its heading: the assist reacts to that,
 	# so a kart pointing at the wall is caught early, one driving along the edge is left alone.
-	var ahead := progress.lateral + sin(progress.heading_error) * racer.kart.speed() * LOOK_AHEAD
-	var near := ahead if absf(ahead) > absf(progress.lateral) else progress.lateral
+	var ahead := rel + sin(progress.heading_error) * racer.kart.speed() * LOOK_AHEAD
+	var near := ahead if absf(ahead) > absf(rel) else rel
 	# 0 in the middle of the road, 1 at the wall cushion.
-	var edge := clampf((absf(near) - (track.half_width - EDGE_ZONE)) / (EDGE_ZONE - WALL_MARGIN + 0.5), 0.0, 1.0)
+	var edge := clampf((absf(near) - (half - EDGE_ZONE)) / (EDGE_ZONE - WALL_MARGIN + 0.5), 0.0, 1.0)
 	_edge = edge
 	# The assist's line: where the kart is now, kept inside the safe band.
-	_lane = clampf(progress.lateral, -safe, safe)
+	_lane = clampf(rel, -safe, safe)
 	if edge > 0.0:
-		_lane = signf(progress.lateral) * minf(absf(_lane), safe - 0.6 * edge)
-	var auto := LineFollow.steer_to_lane(racer.kart, progress, track, _lane)
+		_lane = signf(rel) * minf(absf(_lane), safe - 0.6 * edge)
+	# Aim along the lane's centre where the steering looks ahead (a side lane bends away).
+	var aim := track.corridor(progress.s() + 2.0 + racer.kart.speed() * 0.35, progress.lateral)
+	var aim_center := (aim.x + aim.y) * 0.5 if aim.y - aim.x < now.y - now.x + 0.01 else center
+	var auto := LineFollow.steer_to_lane(racer.kart, progress, track, aim_center + _lane)
 	var help := lerpf(LIGHT_HAND, 1.0, edge)
 	# The stick fades out when it pushes toward the wall it is already close to.
 	var toward_wall := signf(stick) == signf(near)
 	var room := 1.0 - edge if toward_wall else 1.0
 	return clampf(auto * help + stick * STICK_FEEL * room, -1.0, 1.0)
 
-func _auto_accelerate(gas: float, racer: Racer, track: Track) -> float:
+func _auto_accelerate(gas: float, racer: Racer, track: Track, band: Vector2) -> float:
 	var kart := racer.kart
 	var limit := LineFollow.corner_speed(kart, racer.progress, track)
 	var top := maxf(kart.top_speed(), 0.1)
 	var want := lerpf(KID_CRUISE, 1.0, clampf(gas, 0.0, 1.0))
-	if absf(racer.progress.lateral) > track.half_width - WALL_MARGIN - 0.4:
+	if _rel(racer, band) > _half(band) - WALL_MARGIN - 0.4:
 		want = minf(want, EDGE_SLOW)
 	return clampf(minf(limit / top, want), 0.35, 1.0)
 
-func _soft_walls(racer: Racer, track: Track) -> void:
+func _soft_walls(racer: Racer, track: Track, band: Vector2) -> void:
 	var progress := racer.progress
-	var limit := track.half_width - 1.0
-	var over := absf(progress.lateral) - limit
+	var limit := _half(band) - 1.0
+	var rel := progress.lateral - (band.x + band.y) * 0.5
+	var over := absf(rel) - limit
 	if over <= 0.0:
 		return
-	var inward := -track.sample_right(progress.index) * signf(progress.lateral)
+	var inward := -track.sample_right(progress.index) * signf(rel)
 	racer.kart.nudge(inward * minf(over * 30.0, 25.0))
+
+## Distance of the kart from the middle of its lane, and half the lane's width.
+static func _rel(racer: Racer, band: Vector2) -> float:
+	return absf(racer.progress.lateral - (band.x + band.y) * 0.5)
+
+static func _half(band: Vector2) -> float:
+	return (band.y - band.x) * 0.5
 
 # --- Rescue --------------------------------------------------------------------------------
 
 func _watch_for_trouble(racer: Racer, track: Track, delta: float) -> void:
 	var progress := racer.progress
 	var pos := racer.kart.ground_position()
-	var off_course := absf(progress.lateral) > track.half_width + 1.0 or pos.y < -3.0
+	var band := track.corridor(progress.s(), progress.lateral)
+	var off_course := progress.lateral < band.x - 1.0 or progress.lateral > band.y + 1.0 or pos.y < -3.0
 	_off_time = _off_time + delta if off_course else 0.0
 
 	# Stuck = no real progress along the track for a while.

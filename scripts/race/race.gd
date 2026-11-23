@@ -428,6 +428,11 @@ func _physics_process(delta: float) -> void:
 				racer.kart.use_item()
 		if racer.assist.wants_reset:
 			_reset_racer(racer)
+		if not track.forks.is_empty():
+			var in_lane := absf(racer.progress.lateral) > track.half_width + 1.5
+			if in_lane and not racer._in_side_lane:
+				racer.side_lanes += 1
+			racer._in_side_lane = in_lane
 
 	if racing:
 		_check_laps()
@@ -701,11 +706,11 @@ func _smoke_tick(delta: float) -> void:
 	var ok := true
 	print("SMOKE track=%s mode=%s%s speed=%s time=%.1fs resets=%d" % [Game.track.id, Game.MODE_NAMES[Game.mode], " (Team)" if Game.team_race else "", Game.SPEED_NAMES[Game.speed_class], _smoke_time, _resets])
 	for racer in racers:
-		print("SMOKE   %-12s human=%s place=%d laps=%d finished=%s time=%.1f dist=%.0fm wall_hits=%d boosted=%.0f%% tricks=%d bricks=%d wobbles=%d" % [
+		print("SMOKE   %-12s human=%s place=%d laps=%d finished=%s time=%.1f dist=%.0fm wall_hits=%d boosted=%.0f%% tricks=%d bricks=%d wobbles=%d lanes=%d" % [
 			racer.display_name, racer.is_human, racer.place, maxi(racer.progress.lap, 0), racer.finished,
 			racer.finish_time, racer.progress.distance(), racer.kart.wall_hits,
 			100.0 * racer.kart.boost_time / maxf(racer.finish_time if racer.finished else _smoke_time, 0.1),
-			racer.kart.tricks, racer.kart.bricks_picked, racer.kart.wobbles])
+			racer.kart.tricks, racer.kart.bricks_picked, racer.kart.wobbles, racer.side_lanes])
 		if racer.is_human:
 			if Game.mode == Game.Mode.FREE_DRIVE:
 				ok = ok and racer.progress.distance() > 60.0

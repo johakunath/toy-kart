@@ -50,7 +50,46 @@ const TRACKS := [
 		"hills": [[150.0, 230.0, 2.6], [330.0, 400.0, 1.8]],
 		"jump": 46.0,
 	},
+	{
+		# Indoors: a toy road through the living room, his toys as giants. Three zones (wooden
+		# floor by the red sofa, the round rug under the coffee table, the play corner), a jump
+		# over a fallen sofa cushion, and a side lane round an island of giant bricks.
+		"id": "wohnzimmer", "name": "Wohnzimmer", "sort": 15, "laps": 3, "look": Atmosphere.Look.LIVING_ROOM,
+		"world": "living_room",
+		"points": [
+			Vector2(0, 0), Vector2(24, 0), Vector2(44, -3), Vector2(58, -14), Vector2(62, -30),
+			Vector2(56, -45), Vector2(42, -52), Vector2(28, -50), Vector2(14, -56), Vector2(0, -64),
+			Vector2(-18, -66), Vector2(-38, -64), Vector2(-56, -56), Vector2(-68, -42), Vector2(-72, -26),
+			Vector2(-66, -12), Vector2(-52, -3), Vector2(-28, 1),
+		],
+		"stars": [[56.0, [-1.8, 0.0, 1.8]], [140.0, [-1.4]], [180.0, [-1.8, 0.0, 1.8]], [268.0, [-10.0]],
+			[300.0, [1.6]]],
+		"pads": [[14.0, [-1.4, 1.4]], [128.0, [0.0]], [246.0, [-10.0]], [312.0, [-1.2]]],
+		"hills": [[66.0, 108.0, 2.0]],
+		"jump": 36.0, "jump_height": 1.7, "jump_style": "cushion",
+		"zones": [[0.0, "holz"], [116.0, "teppich"], [196.0, "spielecke"], [300.0, "holz"]],
+		"arch": 192.0,
+		"fork": {"from": 204.0, "to": 292.0, "side": -1.0, "offset": 10.0, "lane": 2.6, "ease": 22.0},
+	},
 ]
+
+## Looks of the road per zone ("zones": [[metres from the start, style], ...]; default "rennbahn").
+const STYLES := {
+	"rennbahn": {"road": Color("4a4c5a"), "line": Color("e9ecf5"), "kerb_a": Color("e3241b"), "kerb_b": Color("f3f4f8"),
+		"barrier": Color("2f7fe8"), "skirt": Color("3fb44a")},
+	# Living room: a blue toy road on the wooden floor ...
+	"holz": {"road": Color("2a6ae0"), "line": Color("f3f4f8"), "kerb_a": Color("ffc81e"), "kerb_b": Color("f3f4f8"),
+		"barrier": Color("e3241b"), "skirt": Color("c9874a")},
+	# ... a printed play-rug road ...
+	"teppich": {"road": Color("4a4c5a"), "line": Color("f3f4f8"), "kerb_a": Color("e3241b"), "kerb_b": Color("f3f4f8"),
+		"barrier": Color("2f7fe8"), "skirt": Color("e8483f")},
+	# ... and an orange toy track in the play corner.
+	"spielecke": {"road": Color("ff7412"), "line": Color("fff3c4"), "kerb_a": Color("8e44d8"), "kerb_b": Color("f3f4f8"),
+		"barrier": Color("2fb84a"), "skirt": Color("3b8beb")},
+}
+const C_CUSHION := Color("e0245e")
+const C_PIPING := Color("ffd2e2")
+const C_ISLAND := Color("2fb84a")
 
 const HALF_WIDTH := 3.6      # centre line to the wall face (what the karts can use)
 const ASPHALT := 3.0         # centre line to where the kerb starts
@@ -91,6 +130,15 @@ var _bank := PackedFloat32Array()  # tan(bank angle) per slice: + = left side hi
 var _curv := PackedFloat32Array()  # smoothed signed curvature per slice, + = bends right
 var _ramp_from := -1               # slices of the jump ramp (striped)
 var _ramp_to := -1
+var _land_to := -1                 # last slice of the landing slope
+var _jump_style := "stripes"       # or "cushion": the whole jump is a sofa cushion
+var _style_of := PackedInt32Array()  # zone style per slice, index into _styles
+var _styles: Array[Dictionary] = []
+var _fork := {}                    # the side lane, if the track has one (see Track.forks)
+var _fork_side := 0.0
+var _lane_w := 0.0
+var _fork_c := PackedFloat32Array()  # lane centre offset from the line per slice (0 = no lane)
+var _barrier_normals: Array[Vector2] = []
 
 func _process(_delta: float) -> bool:
 	# "-- --track=<id>" builds one track; without it, all of them.
@@ -155,11 +203,15 @@ func _build(cfg: Dictionary) -> Error:
 		push_error("A corner is tighter than the road is wide.")
 		return ERR_INVALID_DATA
 
+	_zones(cfg, length)
+	_setup_fork(cfg, length)
 	_profile(cfg, length)
 
 	var root := Track.new()
 	root.name = "Track"
 	root.half_width = HALF_WIDTH
+	if not _fork.is_empty():
+		root.forks = [_fork]
 
 	var lo := Vector3(INF, 0, INF)
 	var hi := Vector3(-INF, 0, -INF)
@@ -173,8 +225,12 @@ func _build(cfg: Dictionary) -> Error:
 	TrackBuildCommon.add_ground_collider(root)
 	_add_walls(root)
 	_add_road(root)
-	_add_grass(root, center, size)
-	_add_trees(root, lo, hi)
+	if cfg.get("world", "") == "living_room":
+		LivingRoom.build(root, ROAD_Y - 0.03, _is_clear)
+		_add_world_marks(root, cfg, length)
+	else:
+		_add_grass(root, center, size)
+		_add_trees(root, lo, hi)
 	_add_gate(root)
 
 	# The racing line follows the hills: one point every 3 m on the floor's centre line.
@@ -228,8 +284,12 @@ func _profile(cfg: Dictionary, length: float) -> void:
 			sum += raw[(i + k + _count) % _count]
 		_curv[i] = sum / (2 * BANK_SMOOTH + 1)
 	var lip: float = cfg.get("jump", -1000.0)
+	var jump_h: float = cfg.get("jump_height", JUMP_HEIGHT)
+	var jump_fall := JUMP_FALL * maxf(1.0, jump_h / JUMP_HEIGHT)  # a higher jump lands on a longer slope
+	_jump_style = cfg.get("jump_style", "stripes")
 	_ramp_from = -1
 	_ramp_to = -1
+	_land_to = -1
 	for i in _count:
 		var s := length * i / _count
 		var h := 0.0
@@ -240,15 +300,20 @@ func _profile(cfg: Dictionary, length: float) -> void:
 				h += float(hill[2]) * 0.5 * (1.0 - cos(TAU * (s - s0) / (s1 - s0)))
 		if s >= lip - JUMP_RISE and s <= lip:
 			var u := (s - (lip - JUMP_RISE)) / JUMP_RISE
-			h += JUMP_HEIGHT * u * u
+			h += jump_h * u * u
 			if _ramp_from < 0:
 				_ramp_from = i
 			_ramp_to = i
-		elif s > lip and s <= lip + JUMP_FALL:
-			var u := (s - lip) / JUMP_FALL
-			h += JUMP_HEIGHT * (1.0 - u) * (1.0 - u)
-		# No banking on the start straight (grid, gate) and on the jump.
-		var calm := s < 12.0 or s > length - 32.0 or (s > lip - JUMP_RISE - 8.0 and s < lip + JUMP_FALL + 4.0)
+		elif s > lip and s <= lip + jump_fall:
+			var u := (s - lip) / jump_fall
+			h += jump_h * (1.0 - u) * (1.0 - u)
+			_land_to = i
+		if h > 0.0 and _fork_c.size() > 0 and _fork_c[i] > 0.0:
+			push_error("A hill or jump runs into the side lane (keep the fork on flat road).")
+		# No banking on the start straight (grid, gate), on the jump and around a fork.
+		var calm := s < 12.0 or s > length - 32.0 or (s > lip - JUMP_RISE - 8.0 and s < lip + jump_fall + 4.0)
+		if not _fork.is_empty() and s > float(_fork["from"]) - 12.0 and s < float(_fork["to"]) + 12.0:
+			calm = true
 		var angle := 0.0 if calm else clampf(_curv[i] * BANK_PER_CURVATURE, -MAX_BANK, MAX_BANK)
 		_bank[i] = tan(angle)
 		_h[i] = h
@@ -274,6 +339,110 @@ static func _max_abs(values: PackedFloat32Array) -> float:
 	for v in values:
 		m = maxf(m, absf(v))
 	return m
+
+# --- Zones and the side lane ---------------------------------------------------------------
+
+## Which road style every slice gets ("zones" in the track's config).
+func _zones(cfg: Dictionary, length: float) -> void:
+	var zones: Array = cfg.get("zones", [[0.0, "rennbahn"]])
+	_styles.clear()
+	var index_of := {}
+	for zone: Array in zones:
+		if not index_of.has(zone[1]):
+			index_of[zone[1]] = _styles.size()
+			_styles.append(STYLES[zone[1]])
+	_style_of.resize(_count)
+	for i in _count:
+		var s := length * i / _count
+		var pick := 0
+		for zone: Array in zones:
+			if s >= float(zone[0]):
+				pick = index_of[zone[1]]
+		_style_of[i] = pick
+
+func _st(i: int) -> Dictionary:
+	return _styles[_style_of[posmod(i, _count)]]
+
+func _setup_fork(cfg: Dictionary, length: float) -> void:
+	_fork = {}
+	_fork_c = PackedFloat32Array()
+	if not cfg.has("fork"):
+		return
+	var f: Dictionary = cfg["fork"]
+	_fork = {"from": float(f["from"]), "to": float(f["to"]), "side": float(f["side"]),
+		"offset": float(f["offset"]), "lane": float(f["lane"]), "ease": float(f["ease"])}
+	_fork_side = _fork["side"]
+	_lane_w = _fork["lane"]
+	_fork_c.resize(_count)
+	var tightest := INF
+	for i in _count:
+		_fork_c[i] = Track.fork_offset(_fork, length * i / _count)
+	# The lane is on the inside or outside of the corners it runs along: check its radius.
+	for i in _count:
+		if _fork_c[i] <= 0.0:
+			continue
+		var a := _lane_point(i - 3)
+		var b := _lane_point(i)
+		var c := _lane_point(i + 3)
+		var turn := absf((b - a).signed_angle_to(c - b, Vector3.UP))
+		if turn > 0.0001:
+			tightest = minf(tightest, (b - a).length() / turn * 2.0)
+	print("%s side lane: %.0f-%.0f m, %.1f m out, tightest radius %.1f m" % [_id, _fork["from"], _fork["to"], _fork["offset"], tightest])
+	if tightest < _lane_w + 1.5:
+		push_error("The side lane bends tighter than it is wide.")
+
+func _lane_c(i: int) -> float:
+	return _fork_c[posmod(i, _count)] if not _fork_c.is_empty() else 0.0
+
+## The side lane's outer wall (fork side, metres from the line; HALF_WIDTH where there is none).
+func _lane_outer(i: int) -> float:
+	return maxf(HALF_WIDTH, _lane_c(i) + _lane_w)
+
+func _has_island(i: int) -> bool:
+	return _lane_c(i) - _lane_w > HALF_WIDTH + Track.ISLAND_GAP
+
+func _fork_open(i: int) -> bool:
+	return _lane_c(i) + _lane_w > HALF_WIDTH + 0.001
+
+func _lane_point(i: int) -> Vector3:
+	var k := posmod(i, _count)
+	return _pos[k] + _right[k] * (_fork_side * _lane_c(k))
+
+## True if a thing of radius r at p stays clear of the road, the side lane and the barriers.
+func _is_clear(p: Vector3, r: float) -> bool:
+	if _distance_to_line(p) < HALF_WIDTH + 1.2 + r:
+		return false
+	for i in range(0, _count, 2):
+		if _lane_c(i) > 0.0:
+			var q := _lane_point(i)
+			if Vector2(p.x - q.x, p.z - q.z).length() < _lane_w + 1.2 + r:
+				return false
+	return true
+
+## Living-room landmarks that hang on the road: a brick arch where the play corner starts and
+## brick towers on the side lane's island.
+func _add_world_marks(root: Node3D, cfg: Dictionary, length: float) -> void:
+	if cfg.has("arch"):
+		var i := posmod(int(round(float(cfg["arch"]) / length * _count)), _count)
+		LivingRoom.brick_arch(root, _pos[i] + Vector3(0, ROAD_Y - 0.03, 0), _right[i], HALF_WIDTH + 1.6)
+	if _fork.is_empty():
+		return
+	var first := -1
+	var last := -1
+	for i in _count:
+		if _has_island(i) and _lane_c(i) - _lane_w - HALF_WIDTH > 2.9:
+			if first < 0:
+				first = i
+			last = i
+	if first < 0:
+		return
+	var towers := 3
+	for t in towers:
+		var i := first + int((last - first) * (t + 0.5) / towers)
+		var mid := _fork_side * (HALF_WIDTH + _lane_c(i) - _lane_w) * 0.5
+		var tangent := (_pos[(i + 1) % _count] - _pos[(i - 1 + _count) % _count])
+		tangent.y = 0.0
+		LivingRoom.brick_tower(root, _pos[i] + _right[i] * mid + Vector3(0, ROAD_Y + 0.27, 0), tangent.normalized(), 3 + t % 2 * 2, t)
 
 ## Bank (as tan) at a distance along the line, for placing turbo arrows flat on the road.
 func _bank_at_s(s: float) -> float:
@@ -308,33 +477,66 @@ func _quad(st: SurfaceTool, v: Array[Vector3], normals: Array[Vector3], color: C
 ## One ribbon along the whole track between two cross-section points.
 ## `color_at` picks the colour for slice i; returning a transparent colour skips the slice.
 func _ribbon(st: SurfaceTool, d0: float, h0: float, n0: Vector2, d1: float, h1: float, n1: Vector2, color_at: Callable) -> void:
+	_ribbon_v(st, func(_i: int) -> float: return d0, h0, n0, func(_i: int) -> float: return d1, h1, n1, color_at)
+
+## The same with sideways offsets that change along the track: `d0`/`d1` give the offset at slice i.
+func _ribbon_v(st: SurfaceTool, d0: Callable, h0: float, n0: Vector2, d1: Callable, h1: float, n1: Vector2, color_at: Callable) -> void:
 	for i in _count:
 		var color: Color = color_at.call(i)
 		if color.a < 0.5:
 			continue
-		var v: Array[Vector3] = [_at(i, d0, h0), _at(i, d1, h1), _at(i + 1, d1, h1), _at(i + 1, d0, h0)]
+		var a0: float = d0.call(i)
+		var a1: float = d1.call(i)
+		var b0: float = d0.call(i + 1)
+		var b1: float = d1.call(i + 1)
+		var v: Array[Vector3] = [_at(i, a0, h0), _at(i, a1, h1), _at(i + 1, b1, h1), _at(i + 1, b0, h0)]
 		var normals: Array[Vector3] = [_normal(i, n0.x, n0.y), _normal(i, n1.x, n1.y), _normal(i + 1, n1.x, n1.y), _normal(i + 1, n0.x, n0.y)]
 		_quad(st, v, normals, color)
 
+## A rounded barrier on one side: its wall face is `base` metres (at slice i) from the line.
+func _barrier(st: SurfaceTool, side: float, base: Callable, color_at: Callable) -> void:
+	for k in BARRIER.size() - 1:
+		var p0 := BARRIER[k]
+		var p1 := BARRIER[k + 1]
+		_ribbon_v(st, func(i: int) -> float: return side * (float(base.call(i)) + p0.x), p0.y,
+			Vector2(side * _barrier_normals[k].x, _barrier_normals[k].y),
+			func(i: int) -> float: return side * (float(base.call(i)) + p1.x), p1.y,
+			Vector2(side * _barrier_normals[k + 1].x, _barrier_normals[k + 1].y), color_at)
+
 # --- Road, kerbs, barriers -----------------------------------------------------------------
+
+func _on_cushion(i: int) -> bool:
+	return _jump_style == "cushion" and _ramp_from >= 0 and i >= _ramp_from and i <= _land_to
+
+func _road_color(i: int) -> Color:
+	if _on_cushion(i):
+		return C_CUSHION if (i >> 2) % 3 != 0 else C_CUSHION.darkened(0.14)  # quilted
+	if _jump_style != "cushion" and _ramp_from >= 0 and i >= _ramp_from and i <= _ramp_to:
+		return C_RAMP if (i >> 1) % 2 == 0 else C_BLACK
+	return _st(i)["road"]
+
+func _kerb_color(i: int) -> Color:
+	if _on_cushion(i):
+		return C_PIPING if (i >> 1) % 2 == 0 else C_CUSHION.lightened(0.25)
+	return _st(i)["kerb_a"] if (i >> 1) % 2 == 0 else _st(i)["kerb_b"]
+
+func _barrier_color(i: int) -> Color:
+	return C_PIPING if _on_cushion(i) else _st(i)["barrier"]
 
 func _add_road(root: Node3D) -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var up := Vector2(0, 1)
-	_ribbon(st, -ASPHALT, 0.0, up, ASPHALT, 0.0, up, func(i: int) -> Color:
-		if i >= _ramp_from and i <= _ramp_to and _ramp_from >= 0:
-			return C_RAMP if (i >> 1) % 2 == 0 else C_BLACK
-		return C_ASPHALT)
+	_ribbon(st, -ASPHALT, 0.0, up, ASPHALT, 0.0, up, _road_color)
 	# Edge lines and a dashed centre line.
 	for side: float in [-1.0, 1.0]:
-		_ribbon(st, side * (ASPHALT - 0.3), 0.012, up, side * (ASPHALT - 0.14), 0.012, up, func(_i: int) -> Color: return C_LINE)
+		_ribbon(st, side * (ASPHALT - 0.3), 0.012, up, side * (ASPHALT - 0.14), 0.012, up,
+			func(i: int) -> Color: return C_PIPING if _on_cushion(i) else _st(i)["line"])
 	_ribbon(st, -0.07, 0.012, up, 0.07, 0.012, up,
-		func(i: int) -> Color: return C_LINE if (i >> 2) % 2 == 0 else Color.TRANSPARENT)
-	# Red and white kerbs, slightly raised toward the barrier.
+		func(i: int) -> Color: return _st(i)["line"] if (i >> 2) % 2 == 0 and not _on_cushion(i) else Color.TRANSPARENT)
+	# Kerbs, slightly raised toward the barrier.
 	for side: float in [-1.0, 1.0]:
-		_ribbon(st, side * ASPHALT, 0.01, up, side * HALF_WIDTH, 0.05, up,
-			func(i: int) -> Color: return C_KERB_RED if (i >> 1) % 2 == 0 else C_KERB_WHITE)
+		_ribbon(st, side * ASPHALT, 0.01, up, side * HALF_WIDTH, 0.05, up, _kerb_color)
 	# Chequered start line: two rows of squares across the asphalt.
 	var squares := int(round(2.0 * ASPHALT / STEP))
 	for row in 2:
@@ -344,23 +546,23 @@ func _add_road(root: Node3D) -> void:
 			var v: Array[Vector3] = [_at(row - 1, d0, 0.016), _at(row - 1, d0 + STEP, 0.016), _at(row, d0 + STEP, 0.016), _at(row, d0, 0.016)]
 			var normals: Array[Vector3] = [Vector3.UP, Vector3.UP, Vector3.UP, Vector3.UP]
 			_quad(st, v, normals, color)
-	# Rounded barriers on both sides.
+	# Rounded barriers on both sides; on a fork's side the barrier runs along the lane's outside.
 	var seg_normals: Array[Vector2] = []
 	for k in BARRIER.size() - 1:
 		var d := BARRIER[k + 1] - BARRIER[k]
 		seg_normals.append(Vector2(-d.y, d.x).normalized())
-	var point_normals: Array[Vector2] = []
+	_barrier_normals.clear()
 	for k in BARRIER.size():
 		var a := seg_normals[maxi(k - 1, 0)]
 		var b := seg_normals[mini(k, seg_normals.size() - 1)]
-		point_normals.append((a + b).normalized())
+		_barrier_normals.append((a + b).normalized())
 	for side: float in [-1.0, 1.0]:
-		for k in BARRIER.size() - 1:
-			var p0 := BARRIER[k]
-			var p1 := BARRIER[k + 1]
-			_ribbon(st, side * (HALF_WIDTH + p0.x), p0.y, Vector2(side * point_normals[k].x, point_normals[k].y),
-				side * (HALF_WIDTH + p1.x), p1.y, Vector2(side * point_normals[k + 1].x, point_normals[k + 1].y),
-				func(_i: int) -> Color: return C_BARRIER)
+		if not _fork.is_empty() and side == _fork_side:
+			_barrier(st, side, _lane_outer, _barrier_color)
+		else:
+			_barrier(st, side, func(_i: int) -> float: return HALF_WIDTH, _barrier_color)
+	if not _fork.is_empty():
+		_add_lane(st)
 	_add_skirts(st)
 	_add_chevrons(st)
 	st.index()
@@ -380,6 +582,35 @@ func _add_road(root: Node3D) -> void:
 	road.owner = root
 	print("road mesh: %d vertices" % mesh.surface_get_array_len(0))
 
+## The side lane's road, its kerbs and the island with its two barriers.
+func _add_lane(st: SurfaceTool) -> void:
+	var sd := _fork_side
+	var up := Vector2(0, 1)
+	var kerb := HALF_WIDTH - ASPHALT
+	var inner := func(i: int) -> float: return sd * (_lane_c(i) - _lane_w + kerb if _has_island(i) else HALF_WIDTH)
+	var outer := func(i: int) -> float: return sd * (_lane_c(i) + _lane_w - kerb)
+	var open := func(i: int) -> bool: return _lane_c(i) + _lane_w - kerb > HALF_WIDTH + 0.05 and _lane_c(i + 1) + _lane_w - kerb > HALF_WIDTH + 0.05
+	_ribbon_v(st, inner, 0.0, up, outer, 0.0, up,
+		func(i: int) -> Color: return _road_color(i) if open.call(i) else Color.TRANSPARENT)
+	# A dashed middle line, so the lane reads as a road of its own.
+	_ribbon_v(st, func(i: int) -> float: return sd * _lane_c(i) - 0.07, 0.012, up,
+		func(i: int) -> float: return sd * _lane_c(i) + 0.07, 0.012, up,
+		func(i: int) -> Color: return _st(i)["line"] if _has_island(i) and (i >> 2) % 2 == 0 else Color.TRANSPARENT)
+	# Kerb on the outside of the lane, and on the island side.
+	_ribbon_v(st, outer, 0.01, up, func(i: int) -> float: return sd * (_lane_c(i) + _lane_w), 0.05, up,
+		func(i: int) -> Color: return _kerb_color(i) if open.call(i) else Color.TRANSPARENT)
+	var island := func(i: int) -> bool: return _has_island(i) and _has_island(i + 1)
+	_ribbon_v(st, func(i: int) -> float: return sd * (_lane_c(i) - _lane_w), 0.05, up, inner, 0.01, up,
+		func(i: int) -> Color: return _kerb_color(i) if island.call(i) else Color.TRANSPARENT)
+	# The island: a barrier facing the road, one facing the lane, a raised lawn between them.
+	var island_color := func(i: int) -> Color: return _barrier_color(i) if island.call(i) else Color.TRANSPARENT
+	_barrier(st, sd, func(_i: int) -> float: return HALF_WIDTH, island_color)
+	_barrier(st, -sd, func(i: int) -> float: return -(_lane_c(i) - _lane_w), island_color)
+	var back := BARRIER[BARRIER.size() - 2].x
+	_ribbon_v(st, func(_i: int) -> float: return sd * (HALF_WIDTH + back), 0.3, up,
+		func(i: int) -> float: return sd * maxf(HALF_WIDTH + back, _lane_c(i) - _lane_w - back), 0.3, up,
+		func(i: int) -> Color: return C_ISLAND if island.call(i) else Color.TRANSPARENT)
+
 ## Grass embankments from the barriers down to the lawn wherever the road is raised.
 func _add_skirts(st: SurfaceTool) -> void:
 	var edge := HALF_WIDTH + BARRIER[BARRIER.size() - 1].x
@@ -398,7 +629,7 @@ func _add_skirts(st: SurfaceTool) -> void:
 			var n := (_right[ka] * side + Vector3.UP * SKIRT_SLOPE).normalized()
 			var v: Array[Vector3] = [a, a_low, b_low, b]
 			var normals: Array[Vector3] = [n, n, n, n]
-			_quad(st, v, normals, C_GRASS)
+			_quad(st, v, normals, C_CUSHION if _on_cushion(i) else _st(i)["skirt"])
 
 ## Red boards with white arrows on the outside of tight corners, pointing the way.
 func _add_chevrons(st: SurfaceTool) -> void:
@@ -406,6 +637,8 @@ func _add_chevrons(st: SurfaceTool) -> void:
 	var boards := 0
 	for i in _count:
 		if absf(_curv[i]) < CHEVRON_CURVATURE or i - last < 8:
+			continue
+		if _fork_open(i) and -signf(_curv[i]) == _fork_side:
 			continue
 		last = i
 		boards += 1
@@ -456,16 +689,36 @@ func _add_floor(root: Node3D) -> void:
 	body.owner = root
 	collision.owner = root
 
+func _wall_quad(faces: PackedVector3Array, i: int, da: float, db: float) -> void:
+	var a_low := _at(i, da, -0.4)
+	var a_high := _at(i, da, 3.2)
+	var b_low := _at(i + 1, db, -0.4)
+	var b_high := _at(i + 1, db, 3.2)
+	faces.append_array([a_low, a_high, b_high, a_low, b_high, b_low])
+
 ## Invisible walls the karts bounce off, at the wall face on both sides.
 func _add_walls(root: Node3D) -> void:
 	var faces := PackedVector3Array()
 	for side: float in [-1.0, 1.0]:
+		var on_fork := not _fork.is_empty() and side == _fork_side
 		for i in _count:
-			var a_low := _at(i, side * HALF_WIDTH, -0.4)
-			var a_high := _at(i, side * HALF_WIDTH, 3.2)
-			var b_low := _at(i + 1, side * HALF_WIDTH, -0.4)
-			var b_high := _at(i + 1, side * HALF_WIDTH, 3.2)
-			faces.append_array([a_low, a_high, b_high, a_low, b_high, b_low])
+			var da := _lane_outer(i) if on_fork else HALF_WIDTH
+			var db := _lane_outer(i + 1) if on_fork else HALF_WIDTH
+			_wall_quad(faces, i, side * da, side * db)
+	if not _fork.is_empty():
+		# The island: walls on both its sides and across its two ends.
+		var sd := _fork_side
+		for i in _count:
+			if _has_island(i) and _has_island(i + 1):
+				_wall_quad(faces, i, sd * HALF_WIDTH, sd * HALF_WIDTH)
+				_wall_quad(faces, i, sd * (_lane_c(i) - _lane_w), sd * (_lane_c(i + 1) - _lane_w))
+			if _has_island(i) != _has_island(i + 1):
+				var k := i + 1 if _has_island(i + 1) else i
+				var a := _at(k, sd * HALF_WIDTH, -0.4)
+				var b := _at(k, sd * HALF_WIDTH, 3.2)
+				var c := _at(k, sd * (_lane_c(k) - _lane_w), 3.2)
+				var d := _at(k, sd * (_lane_c(k) - _lane_w), -0.4)
+				faces.append_array([a, b, c, a, c, d])
 	var shape := ConcavePolygonShape3D.new()
 	shape.backface_collision = true
 	shape.set_faces(faces)

@@ -20,6 +20,9 @@ var place := 1
 var finished := false
 var finish_time := 0.0
 var lap_times: Array[float] = []
+## Times this racer drove through a side lane (the checks report it).
+var side_lanes := 0
+var _in_side_lane := false
 var _lap_started_at := 0.0
 
 ## Reads the driver, applies the assists, hands the result to the kart.

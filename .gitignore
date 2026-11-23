@@ -20,3 +20,6 @@ art/models/
 
 # Portrait variants to choose from (the chosen ones are in art/toys/portraits and assets/portraits)
 art/toys/portraits/variants/
+
+# Agent worktrees
+.claude/worktrees/

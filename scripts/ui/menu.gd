@@ -101,12 +101,15 @@ func _build_options_page() -> void:
 	# Strecke: each button shows the shape of its track.
 	var track_group := ButtonGroup.new()
 	var track_row := _option_row(column, "Strecke")
+	# Four or more tracks share the row: narrower buttons, smaller outlines.
+	var track_width := minf(500.0, (1820.0 - 24.0 * (Game.tracks.size() - 1)) / maxf(1.0, Game.tracks.size()))
+	var outline_size := 140.0 if track_width >= 480.0 else 112.0
 	for i in Game.tracks.size():
 		var def := Game.tracks[i]
-		var button := _option_button([], def.display_name, track_group, Vector2(500, 170))
+		var button := _option_button([], def.display_name, track_group, Vector2(track_width, 170))
 		var content := button.get_child(0) as BoxContainer
 		var icon := TrackIcon.new(def.outline)
-		icon.custom_minimum_size = Vector2(140, 140)
+		icon.custom_minimum_size = Vector2(outline_size, outline_size)
 		content.add_child(icon)
 		content.move_child(icon, 0)
 		content.add_theme_constant_override("separation", 18)

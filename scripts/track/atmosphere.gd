@@ -4,7 +4,7 @@ class_name Atmosphere extends Node3D
 ## gradient sky that also lights the shade, haze for depth, bloom, drifting clouds that
 ## cast moving shadows, and small things floating in the air near each camera.
 
-enum Look { SUNNY_DAY, GOLDEN_EVENING }
+enum Look { SUNNY_DAY, GOLDEN_EVENING, LIVING_ROOM }
 
 const LOOKS := {
 	Look.SUNNY_DAY: {
@@ -34,6 +34,22 @@ const LOOKS := {
 		"mote_color": Color(1.0, 0.82, 0.5, 0.8),
 		"leaf_colors": [Color(0.95, 0.55, 0.15), Color(0.9, 0.3, 0.12), Color(0.98, 0.78, 0.2), Color(0.6, 0.35, 0.15)],
 		"leaf_amount": 44,
+	},
+	# Indoors: afternoon sun through the window, warm lamp-like fill, dust glittering in the
+	# light. No clouds and no leaves; the "sky" is the creamy ceiling seen above the walls.
+	Look.LIVING_ROOM: {
+		"sky_top": Color(1.0, 0.95, 0.86), "sky_horizon": Color(1.0, 0.9, 0.78),
+		"ground": Color(0.6, 0.42, 0.28),
+		"sun_elevation": 42.0, "sun_azimuth": 160.0, "sun_color": Color(1.0, 0.9, 0.74), "sun_energy": 1.7,
+		"fill_color": Color(1.0, 0.8, 0.62), "fill_energy": 0.45,
+		"ambient_energy": 1.0, "ambient_color": Color(1.0, 0.93, 0.86), "ambient_sky": 0.55,
+		"fog_color": Color(1.0, 0.9, 0.78), "fog_density": 0.0005, "fog_sun_scatter": 0.25,
+		"glow": 0.6, "bloom": 0.06, "saturation": 1.3, "contrast": 1.06, "exposure": 1.05, "agx_contrast": 1.5,
+		"volumetric": 0.0,
+		"cloud_color": Color(1.0, 1.0, 1.0), "cloud_glow": Color(1.0, 1.0, 1.0), "cloud_count": 0,
+		"mote_color": Color(1.0, 0.94, 0.75, 0.9),
+		"leaf_colors": [Color(1.0, 1.0, 1.0)],
+		"leaf_amount": 0,
 	},
 }
 
@@ -204,7 +220,8 @@ func make_camera_weather() -> Node3D:
 	var holder := Node3D.new()
 	holder.name = "Weather"
 	holder.add_child(_make_motes())
-	holder.add_child(_make_leaves())
+	if int(_cfg["leaf_amount"]) > 0:
+		holder.add_child(_make_leaves())
 	return holder
 
 func _make_motes() -> GPUParticles3D:

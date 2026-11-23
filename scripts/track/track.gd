@@ -7,6 +7,14 @@ class_name Track extends Node3D
 @export var half_width := 3.375
 ## Spacing of the internal sample table in metres.
 @export var sample_step := 0.5
+## Side lanes ("forks"): a second, narrower lane that leaves the road on one side and comes
+## back, with an island in between. The racing line stays on the main road.
+## Each: {"from": s, "to": s, "side": -1 (left) or 1 (right), "offset": lane centre in metres
+## from the line, "lane": lane half width, "ease": metres to swing out and back in}.
+@export var forks: Array[Dictionary] = []
+
+## Gap between the main road's wall and the lane's wall before the island counts as one.
+const ISLAND_GAP := 0.4
 
 var length := 0.0
 var count := 0
@@ -95,6 +103,36 @@ func grid_transform(slot: int) -> Transform3D:
 	var side := -1.0 if slot % 2 == 0 else 1.0
 	var s := length - 5.0 - row * 4.0 - (1.2 if slot % 2 == 1 else 0.0)
 	return transform_at(s, side * half_width * 0.45)
+
+# --- Forks ---------------------------------------------------------------------------------
+
+## How far the centre of a fork's lane is from the racing line at s (0 outside the fork).
+static func fork_offset(fork: Dictionary, s: float) -> float:
+	var s0: float = fork["from"]
+	var s1: float = fork["to"]
+	if s <= s0 or s >= s1:
+		return 0.0
+	var ease_len: float = fork["ease"]
+	return float(fork["offset"]) * smoothstep(0.0, ease_len, s - s0) * smoothstep(0.0, ease_len, s1 - s)
+
+## The drivable band (x = left edge, y = right edge, as lateral offsets from the line) of the
+## lane a kart at `lateral` is in. Normally the road; inside a fork either the road, the side
+## lane, or both together where they are not yet split by the island.
+func corridor(s: float, lateral: float) -> Vector2:
+	var road := Vector2(-half_width, half_width)
+	for fork in forks:
+		var c := fork_offset(fork, fposmod(s, length))
+		if c <= 0.0:
+			continue
+		var side: float = fork["side"]
+		var w: float = fork["lane"]
+		var inner := c - w
+		var outer := maxf(half_width, c + w)
+		var band := Vector2(-half_width, outer)  # in fork-side coordinates: + = toward the lane
+		if inner > half_width + ISLAND_GAP:
+			band = Vector2(inner, c + w) if lateral * side > (half_width + inner) * 0.5 else road
+		return band if side > 0.0 else Vector2(-band.y, -band.x)
+	return road
 
 # --- Projection ----------------------------------------------------------------------------
 

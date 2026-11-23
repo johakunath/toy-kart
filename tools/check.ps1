@@ -5,7 +5,7 @@
 #
 # 1. Godot 3 names: scripts must use Godot 4.7 APIs only.
 # 2. Import + parse: every script, scene and resource must load. Gamepad mapping and menu flow tests.
-# 3. Headless races on both tracks: the race scene runs by itself, with fake children at the controls.
+# 3. Headless races on every track: the race scene runs by itself, with fake children at the controls.
 # Exit code 0 = all good.
 
 param([switch]$Quick)
@@ -73,7 +73,10 @@ if (-not $Quick) {
         @{ Name = 'Riesenrunde: team race, kid + full-mode driver, Kid speed'; Args = @('--track=riesenrunde', '--control=mixed', '--input=none', '--speed=0', '--team=1') },
         @{ Name = 'Waldkurs: 1 full-mode driver, no AI';              Args = @('--track=waldkurs', '--players=1', '--control=full', '--ai=0', '--speed=1') },
         @{ Name = 'Kurvenkurs: free drive, 1 kid';                    Args = @('--track=kurvenkurs', '--players=1', '--mode=free') },
-        @{ Name = 'Waldkurs: time trial, 1 full-mode driver';         Args = @('--track=waldkurs', '--players=1', '--control=full', '--mode=trial', '--speed=1') }
+        @{ Name = 'Waldkurs: time trial, 1 full-mode driver';         Args = @('--track=waldkurs', '--players=1', '--control=full', '--mode=trial', '--speed=1') },
+        @{ Name = 'Wohnzimmer: 2 kids (hands off) + 3 AI, Kid speed'; Args = @('--track=wohnzimmer', '--input=none', '--speed=0') },
+        @{ Name = 'Wohnzimmer: 2 kids holding left (into the side lane), Kid speed'; Args = @('--track=wohnzimmer', '--input=left', '--speed=0') },
+        @{ Name = 'Wohnzimmer: kid + full-mode driver, Fast speed';   Args = @('--track=wohnzimmer', '--control=mixed', '--input=right', '--speed=2') }
     )
 }
 foreach ($s in $scenarios) {
