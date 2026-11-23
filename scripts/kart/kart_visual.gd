@@ -14,6 +14,16 @@ var fork: Node3D          ## bikes only
 var lean_node: Node3D     ## bikes only: the whole bike leans
 var driver: DriverRig
 var wheel_spin_sign := 1.0  ## -1 for models that are turned round to face forward
+## Flip-up roof (the Krankenwagen): a "roof" node in the model, closed at rest, hinged about its
+## own X axis. Purely visual. Open in menus; in a race closed at the start, springs open on "go".
+var roof: Node3D
+var _roof_rest := Vector3.ZERO
+var _roof_angle := 0.0       ## radians open
+var _roof_speed := 0.0
+var _roof_pop := 0.0         ## seconds left of a honk "pop shut"
+var _roof_sound: AudioStreamPlayer3D
+const ROOF_SPRING := 160.0   ## stiff with little damping: a springy flip in about 0.6 s
+const ROOF_DAMPING := 11.0
 
 func build(p_kart: KartDef, p_driver: DriverDef) -> void:
 	kart_def = p_kart
@@ -24,6 +34,8 @@ func build(p_kart: KartDef, p_driver: DriverDef) -> void:
 	wheels.clear()
 	front_wheels.clear()
 	body = null
+	roof = null
+	_roof_sound = null
 	fork = null
 	lean_node = null
 	driver = null
@@ -50,6 +62,15 @@ func build(p_kart: KartDef, p_driver: DriverDef) -> void:
 		if wheel_name.contains("front") or wheel_name.ends_with("-fl") or wheel_name.ends_with("-fr"):
 			front_wheels.append(node)
 	body = model.find_child("body", true, false) as Node3D
+	roof = model.find_child("roof", true, false) as Node3D
+	if roof:
+		_roof_rest = roof.rotation
+		set_roof_open(1.0)
+		_roof_sound = AudioStreamPlayer3D.new()
+		_roof_sound.stream = load("res://assets/sfx/pop.wav")
+		_roof_sound.bus = &"Effects"
+		_roof_sound.volume_db = -6.0
+		add_child(_roof_sound)
 	if body == null and not wheels.is_empty():
 		# Some packs hang the wheels on the body mesh. Use that mesh as the body and move the
 		# wheels next to it, so the body can lean and bounce without taking the wheels along.
@@ -143,7 +164,7 @@ func _model_box() -> AABB:
 	var first := true
 	for node in model.find_children("*", "MeshInstance3D", true, false):
 		var mesh := node as MeshInstance3D
-		if not mesh.visible or String(mesh.name).begins_with("wheel") or (driver and driver.is_ancestor_of(mesh)):
+		if not mesh.visible or String(mesh.name).begins_with("wheel") or String(mesh.name).begins_with("roof") or (driver and driver.is_ancestor_of(mesh)):
 			continue
 		var b := _chain(mesh) * mesh.get_aabb()
 		box = b if first else box.merge(b)
@@ -158,3 +179,33 @@ func _chain(node: Node3D) -> Transform3D:
 		xf = (n as Node3D).transform * xf
 		n = n.get_parent()
 	return xf
+
+# --- Flip-up roof ----------------------------------------------------------------------------
+
+## Puts the roof at once at a share of its standing-still opening (0 = shut, 1 = open).
+func set_roof_open(share: float) -> void:
+	if roof == null:
+		return
+	_roof_angle = deg_to_rad(kart_def.roof_open_degrees) * share
+	_roof_speed = 0.0
+	roof.rotation = _roof_rest - Vector3(_roof_angle, 0, 0)  # minus: the front end lifts
+
+## Each frame in a race: shut while waiting at the start, springs open on "go" (a pop sound),
+## leans further back with speed so the driver stays in view, pops shut for a moment on a honk.
+func animate_roof(delta: float, racing: bool, speed_share: float) -> void:
+	if roof == null:
+		return
+	_roof_pop = maxf(0.0, _roof_pop - delta)
+	var target := 0.0
+	if racing and _roof_pop <= 0.0:
+		target = deg_to_rad(lerpf(kart_def.roof_open_degrees, kart_def.roof_open_fast_degrees, clampf(speed_share, 0.0, 1.0)))
+	if target > 0.5 and _roof_angle < 0.15 and _roof_speed <= 0.0 and _roof_sound and _roof_sound.is_inside_tree():
+		_roof_sound.play()
+	_roof_speed += ((target - _roof_angle) * ROOF_SPRING - _roof_speed * ROOF_DAMPING) * delta
+	_roof_angle = clampf(_roof_angle + _roof_speed * delta, -0.05, deg_to_rad(170.0))
+	roof.rotation = _roof_rest - Vector3(_roof_angle, 0, 0)  # minus: the front end lifts
+
+## Honk: the roof snaps shut and flips open again.
+func pop_roof() -> void:
+	if roof:
+		_roof_pop = 0.22

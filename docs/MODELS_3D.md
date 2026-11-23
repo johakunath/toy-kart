@@ -149,11 +149,15 @@ instead of 2.05 (`LEG_TIP` in both scripts), with a lower shoe. Measured on the 
 `tools/blender/build_duplo_vehicle.py --vehicle krankenwagen|zug` builds a Duplo vehicle as a
 **kart** (`data/karts/`), not a driver: drivers sit in it. The ambulance is a van without a
 bonnet (a white tub with the round nose, stripes, grille and lamps); its roof shell (the upper
-half with the window frames and four studs) is built closed and then swung open about a hinge
-at the back of the tub (`hinge()`, `OPEN = 138` degrees). The real roof opens to about 100
-degrees, but then it stands behind the driver like a wall and the chase camera sees only the
-roof; at 138 degrees it leans back far enough that the driver shows over it. The vehicle is
-sized by its own length, not counting the swung roof. The train car is tall with a round nose
+half with the window frames and four studs) is built closed as its own node `roof`, a child of
+`body`, with its origin on the hinge axis at the back of the tub (`roof_parts()`).
+**Animated roof** (any kart model with a `roof` node; `KartVisual.animate_roof`): open in the
+menus; in a race shut while waiting at the start, it springs open on "go" with a pop
+(`assets/sfx/pop.wav`, about 0.6 s, a little overshoot), snaps shut and open again when the
+driver honks, and leans further back with speed. `KartDef.roof_open_degrees` (100, like the toy)
+standing still, `roof_open_fast_degrees` (135) at full speed: at 100 degrees the roof stands
+behind the driver like a wall and the chase camera would see only the roof. Purely visual.
+`render_model_sheet.py --roof 100` shows it open in a sheet. The train car is tall with a round nose
 (two studs), a rounded roof edge round an open top, an open front between round corner posts
 (the U cut of the real front) and a wide notch in the back, so the driver shows from every side. The model has Kenney-style nodes, so the game animates it like a Kenney kart: one
 mesh `body` and four wheels `wheel-front-left` ... with their origin at the wheel centre (they

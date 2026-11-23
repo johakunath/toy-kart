@@ -34,6 +34,7 @@ ap.add_argument("--length", type=float, default=0.0, help="size by length, nose 
 ap.add_argument("--tris", type=int, default=12000)
 ap.add_argument("--tex", type=int, default=1024)
 ap.add_argument("--turn", type=float, default=0.0)
+ap.add_argument("--mirror", action="store_true", help="flip left and right (Pixal3D gave a mirror image)")
 ap.add_argument("--sheet", default="")
 ap.add_argument("--matte", action="store_true", help="plush look: no shadow map, not metallic, soft")
 ap.add_argument("--even", type=float, default=0.0,
@@ -99,8 +100,15 @@ obj.name = name
 obj.data.name = name
 obj.rotation_mode = "XYZ"  # the glTF importer leaves quaternions, which ignore rotation_euler
 obj.rotation_euler[2] += math.radians(args.turn)
+if args.mirror:
+    obj.scale.x *= -1   # a mirror-image model (lettering reads backwards): flip left and right
 select_only(obj)
 bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+if args.mirror:
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.mesh.flip_normals()
+    bpy.ops.object.mode_set(mode="OBJECT")
 
 tris_before = triangles(obj)
 # glTF splits vertices along texture seams; weld them first or decimation tears parts apart.

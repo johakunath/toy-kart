@@ -208,6 +208,7 @@ func setup(p_kart: KartDef, p_driver: DriverDef) -> void:
 	kart_def = p_kart
 	driver_def = p_driver
 	visual.build(kart_def, driver_def)
+	visual.set_roof_open(0.0)  # a flip-up roof waits shut at the start
 	if kart_def and kart_def.engine_sound:
 		engine_sound.stream = kart_def.engine_sound
 		engine_sound.play()
@@ -573,6 +574,7 @@ func honk() -> void:
 	horn_sound.play()
 	if visual.driver:
 		visual.driver.hop()
+	visual.pop_roof()
 	honked.emit()
 
 ## Sideways shove in m/s, used for soft kart-to-kart bumps.
@@ -752,6 +754,7 @@ func _effect_body(delta: float) -> void:
 		body.position = body.position.lerp(visual.body_rest, delta * 5.0)
 	if visual.driver:
 		visual.driver.animate(delta, input.x, absf(linear_speed), linear_speed - acceleration)
+	visual.animate_roof(delta, not frozen, absf(linear_speed))
 
 func _effect_wheels(delta: float) -> void:
 	for wheel in visual.wheels:

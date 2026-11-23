@@ -122,6 +122,8 @@ def prepare(toy_id, raw_glb, args):
            "--in", raw_glb, "--out", model,
            *size, "--matte", "--even", str(args.even), "--turn", str(args.turn),
            "--blend", os.path.join(ROOT, "art", "models", "%s%s_edit.blend" % (toy_id, args.tag)), "--sheet", sheet]
+    if args.mirror:
+        cmd.append("--mirror")
     drawing = os.path.join(args.views, "%s-front.png" % toy_id)
     if os.path.exists(drawing):
         cmd += ["--match", drawing]
@@ -165,6 +167,8 @@ def main():
     ap.add_argument("--views", default=os.path.join(ROOT, "art", "toys", "turnaround"),
                     help="folder with <id>-front|left|back|right.png (art/toys/photo_views for photo cut-outs)")
     ap.add_argument("--skip-generate", action="store_true", help="reuse art/models/<id>_pixal3d.glb")
+    ap.add_argument("--mirror", action="store_true",
+                    help="flip left and right in Blender (Pixal3D gave a mirror image: lettering reads backwards)")
     ap.add_argument("--tag", default="", help="suffix for the work files (art/models/<id><tag>_*), e.g. _local")
     ap.add_argument("--model-out", default="", help="game model path instead of assets/models/toys/<id>.glb "
                                                      "(a trial model that must not replace the game's)")

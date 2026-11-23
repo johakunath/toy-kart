@@ -17,6 +17,13 @@ class_name KartDef extends Resource
 @export var seat_position := Vector3(0, 0.75, -0.1)
 @export var seat_scale := 1.0
 
+@export_group("Flip-up roof")
+## Only for models with a "roof" node (built closed, origin on the hinge at its back edge, +X
+## axis): how far it flips open in degrees, standing still and at full speed. At full speed it
+## leans further back, so the chase camera sees the driver over it.
+@export_range(0.0, 170.0, 1.0) var roof_open_degrees := 100.0
+@export_range(0.0, 170.0, 1.0) var roof_open_fast_degrees := 135.0
+
 @export_group("Stats (1.0 = standard)")
 @export_range(0.8, 1.2, 0.01) var top_speed := 1.0
 @export_range(0.8, 1.2, 0.01) var acceleration := 1.0

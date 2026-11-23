@@ -32,6 +32,7 @@ ap.add_argument("--out", required=True)
 ap.add_argument("--length", type=float, default=1.5, help="nose to tail in metres")
 ap.add_argument("--blend", default="")
 ap.add_argument("--sheet", default="")
+ap.add_argument("--sheet-roof", type=float, default=100.0, help="degrees the roof is open in the sheet")
 args = ap.parse_args(argv)
 
 STUD_R, STUD_H = 0.3, 0.18
@@ -142,17 +143,18 @@ def wheel(name, u, v, r, width, tyre, hub, hub_r):
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 
-SWUNG = []    # parts swung open (not counted in the vehicle's length)
+ROOF = []     # parts of a flip-up roof: joined into their own node "roof"
+HINGE = None  # Blender point on the roof's hinge axis (along X)
 
 
-def hinge(parts, u, z, degrees):
-    """Swing parts (built closed) open about a cross axis at (u, z): the front end lifts up and over
-    toward the back, like the toy's flip-up roof."""
-    h = W(u, 0, z)
-    m = Matrix.Translation(h) @ Matrix.Rotation(math.radians(-degrees), 4, "X") @ Matrix.Translation(-h)
+def roof_parts(parts, u, z):
+    """Make parts (built closed) the flip-up roof, hinged about a cross axis at (u, z). The game
+    swings it open (KartVisual: front end up and over toward the back)."""
+    global HINGE
+    HINGE = W(u, 0, z)
     for o in parts:
-        o.matrix_world = m @ o.matrix_world
-        SWUNG.append(o)
+        BODY.remove(o)
+        ROOF.append(o)
 
 
 if args.vehicle == "krankenwagen":
@@ -189,11 +191,9 @@ if args.vehicle == "krankenwagen":
             box(u, u + 0.31, v0 - 0.03, v0 + 0.03, 2.0, 2.25, "red", bevel=0.0)
         box(5.0, 6.2, v0 - 0.03, v0 + 0.03, 1.4, 1.8, "red", bevel=0.0)        # red cross bar
         box(5.4, 5.8, v0 - 0.03, v0 + 0.03, 1.25, 1.95, "red", bevel=0.0)
-    # The roof shell (the van's upper half with its window frames), built closed, then flipped
-    # open about the hinge at the back of the tub, like the toy with its roof open (photos
-    # 11.59.29, (1), (2), (3)). The toy opens it to about 100 degrees; here it leans further back
-    # (OPEN) so the chase camera behind still sees the driver over it.
-    OPEN = 138.0
+    # The roof shell (the van's upper half with its window frames and four studs), built closed as
+    # its own node "roof" with the origin on the hinge at the back of the tub. The game flips it
+    # open like the toy (photos 11.59.29, (1), (2), (3)); --sheet-roof shows it open in the sheet.
     first = len(BODY)
     box(0.35, L, -HW, HW, RT - 0.42, RT, "white", bevel=0.4, segments=4)        # roof
     studs(L / 2 - 1.0, -1.0, RT, 2, 2, "white")                                 # four studs on top
@@ -206,7 +206,7 @@ if args.vehicle == "krankenwagen":
         box(L - 0.4, L, v0 - side * 0.35, v1 - side * 0.35, SILL, RT - 0.2, "white", bevel=0.1)
     box(L - 0.4, L, -HW, HW, SILL, SILL + 0.55, "white", bevel=0.12)            # back: low band
     box(L - 0.4, L, -HW, HW, RT - 1.0, RT - 0.2, "white", bevel=0.12)           # back: high band
-    hinge(BODY[first:], L - 0.1, SILL, OPEN)
+    roof_parts(BODY[first:], L - 0.1, SILL)
     for (name, u, v) in (("wheel-front-left", 1.9, 1.95), ("wheel-front-right", 1.9, -1.95),
                          ("wheel-back-left", 6.6, 1.95), ("wheel-back-right", 6.6, -1.95)):
         wheel(name, u, v, 0.9, 0.7, "tyre", "hub", 0.58)
@@ -259,9 +259,27 @@ else:
         wheel(name, u, v, 0.55, 0.45, "grey", "grey", 0.35)
     SEAT = (4.1, FLOOR)
 
-# The length counts the vehicle itself, not a roof swung open behind it.
-pts = [o.matrix_world @ v.co for o in BODY if o not in SWUNG for v in o.data.vertices]
+pts = [o.matrix_world @ v.co for o in BODY for v in o.data.vertices]
 length = max(p.y for p in pts) - min(p.y for p in pts)
+
+# The flip-up roof: one node, origin on the hinge axis.
+roof = None
+if ROOF:
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in ROOF:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = ROOF[0]
+    bpy.ops.object.convert(target="MESH")
+    bpy.ops.object.join()
+    roof = bpy.context.view_layer.objects.active
+    roof.name = "roof"
+    roof.data.name = "roof"
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.mesh.normals_make_consistent(inside=False)
+    bpy.ops.object.mode_set(mode="OBJECT")
+    bpy.context.scene.cursor.location = HINGE
+    bpy.ops.object.origin_set(type="ORIGIN_CURSOR")
 
 # Join the body.
 bpy.ops.object.select_all(action="DESELECT")
@@ -282,7 +300,8 @@ bpy.ops.object.origin_set(type="ORIGIN_CURSOR")
 
 # Scale to the length in metres (wheel origins stay at their centres).
 k = args.length / length
-for o in [body] + WHEELS:
+PARTS = [body] + WHEELS + ([roof] if roof else [])
+for o in PARTS:
     o.location = o.location * k
     o.scale = (k, k, k)
     bpy.ops.object.select_all(action="DESELECT")
@@ -292,9 +311,13 @@ for o in [body] + WHEELS:
     bpy.ops.object.shade_smooth_by_angle(angle=math.radians(35))
 for o in WHEELS:
     o.rotation_mode = "XYZ"
-tris = sum(sum(len(p.vertices) - 2 for p in o.data.polygons) for o in [body] + WHEELS)
+if roof:
+    roof.rotation_mode = "XYZ"
+    roof.parent = body          # it leans and bounces with the body
+    roof.location = roof.location - body.location
+tris = sum(sum(len(p.vertices) - 2 for p in o.data.polygons) for o in PARTS)
 seat = W(SEAT[0], 0, SEAT[1]) * k
-everything = [o.matrix_world @ v.co for o in [body] + WHEELS for v in o.data.vertices]
+everything = [o.matrix_world @ v.co for o in PARTS for v in o.data.vertices]
 lo = Vector((min(p.x for p in everything), min(p.y for p in everything), min(p.z for p in everything)))
 hi = Vector((max(p.x for p in everything), max(p.y for p in everything), max(p.z for p in everything)))
 size = hi - lo
@@ -315,6 +338,8 @@ if args.sheet:
     step = max(size.x, size.y, size.z) * 1.25
     turns = [0, -90, 180, -35]
     group = [body] + WHEELS
+    if roof:
+        roof.rotation_euler.x = math.radians(-args.sheet_roof)
     for i, deg in enumerate(turns):
         empty = bpy.data.objects.new("turn%d" % i, None)
         scene.collection.objects.link(empty)

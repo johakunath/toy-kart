@@ -23,11 +23,16 @@ ap.add_argument("--out", required=True)
 ap.add_argument("--size", type=int, default=400)
 ap.add_argument("--tilt", type=float, default=15.0, help="camera height in degrees above the horizon")
 ap.add_argument("--bg", type=float, default=0.2, help="background grey (0..1)")
+ap.add_argument("--roof", type=float, default=0.0, help="open a flip-up \"roof\" node by this many degrees")
 args = ap.parse_args(argv)
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=os.path.abspath(args.src))
 scene = bpy.context.scene
+for o in scene.objects:
+    if o.name.startswith("roof") and args.roof:
+        o.rotation_mode = "XYZ"
+        o.rotation_euler.x -= math.radians(args.roof)   # the front end lifts up and over
 tops = [o for o in scene.objects if o.parent is None]
 meshes = [o for o in scene.objects if o.type == "MESH"]
 bpy.context.view_layer.update()
