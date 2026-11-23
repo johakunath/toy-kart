@@ -29,6 +29,7 @@ const TRACKS := [
 		"pads": [[12.0, [-1.4, 1.4]], [106.0, [0.0]], [200.0, [1.2]]],
 		"hills": [[112.0, 182.0, 2.2]],
 		"jump": 24.0,
+		"moment": {"kind": "train", "at": 68.0, "left": 18.0, "right": 20.0, "clearance": 5.0},
 	},
 	{
 		# The long one: a big loop with an S, a wide hairpin and a long home straight. Two laps.
@@ -49,6 +50,7 @@ const TRACKS := [
 			[505.0, [-1.4, 1.4]]],
 		"hills": [[150.0, 230.0, 2.6], [330.0, 400.0, 1.8]],
 		"jump": 46.0,
+		"moment": {"kind": "tunnel", "from": 404.0, "to": 440.0},
 	},
 ]
 
@@ -176,6 +178,7 @@ func _build(cfg: Dictionary) -> Error:
 	_add_grass(root, center, size)
 	_add_trees(root, lo, hi)
 	_add_gate(root)
+	_add_moment(root, cfg)
 
 	# The racing line follows the hills: one point every 3 m on the floor's centre line.
 	var line := Curve3D.new()
@@ -596,3 +599,10 @@ func _add_gate(root: Node3D) -> void:
 	gate.transform = Transform3D(Basis(Vector3.UP, yaw).scaled(Vector3.ONE * 6.6), Vector3(_pos[0].x, ROAD_Y, _pos[0].z))
 	root.add_child(gate)
 	gate.owner = root
+
+# --- Signature moments ---------------------------------------------------------------------
+
+## The track's one special thing (toy train bridge, caterpillar tunnel): see tools/track_moments.gd.
+func _add_moment(root: Node3D, cfg: Dictionary) -> void:
+	if cfg.has("moment"):
+		TrackMoments.new(_pos, _right, _bank, _curv, STEP, ROAD_Y, HALF_WIDTH).build(root, cfg)

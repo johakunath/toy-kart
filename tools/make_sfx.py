@@ -170,6 +170,40 @@ def turbo():
     save("turbo.wav", y, 0.6)
 
 
+def train_whistle():
+    """Toy steam train: "tschu-tschuuu". Three breathy pipes a little out of tune, a short toot
+    and a long one, each sliding up into pitch."""
+    buf = np.zeros(int(SR * 1.35))
+    for start, length in ((0.0, 0.28), (0.38, 0.85)):
+        x = t(length)
+        bend = 1.0 - 0.06 * np.exp(-x / 0.05)
+        y = np.zeros(len(x))
+        for f, g in ((587, 1.0), (740, 0.8), (880, 0.6)):
+            y += g * np.sin(2 * np.pi * np.cumsum(f * bend) / SR)
+        y += 0.35 * rng.standard_normal(len(x)) * (0.4 + 0.6 * np.exp(-x / 0.08))
+        y = y * env(len(x), 0.03, 0.12) * (1.0 + 0.08 * np.sin(2 * np.pi * 5 * x))
+        mix_at(buf, y, start)
+    save("train_whistle.wav", buf, 0.6)
+
+
+def train_chug():
+    """Toy steam train: chuff-chuff-chuff-chuff with a soft rail clack. A seamless 1.0 s loop."""
+    seconds = 1.0
+    n = int(SR * seconds)
+    buf = np.zeros(n)
+    length = int(SR * 0.16)
+    x = np.arange(length) / SR
+    for k in range(4):
+        noise = rng.standard_normal(length)
+        # Crude low-pass: smooth the noise so the chuff is breathy, not hissy.
+        noise = np.convolve(noise, np.ones(18) / 18, mode="same")
+        chuff = noise * np.exp(-x / 0.045) * (1.0 if k % 2 == 0 else 0.7)
+        mix_at(buf, chuff, k * seconds / 4)
+        clack = np.sin(2 * np.pi * 1800 * x[: int(SR * 0.02)]) * np.exp(-x[: int(SR * 0.02)] / 0.004)
+        mix_at(buf, clack, k * seconds / 4 + 0.11, 0.25)
+    save("train_chug.wav", buf, 0.7)
+
+
 def sparkle_png():
     size = 64
     yy, xx = np.mgrid[0:size, 0:size]
@@ -228,6 +262,8 @@ if __name__ == "__main__":
     rumble()
     turbo()
     engine_high()
+    train_whistle()
+    train_chug()
     sparkle_png()
     dot_png()
     leaf_png()
