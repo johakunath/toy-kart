@@ -3,6 +3,8 @@ class_name KartPreview extends SubViewportContainer
 ## Used on the selection screen and on the finish screen. It has its own little 3D world.
 
 var cheering := false
+## Stickers to show on the kart (players' karts: Game.sticker_ids(); none for the computer's).
+var stickers: Array[String] = []
 var spin_speed := 0.7
 var shown_kart: KartDef
 var shown_driver: DriverDef
@@ -54,6 +56,7 @@ func show_kart(kart_def: KartDef, driver_def: DriverDef) -> void:
 	shown_kart = kart_def
 	shown_driver = driver_def
 	_visual.build(kart_def, driver_def)
+	_visual.add_stickers(stickers)
 	if _visual.driver:
 		_visual.driver.set_cheering(cheering)
 

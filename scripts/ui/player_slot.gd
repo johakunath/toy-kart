@@ -96,6 +96,7 @@ func _build() -> void:
 	_joined_view.add_child(_header)
 
 	_preview = KartPreview.new()
+	_preview.stickers = Game.sticker_ids()
 	_preview.custom_minimum_size = Vector2(580, 140)
 	_preview.set_view_angle(22.0, 0.55)
 	_preview.size_flags_vertical = Control.SIZE_EXPAND_FILL

@@ -148,6 +148,7 @@ func _spawn_racers() -> void:
 		if cfg.source is AiSource:
 			_wire_ai(cfg.source as AiSource, racer, 0.93)
 		racer.kart.set_marker_color(racer.color)
+		racer.kart.visual.add_stickers(Game.sticker_ids())
 		cfg.source.swallow_held()
 		humans.append(racer)
 		_kid_context = _kid_context or racer.assist.kid
@@ -699,6 +700,7 @@ func _show_finish_screen() -> void:
 		picked += racer.kart.bricks_picked
 	if picked > 0:
 		Game.add_family_bricks(picked)
+	Game.unlock_sticker()  # a present after every race (the finish screen opens it)
 	if Game.cup:
 		var order: Array[Racer] = racers.duplicate()
 		order.sort_custom(func(a: Racer, b: Racer) -> bool: return a.place < b.place)

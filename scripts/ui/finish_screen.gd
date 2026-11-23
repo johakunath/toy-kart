@@ -12,6 +12,9 @@ const MEDALS: Array[Color] = [Color("ffc81e"), Color("dfe6ee"), Color("e0894a")]
 var _again: Button
 var _lock := 0.0
 var _buttons: HBoxContainer
+var _present: Control
+var _present_open := false
+var _time := 0.0
 
 func _init() -> void:
 	visible = false
@@ -32,7 +35,7 @@ func open(racers: Array[Racer], humans: Array[Racer], new_record: bool, bricks :
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 	var column := VBoxContainer.new()
-	var extra_rows := int(team) + int(bricks > 0 or Game.family_bricks() > 0) + int(Game.cup) * 2
+	var extra_rows := int(team) + int(bricks > 0 or Game.family_bricks() > 0) + int(Game.cup) * 2 + 1
 	column.add_theme_constant_override("separation", 26 - 6 * extra_rows)
 	center.add_child(column)
 
@@ -118,6 +121,10 @@ func open(racers: Array[Racer], humans: Array[Racer], new_record: bool, bricks :
 	home.pressed.connect(func() -> void: Game.go_to_menu())
 	home.disabled = true
 	_buttons.add_child(home)
+	if Game.mode != Game.Mode.FREE_DRIVE:
+		var present_row := _make_present(button_size.y)
+		column.add_child(present_row)
+		column.move_child(present_row, _buttons.get_index())
 
 	# Buttons wake up after a moment, so button mashing does not skip the party.
 	_lock = LOCK_SECONDS
@@ -125,7 +132,15 @@ func open(racers: Array[Racer], humans: Array[Racer], new_record: bool, bricks :
 	UiKit.play(self, "fanfare", -6.0)
 
 func _process(delta: float) -> void:
-	if not visible or _lock <= 0.0:
+	if not visible:
+		return
+	_time += delta
+	if _present and not _present_open:
+		# The wrapped present wobbles until it pops open, just before the buttons wake up.
+		_present.rotation = sin(_time * 9.0) * 0.08
+		if _time > LOCK_SECONDS - 0.6:
+			_open_present()
+	if _lock <= 0.0:
 		return
 	_lock -= delta
 	if _lock <= 0.0:
@@ -147,6 +162,8 @@ func _make_card(racer: Racer, width: float, show_place: bool) -> Control:
 	preview.cheering = true
 	preview.spin_speed = 1.0
 	preview.custom_minimum_size = Vector2(width - 40, width - 60)
+	if racer.is_human:
+		preview.stickers = Game.sticker_ids()
 	column.add_child(preview)
 	preview.show_kart(racer.kart_def, racer.driver)
 
@@ -168,6 +185,59 @@ func _make_card(racer: Racer, width: float, show_place: bool) -> Control:
 		else:
 			column.add_child(UiKit.label("%d." % racer.place, 30, Color(UiKit.INK, 0.6)))
 	return card
+
+## A wrapped present (red box, yellow ribbon) with this race's new sticker inside.
+func _make_present(height: float) -> Control:
+	var holder := CenterContainer.new()
+	var side := clampf(height * 0.7, 110.0, 150.0)
+	holder.custom_minimum_size = Vector2(0, side + 10.0)
+	var box := Control.new()
+	box.custom_minimum_size = Vector2(side, side)
+	box.pivot_offset = Vector2(side, side) * 0.5
+	holder.add_child(box)
+	var wrap := Panel.new()
+	wrap.name = "Wrap"
+	wrap.set_anchors_preset(Control.PRESET_FULL_RECT)
+	wrap.add_theme_stylebox_override("panel", UiKit.box(Color("e8243c"), 14, Color.WHITE, 5))
+	box.add_child(wrap)
+	for vertical: bool in [true, false]:
+		var ribbon := ColorRect.new()
+		ribbon.color = UiKit.SUN
+		ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if vertical:
+			ribbon.anchor_left = 0.42
+			ribbon.anchor_right = 0.58
+			ribbon.anchor_bottom = 1.0
+		else:
+			ribbon.anchor_top = 0.42
+			ribbon.anchor_bottom = 0.58
+			ribbon.anchor_right = 1.0
+		wrap.add_child(ribbon)
+	var bow := UiKit.icon_rect("star", side * 0.45, UiKit.SUN)
+	bow.position = Vector2(side * 0.275, -side * 0.3)
+	wrap.add_child(bow)
+	var inside := TextureRect.new()
+	inside.name = "Inside"
+	inside.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	inside.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	inside.set_anchors_preset(Control.PRESET_FULL_RECT)
+	inside.visible = false
+	inside.texture = Game.sticker_texture(Game.last_sticker) if Game.last_sticker != "" else UiKit.icon("item_superstar")
+	box.add_child(inside)
+	_present = box
+	return holder
+
+func _open_present() -> void:
+	_present_open = true
+	_present.rotation = 0.0
+	(_present.get_node("Wrap") as Control).visible = false
+	(_present.get_node("Inside") as Control).visible = true
+	_present.scale = Vector2.ONE * 0.3
+	var tween := create_tween()
+	tween.tween_property(_present, "scale", Vector2.ONE * 1.25, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(_present, "scale", Vector2.ONE, 0.25)
+	UiKit.play(self, "pop")
+	UiKit.play(self, "star", -3.0)
 
 ## The cup so far: one track shape per race; done races bright, this one ringed, next ones dim.
 func _cup_progress() -> Control:

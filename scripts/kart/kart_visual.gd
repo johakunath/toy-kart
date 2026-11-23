@@ -89,3 +89,71 @@ func _build_toy_vehicle() -> void:
 	# The toy itself pitches, leans and slides like a kart body.
 	body = model
 	body_rest = Vector3.ZERO
+
+const STICKER_PATH := "res://assets/stickers/%s.svg"
+
+## Puts the family's stickers on the kart: on both sides, the back and the bonnet, newest last.
+## Only kart models get stickers (a toy vehicle is the toy itself).
+func add_stickers(ids: Array[String]) -> void:
+	if model == null or ids.is_empty() or (driver_def and driver_def.is_vehicle):
+		return
+	var box := _model_box()
+	if box.size.length() < 0.01:
+		return
+	var holder: Node3D = body if body else model
+	var to_holder := _chain(holder).affine_inverse()
+	var mid_y := box.position.y + box.size.y * 0.45
+	var x0 := box.position.x - 0.012
+	var x1 := box.end.x + 0.012
+	var zf := box.position.z + box.size.z * 0.72
+	var zb := box.position.z + box.size.z * 0.3
+	# Slot: [position, facing]. Karts face +Z.
+	var slots: Array[Array] = [
+		[Vector3(x1, mid_y, zb), Vector3.RIGHT], [Vector3(x0, mid_y, zb), Vector3.LEFT],
+		[Vector3(0, mid_y, box.position.z - 0.012), Vector3.FORWARD],
+		[Vector3(x1, mid_y, zf), Vector3.RIGHT], [Vector3(x0, mid_y, zf), Vector3.LEFT],
+		[Vector3(0, box.end.y * 0.92, box.end.z - box.size.z * 0.12), Vector3.UP],
+	]
+	var size := clampf(box.size.y * 0.6, 0.22, 0.38)
+	var shown := ids.slice(maxi(0, ids.size() - slots.size()))
+	for i in shown.size():
+		var slot: Array = slots[i]
+		var sticker := Sprite3D.new()
+		sticker.name = "Sticker_%s" % shown[i]
+		sticker.texture = load(STICKER_PATH % shown[i]) as Texture2D
+		if sticker.texture == null:
+			continue
+		# The back one is what the chase camera sees all race: a bit bigger.
+		var scale_here := 1.5 if i == 2 else 1.0
+		sticker.pixel_size = size * scale_here / float(sticker.texture.get_width())
+		sticker.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+		sticker.shaded = true
+		sticker.double_sided = false
+		var facing: Vector3 = slot[1]
+		var up := Vector3.FORWARD if facing == Vector3.UP else Vector3.UP
+		var basis := Basis.looking_at(-facing, up)
+		var local := Transform3D(basis, slot[0])
+		holder.add_child(sticker)
+		sticker.transform = to_holder * local
+
+## The model's outline in this node's space (without the driver and the wheels).
+func _model_box() -> AABB:
+	var box := AABB()
+	var first := true
+	for node in model.find_children("*", "MeshInstance3D", true, false):
+		var mesh := node as MeshInstance3D
+		if not mesh.visible or String(mesh.name).begins_with("wheel") or (driver and driver.is_ancestor_of(mesh)):
+			continue
+		var b := _chain(mesh) * mesh.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	return box
+
+## Transform of a descendant relative to this node, without needing the scene tree.
+func _chain(node: Node3D) -> Transform3D:
+	var xf := Transform3D.IDENTITY
+	var n: Node = node
+	while n != null and n != self:
+		xf = (n as Node3D).transform * xf
+		n = n.get_parent()
+	return xf

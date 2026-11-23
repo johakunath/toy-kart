@@ -64,6 +64,8 @@ func _ready() -> void:
 	_parse_cmdline()
 	if smoke or not smoke_args.is_empty():
 		save_enabled = false  # test and screenshot runs
+	if smoke_args.has("stickers"):
+		_stickers_in_memory = clampi(int(smoke_args["stickers"]), 0, STICKERS.size())  # screenshots
 	speed_class = clampi(_settings.get_value("options", "speed_class", SpeedClass.KID), 0, 2) as SpeedClass
 	ai_count = clampi(_settings.get_value("options", "ai_count", MAX_AI), 0, MAX_AI)
 	music_on = _settings.get_value("options", "music", true)
@@ -175,6 +177,37 @@ func family_bricks() -> int:
 func add_family_bricks(count: int) -> void:
 	_settings.set_value("family", "bricks", family_bricks() + count)
 	_save()
+
+## Stickers: after every race the family opens a present with the next sticker (in this
+## order). Collected stickers show on every player's kart. With all of them collected, the
+## present holds a star and confetti.
+const STICKERS: Array[String] = ["star", "heart", "lightning", "flower", "rainbow", "ladybug", "rocket", "moon", "paw", "sun"]
+## The sticker the last present held ("" = all collected already); the finish screen shows it.
+var last_sticker := ""
+var _stickers_in_memory := -1  # test runs never save, but still count up within the run
+
+func sticker_count() -> int:
+	if _stickers_in_memory < 0:
+		_stickers_in_memory = clampi(_settings.get_value("family", "stickers", 0), 0, STICKERS.size())
+	return _stickers_in_memory
+
+func sticker_ids() -> Array[String]:
+	return STICKERS.slice(0, sticker_count())
+
+func sticker_texture(id: String) -> Texture2D:
+	return load(KartVisual.STICKER_PATH % id) as Texture2D
+
+## Opens the next present: returns the new sticker, or "" when all are collected.
+func unlock_sticker() -> String:
+	var count := sticker_count()
+	if count >= STICKERS.size():
+		last_sticker = ""
+		return ""
+	_stickers_in_memory = count + 1
+	_settings.set_value("family", "stickers", _stickers_in_memory)
+	_save()
+	last_sticker = STICKERS[count]
+	return last_sticker
 
 func _save() -> void:
 	if save_enabled:
