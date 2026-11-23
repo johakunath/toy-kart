@@ -306,7 +306,8 @@ func make_player(source: InputSource, control_mode: int, color_index: int, drive
 	p.driver = drivers[driver_index % drivers.size()] if not drivers.is_empty() else null
 	p.kart = karts[kart_index % karts.size()] if not karts.is_empty() else null
 	# Test runs: --kart=<id> puts the first player in that kart (screenshots of one vehicle).
-	if smoke and kart_index == 0 and smoke_args.has("kart"):
+	# (--kart=N with a number picks by menu order in race.gd instead.)
+	if smoke and kart_index == 0 and smoke_args.has("kart") and not str(smoke_args["kart"]).is_valid_int():
 		p.kart = kart_by_id(str(smoke_args["kart"]))
 	return p
 

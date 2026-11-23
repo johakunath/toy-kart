@@ -1,6 +1,6 @@
 # Handover
 
-Updated 23 Nov 2026, sixteenth round: more to play (roadmap phase F), presents, rescue helicopter.
+Updated 23 Nov 2026, seventeenth round: fixes from the first playtest with him, six new toys.
 
 ## Where it stands
 
@@ -11,6 +11,31 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## New in the seventeenth round (first playtest with him, 23 Nov)
+
+He had fun. Everything from the playtest list in BACKLOG.md is done except the police car and
+Koba redraws, which wait for Codex (`docs/CODEX_REDO_POLIZEI_KOBA.md`, you paste it in).
+
+![Menu: key pictures, WASD left, arrows right](img/menu-players-2026-11-23.png)
+![New toys](img/new-toys-2026-11-23.png)
+![Police station, Duplo shop and watching toys](img/roadside-2026-11-23.png)
+
+- **Boost pads work** (they never fired: wrong collision mask). +45 % for 1 s.
+- **Big jumps:** ~1.5 s in the air with a barrel roll and a landing boost; kids land safely.
+- **Fairer items:** smaller pick-up radius, every kart has its own star (others can still take
+  it), odds by position (back gets triple turbo and superstar). New **triple turbo**: fire one
+  turbo per press when you want. Kid mode saves boosts for straight road.
+- **Menu:** panels no longer swap; keyboard default grown-up left on W A S D, kid right on the
+  arrows; big swap button (or Tab); pictures of keys and pad buttons; much less text.
+- **Only seatable vehicles:** pickups, truck, bus and jeep removed. 8 vehicles plus 2 new Duplo ones.
+- **Police car** sits on the road with a contact shadow, bigger and longer (motorbike fixed too).
+- **Roadside:** police station, tower and Duplo shop as photo cards beside the start; toys not
+  racing stand in two rows, hop when you pass and cheer at your finish.
+- **Six new toys (3D, built in Blender):** Duplo-Junge and Bauarbeiterin (drivers), Krankenwagen
+  and Zug (karts they sit in), Traktor (its own vehicle), Jumbo (flies like the Flieger).
+  Pixal3D from the photos failed for tractor and airliner; Codex views are optional.
+- Still open: HUD count for the triple turbo; 3D models of the station and shop.
 
 ## New in the sixteenth round (phase F: more to play)
 
@@ -338,8 +363,8 @@ edge strip slows it a little, and it cannot hit the walls hard or turn around.
 - Player selection: each player picks driver, vehicle, Kind or Profi, and colour with their own
   controller, with a live 3D preview. A controller keeps its colour.
 - 16 drivers: your 8 toys as paper cut-outs (Junge, Katze, Löwe, Bär, Polizei, Motorrad, Flieger,
-  Duplo-Flieger) and 8 animated Kenney characters. 12 vehicles: 5 karts, racing car, oldtimer,
-  4 trucks, motorcycle.
+  Duplo-Flieger) and 8 animated Kenney characters. 10 vehicles (since 23 Nov): 5 karts, racing car, oldtimer,
+  motorcycle, Duplo ambulance, Duplo train.
 - Two tracks, each about 285 m and 3 laps (about 1:45 at Kid speed): Kurvenkurs (round curves,
   sunny) and Waldkurs (Kenney tiles, evening).
 - Race with 1 or 2 players and 0 to 3 AI karts; split screen side by side with a coloured frame
