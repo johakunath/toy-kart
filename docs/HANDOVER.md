@@ -1,6 +1,6 @@
 # Handover
 
-Updated 23 Nov 2026, thirteenth round: friendly items, bricks, team mode, medals and the family jar (roadmap phase C).
+Updated 23 Nov 2026, fourteenth round: sound and camera (roadmap phase D).
 
 ## Where it stands
 
@@ -11,6 +11,27 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## New in the fourteenth round (phase D: sound and camera)
+
+![Camera swings out while the kid charges sparks](img/race-camera-swing.png)
+
+- **Your own engine on your side:** in split screen each player's engine plays without position
+  on their own audio bus, panned to their half (left player = left speaker). Before, both
+  cameras heard every engine as a 3D sound.
+- **Engine whine:** a second engine layer (generated, `assets/sfx/engine_high.wav`) fades in at
+  high speed and with every boost, on top of the recorded Kenney engine.
+- **Doppler** on the AI karts' engines: they change pitch as they pass.
+- **Last lap music:** the race tune now cross-fades into a faster version
+  (`assets/music/race_final.wav`, 166 instead of 144 beats per minute) instead of being pitched up.
+- **Spring camera:** falls back a little at speed and catches up when braking (a small
+  overshoot), swings out to show the kart's side in a drift (half as much in kid mode), follows
+  hills and jumps a moment late so landings feel soft, and aims higher in the tall split-screen
+  halves.
+- **Not heard yet:** I cannot listen. Please judge the engine whine and the final-lap music on
+  your speakers; both are one number to change (`_effect_engine` in `kart.gd`, `make_music.py`).
+- Recorded sound effects (CC0 or paid) were not added: generated ones stay until you say a
+  sound feels cheap.
 
 ## New in the thirteenth round (phase C: playing together)
 

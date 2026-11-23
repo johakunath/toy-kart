@@ -68,16 +68,17 @@ later: a helper icon that lights up when the kid assist steers (Nintendo's glowi
 | Toy rescuer respawn | #20 | Done as a bounce drop; a toy helicopter model would be nicer |
 | Hidden rubber-band: wide lines | #19 | Done; a close pack in the last lap is open |
 
-## Phase D: sound and camera (next)
+## Phase D: sound and camera (done 23 Nov 2026, fourteenth round)
 
-| Item | Research |
-| --- | --- |
-| Engine from 3 RPM loops; adaptive music with a final-lap layer | #22 |
-| Split-screen audio: own engine per half, panned | #23 |
-| Spring chase camera with drift swing | #24 |
-| Recorded sound effects where generated ones feel cheap (ask before buying) | goals |
+| Item | Research | Status |
+| --- | --- | --- |
+| Engine layers | #22 | Done: recorded engine + generated high whine layer. A full 3-loop RPM engine is open |
+| Adaptive music with a final-lap version | #22 | Done: cross-fade into a faster tune |
+| Split-screen audio: own engine per half, panned | #23 | Done |
+| Spring chase camera with drift swing | #24 | Done |
+| Recorded sound effects where generated ones feel cheap (ask before buying) | goals | Waits for Johannes' ears |
 
-## Phase E: worlds
+## Phase E: worlds (next)
 
 | Item | Research |
 | --- | --- |
