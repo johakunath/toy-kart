@@ -656,7 +656,11 @@ func _reset_racer(racer: Racer) -> void:
 	if absf(racer.progress.lateral) > track.half_width:
 		lateral = 0.0
 	racer.kart.place(track.transform_at(racer.progress.s(), lateral))
-	racer.kart.drop_in()
+	# The toy helicopter lowers the kart onto the road and flies off.
+	var heli := RescueHeli.new()
+	heli.name = "RescueHeli"
+	_world.add_child(heli)
+	heli.carry(racer.kart)
 	racer.assist.clear_timers(racer)
 	if racer.kart.visual.driver:
 		racer.kart.visual.driver.hop(1.5)
@@ -716,6 +720,9 @@ func _smoke_tick(delta: float) -> void:
 	# Dev helper: "--boost_at=S" fires a boost for the first player S seconds in (for screenshots).
 	if Game.smoke_args.has("boost_at") and _smoke_time - delta < float(Game.smoke_args["boost_at"]) and _smoke_time >= float(Game.smoke_args["boost_at"]):
 		humans[0].kart.boost(1.6, 0.4)
+	# Dev helper: "--rescue_at=S" rescues the first player S seconds in (helicopter screenshots).
+	if Game.smoke_args.has("rescue_at") and _smoke_time - delta < float(Game.smoke_args["rescue_at"]) and _smoke_time >= float(Game.smoke_args["rescue_at"]):
+		_reset_racer(humans[0])
 	if Game.smoke_args.has("pause_shot") and _smoke_time > 5.0 and not _pause_menu.visible:
 		# Dev helper: open the pause menu and save a picture of it.
 		_pause_menu.open()

@@ -1,6 +1,6 @@
 # Handover
 
-Updated 23 Nov 2026, fifteenth round: worlds (roadmap phase E), signature moments, the Duplo girl in 3D.
+Updated 23 Nov 2026, sixteenth round: more to play (roadmap phase F), presents, rescue helicopter.
 
 ## Where it stands
 
@@ -11,6 +11,30 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## New in the sixteenth round (phase F: more to play)
+
+![Cup: trophies for everyone](img/cup-trophies.png)
+![Free drive: rings, the brick jar and catch Papa](img/free-drive-rings.png)
+![The magic rope behind dad](img/coop-rope.png)
+![A present after every race](img/finish-present.png)
+
+- **Pokal (cup):** a new card on the mode page. Kurvenkurs, Wohnzimmer, Riesenrunde in a row,
+  one lap less each (about 10 minutes). Stars by place every race; the same toys race all cup;
+  at the end every player gets a trophy.
+- **Free drive has things to do:** a glowing ring per player to drive through (boost, chime, a
+  party every fifth), one brick jar for everybody (party when full), and "catch Papa": a star
+  floats over dad's kart (only the others see it); the kid catches him by getting close.
+- **Magic rope:** when dad drives just ahead of the kid, a rainbow rope connects them and pulls
+  the kid along a little. **Gift button:** dad gives his item to the kid (D-pad up/down on the
+  pad, R or M on the keyboards); it flies over as a present.
+- **Toys with character:** every computer driver has a personality (Koba proud and honking,
+  Bobo kind and slow, the fox cuts the inside, the police car plays a siren ...). They honk and
+  hop when the kid passes and cheer when he finishes ahead. Speed rules are unchanged.
+- **A present after every race:** a wrapped box pops open with the family's next sticker (10).
+  Stickers collect on every player's kart; the big one on the back is the newest.
+- **Rescue helicopter:** a stuck kart is lowered back onto the road by a red toy helicopter.
+- The menu check now starts from fresh settings (your saved picks made it fail).
 
 ## New in the fifteenth round (phase E: worlds)
 
@@ -385,12 +409,11 @@ Tell Claude the answers by voice; they become the tuning list.
 
 ## What is next
 
-1. You: a race in the Wohnzimmer. Does he spot his toys? Does he laugh at the cushion jump, the
-   train and the caterpillar? Try the side lane yourself in Profi mode.
-2. You: on the projector, are the colours strong enough (or too strong), indoors and outdoors?
-3. Phase F (ROADMAP.md): a mini-cup of 3 races with a trophy, AI personalities, tow rope behind
-   dad, kid battle modes.
-4. Rest of milestone 2: graphics presets for projector and monitor; faces on the finish podium.
+1. You: a cup with him (Pokal card). Does he follow the rainbow rope? Try the gift button.
+2. You: free drive together: does "catch Papa" make him laugh? Are the honks of the toys too
+   many (tunable: `REACT_COOLDOWN` in `scripts/input/ai_source.gd`)?
+3. You: on the projector, colours indoors and outdoors; the gift button on a real pad.
+4. Phase G (ROADMAP.md) or the rest of milestone 2: graphics presets, side lanes on more tracks.
 
 ## Notes for the next Claude session
 

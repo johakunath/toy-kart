@@ -469,10 +469,11 @@ func add_brick() -> void:
 	rumble_requested.emit(0.2, 0.0, 0.05)
 	bricks_changed.emit(bricks)
 
-## After a rescue: the kart drops back onto the road from above with a bounce.
-func drop_in() -> void:
+## After a rescue: the kart's picture comes down onto the road from above (lowered by the rescue
+## helicopter) with a little bounce. The kart itself is on the road already and can drive.
+func drop_in(height := 2.5, seconds := 0.5) -> void:
 	var tween := create_tween()
-	tween.tween_property(visual, "position:y", 0.0, 0.5).from(2.5).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	tween.tween_property(visual, "position:y", 0.0, seconds).from(height).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 	_pop_sound.pitch_scale = 0.8
 	_pop_sound.play()
 	rumble_requested.emit(0.3, 0.4, 0.15)

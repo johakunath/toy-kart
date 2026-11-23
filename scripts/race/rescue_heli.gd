@@ -7,7 +7,7 @@ class_name RescueHeli extends Node3D
 const LOWER_SECONDS := 0.75
 const LEAVE_SECONDS := 1.4
 const DROP_HEIGHT := 3.2
-const HANG := 2.2              ## rope length from the helicopter to the kart's roof
+const HANG := 2.8              ## rope length from the helicopter to the kart's roof
 
 var _kart: Kart
 var _time := 0.0
@@ -22,7 +22,7 @@ static var _parts := {}
 func carry(kart: Kart) -> void:
 	_kart = kart
 	_build()
-	_leave_dir = -kart.global_basis.z if kart.global_basis.z.length() > 0.1 else Vector3.FORWARD
+	_leave_dir = kart.forward()
 	_leave_dir.y = 0.0
 	_leave_dir = _leave_dir.normalized()
 	kart.drop_in(DROP_HEIGHT, LOWER_SECONDS)
@@ -51,7 +51,8 @@ func _process(delta: float) -> void:
 func _follow() -> void:
 	var low := _kart.visual.global_position
 	global_position = low + Vector3.UP * (1.3 + HANG) + Vector3.UP * sin(_time * 6.0) * 0.05
-	var yaw := _kart.global_rotation.y
+	var fwd := _kart.forward()
+	var yaw := atan2(fwd.x, fwd.z)  # the model's nose is +Z
 	rotation = Vector3(0.0, yaw, sin(_time * 3.0) * 0.06)
 	var length := global_position.y - (low.y + 1.25) - 0.35
 	_rope.scale = Vector3(1.0, maxf(length, 0.1), 1.0)
