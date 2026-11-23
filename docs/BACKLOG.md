@@ -23,6 +23,14 @@ He had fun and likes it. Being fixed now unless marked "waits".
 | Track | New photos: blue police station and the Duplo shop become props beside the track, not vehicles | Done: photo cards beside the start straight (`scripts/track/roadside.gd`, `tools/make_props.py`, `docs/img/roadside-2026-11-23.png`). Waits: local 3D models of the station, tower and shop (Pixal3D, `local-game-assets`) to replace the cards; trees can still poke through a card outdoors |
 | Track | Toys that are not racing stand at the roadside and watch | Done: two rows beside the start grid, no colliders; they sway, hop when a human kart passes and cheer at a human finish |
 
+## Ideas, 23 Nov 2026 (Johannes, not refined)
+
+| Idea | Notes |
+| --- | --- |
+| Our living room as a free-drive world | Rebuild the real living room at toy scale: drive under the sofa and the bed, around the room; a race track through it too. Builds on the Wohnzimmer track. Also a gameplay-design playground for Johannes |
+| Little toy city, "kids' GTA" | A small town to drive around freely: little missions, a paint shop for new kart colours, collectibles. Gentle, nothing violent |
+| Collectibles | Things to find in free drive (pairs with stickers/presents) |
+
 ## Found while building milestone 1
 
 | Area | Item | When |
