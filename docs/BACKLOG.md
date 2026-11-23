@@ -20,8 +20,8 @@ He had fun and likes it. Being fixed now unless marked "waits".
 | Koba | Face looks bulky and odd: new Codex views, then rebuild the 3D model locally | Waits for Codex |
 | Menu | Two players: the panels swap sides when clicking. Both on keyboard: grown-up left with WASD, kid right with arrow keys; easy to switch | Fixing |
 | Menu | Pictures of the real keys and pad buttons instead of written key names; less text overall | Fixing |
-| Track | New photos: blue police station and the Duplo shop become props beside the track, not vehicles | Fixing |
-| Track | Toys that are not racing stand at the roadside and watch | Fixing |
+| Track | New photos: blue police station and the Duplo shop become props beside the track, not vehicles | Done: photo cards beside the start straight (`scripts/track/roadside.gd`, `tools/make_props.py`, `docs/img/roadside-2026-11-23.png`). Waits: local 3D models of the station, tower and shop (Pixal3D, `local-game-assets`) to replace the cards; trees can still poke through a card outdoors |
+| Track | Toys that are not racing stand at the roadside and watch | Done: two rows beside the start grid, no colliders; they sway, hop when a human kart passes and cheer at a human finish |
 
 ## Found while building milestone 1
 
