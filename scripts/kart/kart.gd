@@ -73,6 +73,7 @@ var frozen := true               ## true until the countdown ends
 var class_factor := 1.0          ## speed class: Game.SPEED_FACTOR
 var pace := 1.0                  ## AI pacing
 var catchup := 0.0               ## 0..0.3 extra top speed for a kid who is behind
+var tow := 0.0                   ## 0..0.12 extra top speed from the magic rope behind dad (CoopHelp)
 var engine_db_offset := 0.0      ## AI karts are quieter
 var item := Items.NONE
 var has_item: bool:
@@ -237,7 +238,7 @@ func speed() -> float:
 func speed_multiplier() -> float:
 	var stat := kart_def.top_speed if kart_def else 1.0
 	var boost := _boost_factor()
-	return class_factor * stat * pace * (1.0 + catchup) * (1.0 + boost) * (1.0 + (bricks * BRICK_SPEED if brick_bonus else 0.0))
+	return class_factor * stat * pace * (1.0 + catchup + tow) * (1.0 + boost) * (1.0 + (bricks * BRICK_SPEED if brick_bonus else 0.0))
 
 ## Turn rate in rad/s at full steer.
 func steer_rate() -> float:
@@ -390,6 +391,22 @@ func give_item() -> void:
 		return
 	item = item_picker.call() if item_picker.is_valid() else Items.TURBO
 	item_changed.emit(item)
+
+## Hands the held item over (dad gives it to the kid); returns it, or Items.NONE.
+func take_item() -> int:
+	var held := item
+	if held != Items.NONE:
+		item = Items.NONE
+		item_changed.emit(Items.NONE)
+	return held
+
+## Gets an item handed over by another player. False when the hands are already full.
+func receive_item(gift: int) -> bool:
+	if item != Items.NONE or gift == Items.NONE:
+		return false
+	item = gift
+	item_changed.emit(item)
+	return true
 
 func use_item() -> void:
 	if item == Items.NONE:

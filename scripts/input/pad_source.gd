@@ -1,7 +1,8 @@
 class_name PadSource extends InputSource
 ## Any XInput / SDL gamepad as a player device. Reads the device directly, so two pads never mix.
 ## Kid mode: either stick, D-pad or LB/RB steer; A or RT = full gas; B, X, Y honk.
-## Full mode: left stick or D-pad steer, RT or A gas, LT or B brake, RB drift, X or LB use, Y horn.
+## Full mode: left stick or D-pad steer, RT or A gas, LT or B brake, RB drift, X or LB use, Y horn,
+## D-pad up or down gives the held item to the kid.
 
 const DEADZONE := 0.25
 
@@ -13,6 +14,7 @@ func _init(p_device: int, ordinal: int) -> void:
 	id = "pad:%s:%d" % [guid, ordinal]
 	label = "Controller %d" % (ordinal + 1)
 	icon = "gamepad"
+	gift_icon = "dpad_up"
 
 func is_connected_now() -> bool:
 	return Input.get_connected_joypads().has(device)
@@ -58,6 +60,7 @@ func _read_raw(control_mode: int) -> Dictionary:
 		"drift": _b(JOY_BUTTON_RIGHT_SHOULDER),
 		"use": _b(JOY_BUTTON_X) or _b(JOY_BUTTON_LEFT_SHOULDER),
 		"horn": _b(JOY_BUTTON_Y),
+		"gift": _b(JOY_BUTTON_DPAD_UP) or _b(JOY_BUTTON_DPAD_DOWN),
 	}
 
 func _read_menu_raw() -> Dictionary:
@@ -78,4 +81,4 @@ func any_button() -> bool:
 func drive_help(control_mode: int) -> String:
 	if control_mode == Game.ControlMode.KID:
 		return "Stick lenken   A Turbo   B X Y Hupe"
-	return "Stick lenken   RT Gas   LT Bremse   RB Drift   X Stern   Y Hupe"
+	return "Stick lenken   RT Gas   LT Bremse   RB Drift   X Stern   Y Hupe   Kreuz hoch Geschenk"

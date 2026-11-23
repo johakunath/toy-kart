@@ -249,6 +249,38 @@ def leaf_png():
     Image.fromarray(img, "RGBA").save(os.path.join(FX, "leaf.png"))
 
 
+def magic_rope():
+    """The magic rope connects: a soft rising bell arpeggio with a shimmer on top."""
+    buf = np.zeros(int(SR * 1.3))
+    for i, f in enumerate([784, 988, 1175, 1568]):
+        gain = 0.8 - 0.1 * i
+        mix_at(buf, tone(f, 0.9, "sine", decay=4.5), i * 0.07, gain)
+        mix_at(buf, tone(f * 2.01, 0.6, "sine", decay=7), i * 0.07, gain * 0.35)
+        mix_at(buf, tone(f * 3.02, 0.4, "sine", decay=10), i * 0.07, gain * 0.15)
+    n = t(1.0)
+    shimmer = rng.standard_normal(len(n)) * np.sin(2 * np.pi * 7 * n) ** 2
+    shimmer = np.convolve(shimmer, np.ones(6) / 6, mode="same") * np.exp(-3.5 * n)
+    hp = shimmer - np.convolve(shimmer, np.ones(40) / 40, mode="same")
+    mix_at(buf, hp * env(len(n), 0.05, 0.3), 0.05, 0.25)
+    save("magic_rope.wav", buf, 0.6)
+
+
+def gift():
+    """A present flies over: a quick upward whoosh with a sparkly two-note chime."""
+    buf = np.zeros(int(SR * 0.9))
+    n = t(0.45)
+    f = 300 + 900 * (n / 0.45) ** 1.5
+    whoosh = np.sin(2 * np.pi * np.cumsum(f) / SR) * env(len(n), 0.02, 0.15) * 0.5
+    noise = rng.standard_normal(len(n))
+    noise = (noise - np.convolve(noise, np.ones(12) / 12, mode="same")) * env(len(n), 0.05, 0.2) * 0.25
+    mix_at(buf, whoosh + noise, 0.0)
+    mix_at(buf, tone(1319, 0.4, "sine", decay=8), 0.3)
+    mix_at(buf, tone(2637, 0.3, "sine", decay=12), 0.3, 0.3)
+    mix_at(buf, tone(1760, 0.5, "sine", decay=6), 0.42)
+    mix_at(buf, tone(3520, 0.3, "sine", decay=12), 0.42, 0.3)
+    save("gift.wav", buf, 0.6)
+
+
 if __name__ == "__main__":
     os.makedirs(SFX, exist_ok=True)
     os.makedirs(FX, exist_ok=True)
@@ -267,4 +299,6 @@ if __name__ == "__main__":
     sparkle_png()
     dot_png()
     leaf_png()
+    magic_rope()
+    gift()
     print("sfx written to", SFX)

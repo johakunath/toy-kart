@@ -8,6 +8,7 @@ var brake := 0.0       ## 0..1 (brakes, then reverses)
 var drift := false     ## held
 var use := false       ## true only on the tick the button went down
 var horn := false      ## true only on the tick the button went down
+var gift := false      ## full mode: hand the held item to the kid (true only on the tick the button went down)
 var spark := false     ## kid mode: steering hard charges drift sparks (set by the assist)
 var spark_cancel := false  ## kid mode: drop the charge without a boost (set by the assist)
 
@@ -18,6 +19,7 @@ func copy_from(other: Intent) -> void:
 	drift = other.drift
 	use = other.use
 	horn = other.horn
+	gift = other.gift
 	spark = other.spark
 	spark_cancel = other.spark_cancel
 
@@ -28,5 +30,6 @@ func clear() -> void:
 	drift = false
 	use = false
 	horn = false
+	gift = false
 	spark = false
 	spark_cancel = false

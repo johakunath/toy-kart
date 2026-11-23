@@ -81,6 +81,18 @@ func _process(_delta: float) -> bool:
 	_button(JOY_BUTTON_DPAD_RIGHT, true)
 	_expect("full: D-pad right steers right", pad.read(full).steer == 1.0)
 	_button(JOY_BUTTON_DPAD_RIGHT, false)
+	for dpad: JoyButton in [JOY_BUTTON_DPAD_UP, JOY_BUTTON_DPAD_DOWN]:
+		pad.read(full)
+		_button(dpad, true)
+		var gift_intent := pad.read(full)
+		_expect("full: D-pad %d gives the item to the kid, once per press" % dpad, gift_intent.gift and not pad.read(full).gift)
+		_expect("full: D-pad %d does not steer or use the item" % dpad, gift_intent.steer == 0.0 and not gift_intent.use)
+		_button(dpad, false)
+	pad.read(kid)
+	_button(JOY_BUTTON_DPAD_UP, true)
+	_expect("kid: D-pad up gives nothing away", not pad.read(kid).gift)
+	_button(JOY_BUTTON_DPAD_UP, false)
+	_expect("full: the pad shows the D-pad in the gift hint", pad.gift_icon == "dpad_up")
 
 	# --- Two pads never mix ---
 	var other := PadSource.new(DEVICE + 1, 1)
