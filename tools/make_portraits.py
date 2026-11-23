@@ -7,8 +7,11 @@
         copies the chosen variants to art/toys/portraits/<id>.png and installs them in the game:
         assets/portraits/<id>.png (256 px) and `portrait` in data/drivers/<id>.tres.
 
-The reference picture of each toy is its drawing or photo cut-out (see REFS). The Kenney
-characters have no drawing: tools/render_driver_refs.gd renders them first (--refs <dir>).
+The reference picture of each toy is its drawing or photo cut-out (see REFS). Toys built in
+Blender use a three-quarter render of their game model instead (MODEL_REFS,
+tools/blender/render_model_ref.py): a photo of a built Duplo toy from the front made FLUX draw a
+brick pile, the model shows wings, tail and wheels at once. The Kenney characters have no
+drawing: tools/render_driver_refs.gd renders them first (--refs <dir>).
 """
 import argparse
 import os
@@ -26,6 +29,7 @@ import comfy_api as api  # noqa: E402
 import run_flux_klein as flux  # noqa: E402
 
 VARIANTS = os.path.join(ROOT, "art", "toys", "portraits", "variants")
+BLENDER = os.environ.get("BLENDER", r"C:\Program Files\Blender Foundation\Blender 5.3\blender.exe")
 GODOT = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "Godot", "Godot_v4.7.2-stable_win64_console.exe")
 
 # Driver id -> reference picture (relative to the project), or None = rendered Kenney character.
@@ -43,13 +47,21 @@ REFS = {
     "paper_traktor": "art/toys/photo_views/traktor-right.png",
     "paper_jumbo": "assets/paper/jumbo_front.png",
 }
+# Driver id -> game model: a three-quarter render of it is the reference (wins over REFS).
+MODEL_REFS = {
+    "paper_duploflieger": "assets/models/toys/duploflieger.glb",
+    "paper_jumbo": "assets/models/toys/jumbo.glb",
+}
 # What the toy is, where FLUX guesses wrong from the picture alone.
 HINTS = {
     "paper_junge": "a chunky plastic toy figure of a little girl",
     "paper_duplojunge": "a chunky plastic toy figure of a little boy in yellow overalls",
     "paper_bauarbeiterin": "a chunky plastic toy figure of a builder woman with a white hard hat",
     "paper_traktor": "a blue toy farm tractor with a black front loader",
-    "paper_jumbo": "a white toy jumbo jet airliner with four engines and a blue tail",
+    "paper_jumbo": "a white toy jumbo jet airliner with four engines, a blue tail, a row of small dark "
+                   "blue passenger windows and a dark blue cockpit window",
+    "paper_duploflieger": "a toy airplane built from colourful Duplo bricks, with long brick wings, an "
+                          "orange tail fin and small wheels",
 }
 # Strong toy-brick colours, one per driver, so neighbours in the menu look different.
 BACKGROUNDS = ["bright red", "bright blue", "sunny yellow", "bright green", "orange", "purple",
@@ -90,18 +102,26 @@ def generate(ids, count, refs_dir):
     os.makedirs(VARIANTS, exist_ok=True)
     work = os.path.join(VARIANTS, "refs")
     os.makedirs(work, exist_ok=True)
-    if any(i not in REFS for i in ids):
+    if any(i not in REFS and i not in MODEL_REFS for i in ids):
         if not refs_dir:
             refs_dir = work
             subprocess.run([GODOT, "--path", ROOT, "--windowed", "--resolution", "400x300", "--script",
                             "res://tools/render_driver_refs.gd", "--", "--out=" + refs_dir], check=True,
                            stdout=subprocess.DEVNULL)
+    for i in ids:
+        if i in MODEL_REFS:
+            subprocess.run([BLENDER, "-b", "--python", os.path.join(ROOT, "tools", "blender", "render_model_ref.py"),
+                            "--", "--in", os.path.join(ROOT, MODEL_REFS[i]),
+                            "--out", os.path.join(work, i + "_model.png")], check=True, stdout=subprocess.DEVNULL)
     all_ids = [i for i, _ in drivers()]
     vehicle = dict(drivers())
     started = time.time()
     with api.comfy_server(os.path.join(VARIANTS, "comfy_server.log")):
         for i in ids:
-            src = os.path.join(ROOT, REFS[i]) if i in REFS else os.path.join(refs_dir, i + ".png")
+            if i in MODEL_REFS:
+                src = os.path.join(work, i + "_model.png")
+            else:
+                src = os.path.join(ROOT, REFS[i]) if i in REFS else os.path.join(refs_dir, i + ".png")
             ref = api.upload(on_white(src, os.path.join(work, i + "_ref.png")))
             prompt = (VEHICLE if vehicle[i] else PERSON) % BACKGROUNDS[all_ids.index(i) % len(BACKGROUNDS)]
             if i in HINTS:
