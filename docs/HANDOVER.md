@@ -1,6 +1,6 @@
 # Handover
 
-Updated 23 Nov 2026, twelfth round: hills, banked corners, a jump with tricks, and arrow boards (roadmap phase B).
+Updated 23 Nov 2026, thirteenth round: friendly items, bricks, team mode, medals and the family jar (roadmap phase C).
 
 ## Where it stands
 
@@ -11,6 +11,31 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## New in the thirteenth round (phase C: playing together)
+
+![Team race finish: medals, team banner, brick jar](img/finish-team.png)
+![Bricks on the road and the brick dots](img/race-bricks.png)
+
+- **Friendly items** from the stars, with a short roulette in a white disc at the bottom:
+  Turbo (boost), Superstern (long boost, nothing can wobble you), Blase (a shield bubble),
+  Feder (the kart jumps, with a trick and a landing boost) and Kitzelblase (a pink bubble flies to
+  the kart ahead and makes it spin round twice with a honk; costs only a little speed).
+  **A kid-mode player is never a target.** His items fire by themselves after a second.
+- **Who gets what:** he always gets good items; a grown-up driving ahead of him gets small ones
+  (bubble, tickle, turbo); everyone else by place, the further back the better. No blue shell.
+  The AI waits a moment before using an item, like a person.
+- **Toy bricks** in rows on the road (placed by the race on every track, clear of stars, pads and
+  the start). Each held brick = 1 % more top speed, up to 10 (shown as red dots). A tickle costs
+  one brick. With a kid in the race the AI's bricks give it no speed.
+- **Team mode:** a new "Team" card on the first page: all players against the toy AI karts. The
+  team's place is its best driver's; the finish screen says "Team gewinnt!" or "Super, Team!".
+  Tickles never hit a teammate.
+- **Finish screen:** gold, silver and bronze medals, the team banner, and the **family brick jar**
+  (all bricks collected in every race, saved in the settings).
+- **Rescue drop:** a kart put back on the road drops in from above with a bounce and a pop.
+- **AI that drops back takes wide lines** through corners instead of only driving slower.
+- Tests: a kid steering well still wins, hands off is 3rd, nobody tickles a kid, zero resets.
 
 ## New in the twelfth round (phase B: tracks with moments)
 

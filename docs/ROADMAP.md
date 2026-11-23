@@ -56,19 +56,19 @@ later: a helper icon that lights up when the kid assist steers (Nintendo's glowi
 | One signature moment per track (cushion jump, toy train, tunnel) | #17 | Open: best together with the living-room world (phase E) |
 | Hills and a jump on Waldkurs | | Open: Kenney tiles have no slope collision |
 
-## Phase C: playing together (next)
+## Phase C: playing together (done 23 Nov 2026, thirteenth round)
 
-| Item | Research |
-| --- | --- |
-| Team mode "us vs. the toys" | #11 |
-| Kid-safe items: boost, star, bubble shield, magnet, spring | #12 |
-| Item odds per player, no blue shell | #13 |
-| Coins / bricks on the racing line, dot counter | #18 |
-| Podium for everyone, a present after every race, family progress | #16 |
-| Toy rescuer respawn | #20 |
-| Hidden rubber-band: AI mistakes and wide lines, close last lap | #19 |
+| Item | Research | Status |
+| --- | --- | --- |
+| Team mode "us vs. the toys" | #11 | Done: "Team" card, team place, team finish banner |
+| Kid-safe items: turbo, superstar, shield bubble, spring, tickle bubble | #12 | Done (magnet left out: too close to turbo) |
+| Item odds per player, no blue shell | #13 | Done |
+| Bricks on the racing line, dot counter | #18 | Done |
+| Podium medals, family brick jar | #16 | Done. Open: a present after every race (sticker, horn, colour) needs things to unlock first |
+| Toy rescuer respawn | #20 | Done as a bounce drop; a toy helicopter model would be nicer |
+| Hidden rubber-band: wide lines | #19 | Done; a close pack in the last lap is open |
 
-## Phase D: sound and camera
+## Phase D: sound and camera (next)
 
 | Item | Research |
 | --- | --- |

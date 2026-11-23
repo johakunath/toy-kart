@@ -70,6 +70,7 @@ if (-not $Quick) {
         @{ Name = 'Waldkurs: 1 kid steering well with gas, toy vehicles'; Args = @('--track=waldkurs', '--input=skilled', '--players=1', '--driver=4', '--speed=0') },
         @{ Name = 'Riesenrunde: 2 kids (hands off) + 3 AI, Kid speed'; Args = @('--track=riesenrunde', '--input=none', '--speed=0') },
         @{ Name = 'Kurvenkurs: kid + full-mode driver, Fast speed';   Args = @('--track=kurvenkurs', '--control=mixed', '--input=right', '--speed=2') },
+        @{ Name = 'Riesenrunde: team race, kid + full-mode driver, Kid speed'; Args = @('--track=riesenrunde', '--control=mixed', '--input=none', '--speed=0', '--team=1') },
         @{ Name = 'Waldkurs: 1 full-mode driver, no AI';              Args = @('--track=waldkurs', '--players=1', '--control=full', '--ai=0', '--speed=1') },
         @{ Name = 'Kurvenkurs: free drive, 1 kid';                    Args = @('--track=kurvenkurs', '--players=1', '--mode=free') },
         @{ Name = 'Waldkurs: time trial, 1 full-mode driver';         Args = @('--track=waldkurs', '--players=1', '--control=full', '--mode=trial', '--speed=1') }

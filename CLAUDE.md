@@ -18,8 +18,8 @@ checks yourself. Give him steps only in the Godot editor or on websites.
 | --- | --- |
 | `scripts/core/` | `game.gd` (autoload `Game`: mode, speed, track, players, catalog, settings), `music.gd` (autoload `Music`), `DriverDef`, `KartDef`, `TrackDef` |
 | `scripts/input/` | `Intent`, `InputSource` (keyboard, pad, AI, test), `Assist` (kid/full), `LineFollow` |
-| `scripts/kart/` | `Kart` (rolling-ball arcade physics), `KartVisual`, `DriverRig` (3D model or paper card) |
-| `scripts/track/` | `Track` (racing line lookups), `TrackProgress` (laps), `BoostStar`, `BoostPad` (turbo arrows), `Atmosphere` (light, sky, weather), `Scatter` (trees) |
+| `scripts/kart/` | `Kart` (rolling-ball arcade physics, items, tricks), `KartVisual`, `DriverRig` (3D model or paper card), `Items` (item set and odds), `ToyLook` (rim light, clear coat) |
+| `scripts/track/` | `Track` (racing line lookups), `TrackProgress` (laps), `BoostStar`, `BoostPad` (turbo arrows), `Brick` (toy bricks, placed by the race), `Atmosphere` (light, sky, weather), `Scatter` (trees) |
 | `scripts/race/` | `race.gd` (builds the race at runtime), `Racer`, `ChaseCamera` |
 | `scripts/ui/` | `menu.gd`, `PlayerSlot`, `PlayerHud`, `FinishScreen`, `PauseMenu`, `KartPreview`, `UiKit` |
 | `scenes/` | `menu.tscn` (main), `race.tscn`, `kart.tscn`, `boost_star.tscn`, `tracks/kurvenkurs.tscn`, `tracks/waldkurs.tscn`, `tracks/riesenrunde.tscn` |
