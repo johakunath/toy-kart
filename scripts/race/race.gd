@@ -57,6 +57,7 @@ func _ready() -> void:
 	_build_world()
 	_spawn_racers()
 	_place_bricks()
+	_world.add_child(Roadside.new(track, racers))  # toy buildings and watching toys at the start
 	_build_views()
 	add_child(CoopHelp.new(track, humans, huds))  # magic rope and gifts between humans
 	_build_overlay()
