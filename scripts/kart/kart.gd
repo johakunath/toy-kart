@@ -46,6 +46,17 @@ const SUPERSTAR_SECONDS := 2.2   ## long boost, and nothing can wobble the kart 
 const SUPERSTAR_STRENGTH := 0.45
 const BUBBLE_SECONDS := 12.0     ## a shield that pops one tickle
 const SPRING_JUMP := 5.5         ## m/s straight up
+const TRIPLE_TURBO_CHARGES := 3  ## a triple turbo fires three turbos, one per press
+## Jump ramps: at the lip the kart is thrown up and floats a little, about 1 s in the air at
+## Kid speed, with a barrel roll of the picture (never the physics ball) and a landing boost.
+const RAMP_LAUNCH_UP := 6.0      ## m/s straight up at the lip (at RAMP_FULL_SPEED or faster)
+const RAMP_FULL_SPEED := 8.0     ## m/s; slower karts get a smaller hop (down to half)
+const RAMP_AIR_GRAVITY := 1.0    ## gravity scale in the air after a ramp (the ball's normal: 1.5)
+const RAMP_AIR_STEER := 0.7      ## share of the steering that turns the kart in the air
+const RAMP_GUIDE_RATE := 1.2     ## rad/s the flight turns toward the road ahead (lands on the road)
+const RAMP_TRICK_SECONDS := 0.75 ## the barrel roll
+const RAMP_TRICK_LIFT := 0.35    ## metres the picture rises during the roll
+const RAMP_TRICK_PIVOT := 0.45   ## height of the roll axis above the wheels
 const WOBBLE_SECONDS := 0.7
 const MAX_BRICKS := 10           ## bricks held at once; each gives 1 % more top speed
 const BRICK_SPEED := 0.01
@@ -94,6 +105,13 @@ var free_start_boost := false
 ## Kid mode and AI: a trick in the air happens by itself (others press drift, use or horn).
 var auto_trick := false
 var tricks := 0                  ## landed tricks (the checks report them)
+var ramp_jumps := 0              ## launches off a jump ramp (the checks report them)
+var best_air := 0.0              ## longest time in the air, seconds (the checks report it)
+var items_got := 0               ## items picked up from stars (the checks report them)
+var pad_boosts := 0              ## turbo arrows driven over (the checks report them)
+var turbo_charges := 0           ## turbos left in a held triple turbo
+## Kid assist: m/s above which a boost stops pushing (set before a bend; 0 = no limit).
+var boost_cap := 0.0
 var spark_tier := 0
 
 var kart_def: KartDef
@@ -125,6 +143,9 @@ var _spark_sound: AudioStreamPlayer3D
 var _air_time := 0.0
 var _trick := false
 var _spring_trick := false
+var _ramp_air := false           ## launched off a ramp and not landed yet
+var _ground_gravity := 1.5
+var _ramp_time := 0.0
 var _shield_left := 0.0
 var _star_left := 0.0
 var _shield: MeshInstance3D
@@ -142,6 +163,7 @@ var _placed := false
 
 func _ready() -> void:
 	sphere.body_entered.connect(_on_sphere_body_entered)
+	_ground_gravity = sphere.gravity_scale
 	sparkles.emitting = false
 	marker.visible = false
 	_build_flames()
@@ -219,6 +241,8 @@ func place(xform: Transform3D) -> void:
 	acceleration = 0.0
 	linear_velocity = Vector3.ZERO
 	input = Vector3.ZERO
+	_ramp_air = false
+	sphere.gravity_scale = _ground_gravity
 	_placed = true
 	reset_physics_interpolation()
 
@@ -237,7 +261,7 @@ func speed() -> float:
 
 func speed_multiplier() -> float:
 	var stat := kart_def.top_speed if kart_def else 1.0
-	var boost := _boost_factor()
+	var boost := 0.0 if _boost_capped() else _boost_factor()
 	return class_factor * stat * pace * (1.0 + catchup + tow) * (1.0 + boost) * (1.0 + (bricks * BRICK_SPEED if brick_bonus else 0.0))
 
 ## Turn rate in rad/s at full steer.
@@ -250,6 +274,9 @@ func top_speed() -> float:
 
 func is_boosting() -> bool:
 	return _boost_left > 0.0
+
+func _boost_capped() -> bool:
+	return boost_cap > 0.0 and speed() > boost_cap
 
 ## Extra top speed from a boost; after the boost it fades out instead of stopping hard.
 func _boost_factor() -> float:
@@ -267,7 +294,7 @@ func boost(duration := 1.6, strength := 0.5) -> void:
 	# Measured from the normal top speed, so boosts never stack on top of each other.
 	var cruise := top_speed() * pace * (1.0 + catchup)
 	_boost_target = maxf(_boost_target if _boost_left > 0.0 else 0.0, cruise * (1.0 + strength))
-	_push_forward(BOOST_KICK)
+	_push_forward(clampf(boost_cap - speed(), 0.0, BOOST_KICK) if boost_cap > 0.0 else BOOST_KICK)
 	_boost_strength = maxf(strength, _boost_strength if _boost_left > 0.0 else 0.0)
 	_boost_left = maxf(_boost_left, duration)
 	_fade_left = 0.0
@@ -386,11 +413,32 @@ func _push_forward(dv: float) -> void:
 	sphere.linear_velocity += fwd * dv
 	sphere.angular_velocity += container.global_basis.x * (dv / BALL_RADIUS)
 
-func give_item() -> void:
+## Gets an item from a star. False when the hands are already full.
+func give_item() -> bool:
 	if item != Items.NONE:
-		return
+		return false
 	item = item_picker.call() if item_picker.is_valid() else Items.TURBO
+	turbo_charges = TRIPLE_TURBO_CHARGES if item == Items.TRIPLE_TURBO else 0
+	items_got += 1
 	item_changed.emit(item)
+	return true
+
+## Turbo arrows on the road (BoostPad).
+func pad_boost(duration: float, strength: float) -> void:
+	pad_boosts += 1
+	boost(duration, strength)
+
+## Thrown up at a jump ramp's lip (the racer calls this as the kart crosses it).
+func ramp_launch() -> void:
+	if frozen or not colliding or _ramp_air:
+		return
+	var up := RAMP_LAUNCH_UP * clampf(speed() / RAMP_FULL_SPEED, 0.5, 1.0)
+	sphere.linear_velocity.y = maxf(sphere.linear_velocity.y, up)
+	sphere.gravity_scale = RAMP_AIR_GRAVITY
+	_ramp_air = true
+	_ramp_time = 0.0
+	ramp_jumps += 1
+	rumble_requested.emit(0.3, 0.5, 0.12)
 
 ## Hands the held item over (dad gives it to the kid); returns it, or Items.NONE.
 func take_item() -> int:
@@ -405,11 +453,20 @@ func receive_item(gift: int) -> bool:
 	if item != Items.NONE or gift == Items.NONE:
 		return false
 	item = gift
+	turbo_charges = TRIPLE_TURBO_CHARGES if item == Items.TRIPLE_TURBO else 0
 	item_changed.emit(item)
 	return true
 
 func use_item() -> void:
 	if item == Items.NONE:
+		return
+	if item == Items.TRIPLE_TURBO:
+		# One turbo per press; the item stays in the slot until the last one is used.
+		turbo_charges -= 1
+		boost(TURBO_SECONDS, TURBO_STRENGTH)
+		if turbo_charges <= 0:
+			item = Items.NONE
+			item_changed.emit(Items.NONE)
 		return
 	var used := item
 	item = Items.NONE
@@ -540,6 +597,8 @@ func _physics_process(delta: float) -> void:
 	var steering_grip := clampf(absf(linear_speed), 0.2, 1.0)
 	var rate := steer_rate() * (DRIFT_STEER if drifting else 1.0)
 	var target_angular := -input.x * steering_grip * rate * direction
+	if _ramp_air and not colliding:
+		target_angular *= RAMP_AIR_STEER  # gentle air steering, so the kart lands on the road
 	if frozen:
 		target_angular = 0.0  # wheels turn during the countdown, the kart stays put
 	angular_speed = lerpf(angular_speed, target_angular, minf(1.0, delta * STEER_RESPONSE))
@@ -551,6 +610,9 @@ func _physics_process(delta: float) -> void:
 		var grip_turn := turn * (DRIFT_GRIP if drifting else GRIP)
 		sphere.angular_velocity = sphere.angular_velocity.rotated(Vector3.UP, grip_turn)
 		sphere.linear_velocity = sphere.linear_velocity.rotated(Vector3.UP, grip_turn)
+	elif _ramp_air:
+		# Off a ramp the flight follows the nose too: a jump before a bend lands in the bend.
+		sphere.linear_velocity = sphere.linear_velocity.rotated(Vector3.UP, turn * GRIP)
 
 	# Ground alignment
 	if raycast.is_colliding():
@@ -564,10 +626,17 @@ func _physics_process(delta: float) -> void:
 			var xform := _align_with_y(container.global_transform, _normal)
 			container.global_transform = container.global_transform.interpolate_with(xform, 0.2).orthonormalized()
 	colliding = raycast.is_colliding()
+	if _ramp_air:
+		_ramp_time += delta
+		if colliding and _ramp_time > 0.4:
+			# Never left the ground (a slow kart): back to normal gravity.
+			_ramp_air = false
+			sphere.gravity_scale = _ground_gravity
 	if not colliding and not frozen:
 		_air_time += delta
 		var pressed := intent.drift or intent.use or intent.horn
-		if not _trick and _air_time > 0.08 and (auto_trick or pressed or _spring_trick):
+		best_air = maxf(best_air, _air_time)
+		if not _trick and _air_time > 0.08 and (auto_trick or pressed or _spring_trick or _ramp_air):
 			_start_trick()
 
 	var accel_stat := kart_def.acceleration if kart_def else 1.0
@@ -578,7 +647,7 @@ func _physics_process(delta: float) -> void:
 		linear_speed = lerpf(linear_speed, target_speed / 2.0, delta * 2.0)
 	else:
 		linear_speed = lerpf(linear_speed, target_speed, delta * 6.0 * accel_stat)
-	if _boost_left > 0.0:
+	if _boost_left > 0.0 and not _boost_capped():
 		linear_speed = maxf(linear_speed, 1.0)
 
 	acceleration = lerpf(acceleration, linear_speed + (absf(sphere.angular_velocity.length() * linear_speed) / 100.0), delta)
@@ -592,9 +661,11 @@ func _physics_process(delta: float) -> void:
 	_prev_position = container.position
 
 	if _boost_left > 0.0:
-		var missing := _boost_target - speed()
+		var missing := (minf(_boost_target, boost_cap) if boost_cap > 0.0 else _boost_target) - speed()
 		if missing > 0.0 and colliding:
 			_push_forward(minf(missing, BOOST_PUSH * delta))
+		elif colliding and _boost_capped():
+			_push_forward(maxf(missing, -BOOST_PUSH * 0.5 * delta))  # boosted too fast into a bend
 		_boost_left -= delta
 		boost_time += delta
 		if _boost_left <= 0.0:
@@ -792,10 +863,39 @@ func _start_trick() -> void:
 	if visual.driver:
 		visual.driver.hop(1.2)
 	var tween := create_tween()
+	if _ramp_air:
+		# Off a ramp: a barrel roll around the kart's middle, lifted a little.
+		tween.tween_method(_ramp_trick_pose, 0.0, 1.0, RAMP_TRICK_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tween.tween_callback(func() -> void: visual.transform = Transform3D.IDENTITY)
+		return
 	tween.tween_property(visual, "rotation:y", TAU, 0.4).from(0.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tween.tween_callback(func() -> void: visual.rotation.y = 0.0)
 
+func in_ramp_air() -> bool:
+	return _ramp_air and not colliding
+
+## In the air off a ramp: the flight bends toward `dir` (flat), so a jump before a bend
+## lands on the road instead of at the outer wall. The racer calls this with the road ahead.
+func ramp_guide(dir: Vector3, delta: float) -> void:
+	var v := sphere.linear_velocity
+	var flat := Vector2(v.x, v.z)
+	if flat.length() < 1.0 or dir.length_squared() < 0.0001:
+		return
+	var angle := Vector2(dir.x, dir.z).angle_to(flat)
+	var turn := clampf(-angle, -RAMP_GUIDE_RATE * delta, RAMP_GUIDE_RATE * delta)
+	sphere.linear_velocity = v.rotated(Vector3.UP, -turn)
+	container.rotate_y(-turn)
+
+## The barrel roll's picture at t = 0..1 (the physics ball does not turn).
+func _ramp_trick_pose(t: float) -> void:
+	var pivot := Vector3(0.0, RAMP_TRICK_PIVOT, 0.0)
+	var roll := Basis(Vector3(0, 0, 1), TAU * t)
+	visual.transform = Transform3D(roll, pivot - roll * pivot + Vector3(0.0, RAMP_TRICK_LIFT * sin(PI * t), 0.0))
+
 func _land() -> void:
+	if _ramp_air:
+		_ramp_air = false
+		sphere.gravity_scale = _ground_gravity
 	if _trick and _air_time >= TRICK_MIN_AIR:
 		tricks += 1
 		boost(TRICK_BOOST_SECONDS, TRICK_BOOST_STRENGTH)

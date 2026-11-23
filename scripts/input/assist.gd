@@ -12,7 +12,8 @@ class_name Assist extends RefCounted
 ##   - Steering hard in the middle of the road charges drift sparks (blue, then orange);
 ##     letting go fires a boost. Near the edge the charge is dropped, never fired.
 ##   - A start boost every time, bigger feeling with gas held.
-##   - Items fire by themselves after a second (so he sees which one he got).
+##   - Items fire by themselves after a second (so he sees which one he got); a boost item
+##     waits for a straight bit of road, so it never throws the kart into a bend.
 ##   - Reset onto the track after 2 s off course, or when stuck.
 ## Full mode and AI: the intent passes through; only a rescue when lost or stuck.
 
@@ -20,6 +21,11 @@ const KID_OFF_COURSE_SECONDS := 2.0
 const KID_STUCK_SECONDS := 2.5
 const OTHER_RESCUE_SECONDS := 4.0
 const AUTO_USE_DELAY := 1.0   ## the item roulette shows first, then the item fires
+const AUTO_USE_LOOK := 2.2    ## kid boost items: seconds of road ahead that must be straight ...
+const AUTO_USE_BEND := 0.045  ## ... no bend tighter than this (1/m, about a 22 m radius) ...
+const AUTO_USE_MAX_WAIT := 8.0  ## ... but never wait longer than this
+const BOOST_BEND_LOOK := 1.0  ## kid: seconds ahead a bend limits boosts ...
+const KID_BEND_BOOST := 1.05  ## ... to this share of the normal top speed
 const WALL_MARGIN := 1.3         ## the assist steers back to this far from the walls
 const EDGE_ZONE := 2.6           ## metres from the wall where the assist starts to take over
 const LIGHT_HAND := 0.15         ## how much the assist helps in the middle of the road (0..1)
@@ -72,15 +78,27 @@ func apply(raw: Intent, racer: Racer, track: Track, racing: bool, delta: float) 
 		_out.spark = absf(raw.steer) >= SPARK_STICK and _edge <= 0.0
 		_out.spark_cancel = _edge > 0.3
 		_soft_walls(racer, track, band)
+		# Boosts push only up to normal top speed while a bend is close.
+		var bend_ahead := track.max_curvature(racer.progress.s(), 3.0 + racer.kart.speed() * BOOST_BEND_LOOK)
+		racer.kart.boost_cap = racer.kart.top_speed() * KID_BEND_BOOST if bend_ahead >= AUTO_USE_BEND else 0.0
 		_out.use = false
 		if racer.kart.has_item:
 			_use_timer += delta
-			if _use_timer >= AUTO_USE_DELAY:
+			if _use_timer >= AUTO_USE_DELAY and (_use_timer >= AUTO_USE_MAX_WAIT or _good_moment(racer, track)):
 				_out.use = true
 				_use_timer = 0.0
 		else:
 			_use_timer = 0.0
 	return _out
+
+## Kid mode: a boost item fires on a straight bit of road; other items fire at once.
+static func _good_moment(racer: Racer, track: Track) -> bool:
+	var item := racer.kart.item
+	if item != Items.TURBO and item != Items.TRIPLE_TURBO and item != Items.SUPERSTAR and item != Items.SPRING:
+		return true
+	var kart := racer.kart
+	var ahead := maxf(kart.speed(), kart.top_speed()) * (1.0 + 0.45) * AUTO_USE_LOOK
+	return track.max_curvature(racer.progress.s(), ahead) < AUTO_USE_BEND
 
 ## Called after a reset or at the start: forget timers, keep the lane where the kart is.
 func clear_timers(racer: Racer) -> void:
