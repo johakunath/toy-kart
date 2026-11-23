@@ -78,15 +78,15 @@ later: a helper icon that lights up when the kid assist steers (Nintendo's glowi
 | Spring chase camera with drift swing | #24 | Done |
 | Recorded sound effects where generated ones feel cheap (ask before buying) | goals | Waits for Johannes' ears |
 
-## Phase E: worlds (next)
+## Phase E: worlds (done 23 Nov 2026, fifteenth round)
 
-| Item | Research |
-| --- | --- |
-| Living-room toy world, his toys as giant landmarks | #25 |
-| Three zones per lap, each with its own look | #26 |
-| Background life: waving toys, animals, plush crowd | #33 |
-| One safe fork per track | #32 |
-| MultiMesh grass with wind, toon water: done (grass, flowers, reeds; pond on Kurvenkurs, lake on Riesenrunde) | #35 |
+| Item | Research | Status |
+| --- | --- | --- |
+| Living-room toy world, his toys as giant landmarks | #25 | Done: track "Wohnzimmer" (sofa with Bobo, coffee table bridge, Koba in the infield, fox by the window, police car on the table, two planes circling) |
+| Three zones per lap, each with its own look | #26 | Done: "zones" in the generator (road, kerb, barrier colours); Wohnzimmer has wooden floor, rug, play corner with a brick arch |
+| Background life: waving toys, animals, plush crowd | #33 | Done: `ToyMotion` (bob, rock, nod, hop, orbit, blink); fans by the start line and a plane on every round track |
+| One safe fork per track | #32 | Done on Wohnzimmer: side lane round a brick island (`Track.forks`); kid assist keeps the main road, some AI take the lane. Other tracks: add a "fork" entry |
+| MultiMesh grass with wind, toon water | #35 | Done: grass, flowers, reeds; pond on Kurvenkurs, lake on Riesenrunde |
 
 ## Phase F: more to play
 
