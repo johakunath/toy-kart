@@ -86,7 +86,7 @@ later: a helper icon that lights up when the kid assist steers (Nintendo's glowi
 | Three zones per lap, each with its own look | #26 |
 | Background life: waving toys, animals, plush crowd | #33 |
 | One safe fork per track | #32 |
-| MultiMesh grass with wind, toon water | #35 |
+| MultiMesh grass with wind, toon water: done (grass, flowers, reeds; pond on Kurvenkurs, lake on Riesenrunde) | #35 |
 
 ## Phase F: more to play
 
