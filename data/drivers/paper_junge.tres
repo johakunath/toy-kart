@@ -3,15 +3,19 @@
 [ext_resource type="Script" path="res://scripts/core/driver_def.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/paper/junge_front.png" id="2"]
 [ext_resource type="Texture2D" path="res://assets/paper/junge_back.png" id="3"]
-[ext_resource type="Texture2D" path="res://assets/portraits/paper_junge.png" id="4"]
+[ext_resource type="PackedScene" path="res://assets/models/toys/junge.glb" id="4"]
+[ext_resource type="Texture2D" path="res://assets/portraits/paper_junge.png" id="5"]
 
 [resource]
 script = ExtResource("1")
 id = "paper_junge"
 display_name = "Duplo-Mädchen"
-type = 1
+type = 0
 sort_order = 10
+model_scene = ExtResource("4")
+animation = ""
+model_scale = 1.0
 front_texture = ExtResource("2")
 back_texture = ExtResource("3")
 card_height = 0.70
-portrait = ExtResource("4")
+portrait = ExtResource("5")
