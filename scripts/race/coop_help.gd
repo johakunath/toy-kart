@@ -57,6 +57,10 @@ var _free_sum := 0.0
 var _free_n := 0
 var _gifts_sent := 0
 var _gifts_got := 0
+var _gifts_back := 0
+## A present that landed while the kid's hands were full: it waits and fills his item slot
+## the moment it is free (so dad's gift is never lost to a star the kid drove through).
+var _queued := {}
 var _gifts_used := 0
 var _gift_waiting := {}         ## Racer (kid) -> true while he holds a gifted item
 
@@ -156,7 +160,7 @@ func gift_target(giver: Racer) -> Racer:
 	for other in _humans:
 		if other == giver or not other.assist.kid or other.finished or other.kart.has_item:
 			continue
-		if _present_for(other):
+		if _present_for(other) or _queued.has(other):
 			continue
 		var d := absf(other.progress.distance() - giver.progress.distance())
 		if d < best_d:
@@ -228,14 +232,30 @@ func _deliver(p: Dictionary) -> void:
 		kid.kart.rumble_requested.emit(0.4, 0.2, 0.15)
 		if kid.kart.visual.driver:
 			kid.kart.visual.driver.hop(1.2)
+	elif not kid.finished and not _queued.has(kid):
+		# His hands were full after all (he drove through a star): the present waits for him.
+		_queued[kid] = item
+		_gifts_got += 1
+		UiKit.play(self, "star", -8.0)
+		if kid.kart.visual.driver:
+			kid.kart.visual.driver.hop(1.0)
 	elif not giver.finished:
-		# His hands were full after all (he drove through a star): the present goes back.
 		giver.kart.receive_item(item)
+		_gifts_back += 1
 
 func _on_kid_item_changed(item: int, kid: Racer) -> void:
 	if item == Items.NONE and _gift_waiting.has(kid):
 		_gift_waiting.erase(kid)
 		_gifts_used += 1
+	if item == Items.NONE and _queued.has(kid) and not kid.finished:
+		var waiting: int = _queued[kid]
+		_queued.erase(kid)
+		_give_later.call_deferred(kid, waiting)
+
+func _give_later(kid: Racer, item: int) -> void:
+	if kid.kart.receive_item(item):
+		_gift_waiting[kid] = true
+		kid.kart.rumble_requested.emit(0.4, 0.2, 0.15)
 
 ## A present box: red with a yellow ribbon and bow, glowing a little, sparkles behind it.
 func _make_present() -> Node3D:
@@ -359,13 +379,13 @@ func smoke_report() -> bool:
 	var rope_share := float(_rope_ticks) / maxf(_race_ticks, 1.0)
 	var towed := _towed_sum / maxf(_towed_n, 1.0)
 	var free := _free_sum / maxf(_free_n, 1.0)
-	print("SMOKE COOP rope=%.0f%% kid_speed_towed=%.3f kid_speed_without_pull=%.3f gain=%+.1f%% gifts_sent=%d gifts_arrived=%d gifts_used=%d" % [
-		100.0 * rope_share, towed, free, 100.0 * (towed / maxf(free, 0.01) - 1.0), _gifts_sent, _gifts_got, _gifts_used])
+	print("SMOKE COOP rope=%.0f%% kid_speed_towed=%.3f kid_speed_without_pull=%.3f gain=%+.1f%% gifts_sent=%d gifts_arrived=%d gifts_back=%d gifts_used=%d" % [
+		100.0 * rope_share, towed, free, 100.0 * (towed / maxf(free, 0.01) - 1.0), _gifts_sent, _gifts_got, _gifts_back, _gifts_used])
 	# The speed gain is printed but not required: the catch-up help already keeps the kid close,
 	# so the measured gain swings between about 0 and +12 % from run to run. Required: the rope
 	# connects, it never slows him down, and the gifts arrive.
 	var ok := rope_share > 0.4 and _towed_n > 100 and _free_n > 100 and towed > free * 0.97 \
-		and _gifts_got >= 1 and _gifts_used >= 1  # a gift flies back when the kid already has an item
+		and _gifts_sent >= 2 and _gifts_got + _gifts_back >= _gifts_sent - 1  # every present lands somewhere
 	if not ok:
 		print("SMOKE   co-op help did not work (rope, pull or gifts)")
 	return ok

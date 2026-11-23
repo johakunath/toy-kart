@@ -19,6 +19,8 @@ The couch test below is the gate for milestone 1.
   the hill). Riesenrunde: on the inside of the long left bend after the jump, round
   brick towers, with a turbo arrow. Computer drivers now brake for the lane's own tighter curve.
   Grass and flowers keep off side lanes.
+- **Dad's presents never get lost:** if the kid's hands are full when a present lands, it waits
+  and fills his item slot as soon as it is free (before, most presents flew back to dad).
 - **Physics runs at 120 steps a second** (was 60): less delay between pad and kart.
 - **Police station and Duplo shop are 3D** (built in Blender from simple shapes after the photos,
   `tools/blender/build_duplo_buildings.py`, `docs/MODELS_3D.md`). The "tower" card was the
