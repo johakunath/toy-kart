@@ -3,21 +3,27 @@
 [ext_resource type="Script" path="res://scripts/core/driver_def.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/paper/traktor_front.png" id="2"]
 [ext_resource type="Texture2D" path="res://assets/paper/traktor_back.png" id="3"]
+[ext_resource type="PackedScene" path="res://assets/models/toys/traktor.glb" id="4"]
+[ext_resource type="Texture2D" path="res://assets/portraits/paper_traktor.png" id="5"]
 
 [resource]
 script = ExtResource("1")
+model_scene = ExtResource("4")
+animation = ""
+model_scale = 1.0
 id = "paper_traktor"
 display_name = "Traktor"
-type = 1
+type = 0
 sort_order = 20
 front_texture = ExtResource("2")
 back_texture = ExtResource("3")
 card_height = 0.70
 is_vehicle = true
-vehicle_width = 1.0
+vehicle_width = 0.7
 ai_lane = 3
 ai_wobble = 0.2
 ai_horn = 0.9
 ai_show_off = 0.1
 ai_friendly = 1.0
 ai_brave = 0.8
+portrait = ExtResource("5")

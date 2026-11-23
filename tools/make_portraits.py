@@ -38,10 +38,18 @@ REFS = {
     "paper_motorrad": "art/toys/turnaround/motorrad-front.png",
     "paper_flieger": "art/toys/turnaround/flieger-front.png",
     "paper_duploflieger": "assets/paper/duploflieger_front.png",
+    "paper_duplojunge": "assets/paper/duplojunge_front.png",
+    "paper_bauarbeiterin": "assets/paper/bauarbeiterin_front.png",
+    "paper_traktor": "art/toys/photo_views/traktor-right.png",
+    "paper_jumbo": "assets/paper/jumbo_front.png",
 }
 # What the toy is, where FLUX guesses wrong from the picture alone.
 HINTS = {
     "paper_junge": "a chunky plastic toy figure of a little girl",
+    "paper_duplojunge": "a chunky plastic toy figure of a little boy in yellow overalls",
+    "paper_bauarbeiterin": "a chunky plastic toy figure of a builder woman with a white hard hat",
+    "paper_traktor": "a blue toy farm tractor with a black front loader",
+    "paper_jumbo": "a white toy jumbo jet airliner with four engines and a blue tail",
 }
 # Strong toy-brick colours, one per driver, so neighbours in the menu look different.
 BACKGROUNDS = ["bright red", "bright blue", "sunny yellow", "bright green", "orange", "purple",

@@ -3,6 +3,9 @@
 How a toy becomes a 3D driver. Milestone 3. Done: Koba (from a video); Bobo, plane, fox, motorbike,
 police car (from Codex turnaround views); the Duplo plane and the Duplo girl (built in Blender).
 All 8 toys are 3D now; the paper cards stay in the `.tres` files. Blocky Duplo toys are built by Claude from simple shapes in Blender instead.
+The 23 Nov toys are all 3D, built in Blender: Duplo-Junge and Bauarbeiterin (drivers,
+`build_duplo_figure.py`), Krankenwagen and Zug (karts, `build_duplo_vehicle.py`), Traktor and
+Jumbo (toy vehicles, `build_toy_vehicle.py`). Close-ups in the game: `docs/img/new-toys-2026-11-23.png`.
 
 Everything runs on this PC; nothing is uploaded and no account is needed. Johannes does nothing
 in a terminal: Claude runs every step.
@@ -120,6 +123,44 @@ box, which would shift her back by half her legs). One command does model, edit 
 blender -b --python tools/blender/build_duplo_girl.py -- --out assets/models/toys/junge.glb
     --blend art/models/junge_edit.blend --sheet <scratchpad>/junge_sheet.png
 ```
+
+### More Duplo figures and Duplo vehicles (23 Nov toys)
+
+`tools/blender/build_duplo_figure.py --figure duplojunge|bauarbeiterin` builds the other seated
+Duplo figures on the girl's body (same seat point, height and pose) with a preset per toy:
+colours, the torso print (overall bib with badge; vest over the shirt), hair (short swept cap;
+curls under a white hard hat), hand colour (the builder wears light grey gloves). The girl's own
+script stays as it is. Add a figure = add a preset.
+
+```
+blender -b --python tools/blender/build_duplo_figure.py -- --figure duplojunge
+    --out assets/models/toys/duplojunge.glb --blend art/models/duplojunge_edit.blend --sheet <png>
+```
+
+`tools/blender/build_duplo_vehicle.py --vehicle krankenwagen|zug` builds a Duplo vehicle as a
+**kart** (`data/karts/`), not a driver: drivers sit in it. The ambulance is built with its
+flip-up roof left off, so the driver is seen sitting inside; the train car is open on top like
+the real one. The model has Kenney-style nodes, so the game animates it like a Kenney kart: one
+mesh `body` and four wheels `wheel-front-left` ... with their origin at the wheel centre (they
+spin and the front ones steer). `--length 1.5` (metres, nose to tail). The script prints the
+`seat_position` for the kart `.tres` (top of the floor, middle of the seat well); `seat_scale
+0.95` makes a 0.7 m figure the right size for the toy.
+
+## Toys from real photos (no Codex): tractor and airliner
+
+`tools/make_photo_views.py --id <id> --front <photo> --left <photo> --back <photo> --right <photo>
+[--fit height|width]` cuts four photos out with rembg and brings them to one scale
+(`art/toys/photo_views/`). Then `tools/make_3d_toy.py --id <id> --views art/toys/photo_views`.
+Photos are perspective shots, not straight views, so Pixal3D gets less to work with than from
+Codex drawings; look at the sheet before using the model. First try (23 Nov): the tractor came
+out without its front wheels and dark, the airliner without its tail fin and with half a body.
+Both were rejected (kept in `art/models/pixal3d_rejected/`, not in git).
+
+Instead `tools/blender/build_toy_vehicle.py --vehicle traktor|jumbo` builds them from simple
+shapes (boxes, cylinders, a lofted plane body, flat wing plates) as toy-vehicle drivers: one
+mesh, origin at the bottom middle. Tractor `--length 1.5`, airliner `--width 1.7` (wing span;
+`vehicle_hover = 0.4` in its `.tres` makes it fly). Clean and recognisable in the race; an
+optional Codex prompt for a more detailed look is at the end of `docs/CODEX_REDO_POLIZEI_KOBA.md`.
 
 ## Using ComfyUI yourself (Johannes)
 

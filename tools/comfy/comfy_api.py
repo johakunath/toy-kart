@@ -9,8 +9,9 @@ import urllib.error
 import urllib.request
 
 SERVER = "http://127.0.0.1:8188"
-COMFY = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))),
-                     "ComfyUI")
+# ComfyUI sits next to the project folder; COMFYUI_DIR overrides it (needed in git worktrees).
+COMFY = os.environ.get("COMFYUI_DIR") or os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "ComfyUI")
 
 
 def http(path, data=None, server=SERVER):
