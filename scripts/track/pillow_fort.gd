@@ -15,7 +15,7 @@ const C_PINK := Color("ff6f9c")
 const C_RED := Color("e3241b")
 const C_BLACK := Color("1c1d24")
 const C_WHITE := Color("f4f6fb")
-const FEATHER_COLORS: Array[Color] = [Color("f4f6fb"), Color("ffd2e2"), Color("ffe36b"), Color("8fd4ff")]
+const FEATHER_COLORS: Array[Color] = [Color("f4f6fb"), Color("ffd2e2"), Color("ff8fb8"), Color("8fd4ff")]
 
 const REACH := 48.0          ## a kart flying closer than this to the lip makes the teddy cheer
 const FEATHERS := 36
@@ -132,7 +132,7 @@ func _build_teddy() -> void:
 	for side: float in [-1.0, 1.0]:
 		body.ball(Vector3(side * 0.55, 5.05, 1.75), Vector3(0.6, 0.42, 0.22), C_RED, Basis(Vector3.FORWARD, side * 0.25))
 	body.ball(Vector3(0, 5.05, 1.9), Vector3(0.25, 0.25, 0.2), C_RED.darkened(0.15))
-	teddy.add_child(body.instance())
+	teddy.add_child(body.build())
 
 	_head = Node3D.new()
 	_head.name = "Head"
@@ -150,7 +150,7 @@ func _build_teddy() -> void:
 		for k in 3:
 			var a := (k + 1) * 0.28
 			head.ball(Vector3(side * sin(a) * 0.45, -0.85 - (1.0 - cos(a)) * 0.6 + 0.1, 2.0 - k * 0.07), Vector3.ONE * 0.08, C_BLACK)
-	_head.add_child(head.instance())
+	_head.add_child(head.build())
 	for side: float in [-1.0, 1.0]:
 		var eye := Node3D.new()
 		eye.position = Vector3(side * 0.72, 0.4, 1.62)
@@ -158,7 +158,7 @@ func _build_teddy() -> void:
 		var parts := ToyParts.new(0.2, 0.6)
 		parts.ball(Vector3.ZERO, Vector3(0.34, 0.4, 0.22), C_BLACK)
 		parts.ball(Vector3(0.1, 0.14, 0.18), Vector3.ONE * 0.1, C_WHITE)
-		eye.add_child(parts.instance(false))
+		eye.add_child(parts.build(false))
 		_eyes.append(eye)
 
 	for side: float in [-1.0, 1.0]:
@@ -169,7 +169,7 @@ func _build_teddy() -> void:
 		var parts := ToyParts.new(0.95)
 		parts.ball(Vector3(0, -1.5, 0), Vector3(0.85, 1.75, 0.85), C_FUR)
 		parts.ball(Vector3(0, -2.9, 0.35), Vector3(0.6, 0.45, 0.55), C_CREAM)
-		arm.add_child(parts.instance())
+		arm.add_child(parts.build())
 		_arms.append(arm)
 
 func _pose(delta: float) -> void:

@@ -193,7 +193,7 @@ func _build_owl() -> void:
 	for side: float in [-1.0, 1.0]:
 		for k in 3:
 			body.ball(Vector3(side * 0.42 + (k - 1) * 0.16, 0.05, 0.55), Vector3(0.1, 0.1, 0.2), C_ORANGE)
-	_owl.add_child(body.instance())
+	_owl.add_child(body.build())
 
 	_owl_head = Node3D.new()
 	_owl_head.name = "Head"
@@ -206,7 +206,7 @@ func _build_owl() -> void:
 		# Ear tufts.
 		head.cylinder(Vector3(side * 0.72, 0.95, -0.05), 0.0, 0.3, 0.75, C_OWL_DARK, Basis(Vector3.FORWARD, -side * 0.35))
 	head.cylinder(Vector3(0, -0.28, 1.0), 0.0, 0.17, 0.5, C_ORANGE, Basis(Vector3.RIGHT, PI * 0.5 + 0.5))
-	_owl_head.add_child(head.instance())
+	_owl_head.add_child(head.build())
 	for side: float in [-1.0, 1.0]:
 		var eye := Node3D.new()
 		eye.position = Vector3(side * 0.45, 0.08, 0.96)
@@ -215,7 +215,7 @@ func _build_owl() -> void:
 		parts.ball(Vector3.ZERO, Vector3(0.34, 0.34, 0.1), C_YELLOW)
 		parts.ball(Vector3(0, 0, 0.06), Vector3(0.2, 0.2, 0.08), C_BLACK)
 		parts.ball(Vector3(0.07, 0.08, 0.12), Vector3.ONE * 0.06, C_WHITE)
-		eye.add_child(parts.instance(false))
+		eye.add_child(parts.build(false))
 		_owl_eyes.append(eye)
 
 	for side: float in [-1.0, 1.0]:
@@ -224,7 +224,7 @@ func _build_owl() -> void:
 		_owl.add_child(wing)
 		var parts := ToyParts.new(0.7)
 		parts.ball(Vector3(side * 0.12, -0.75, 0), Vector3(0.28, 0.95, 0.75), C_OWL_DARK)
-		wing.add_child(parts.instance())
+		wing.add_child(parts.build())
 		_wings.append(wing)
 
 func _pose_owl(delta: float) -> void:
@@ -318,5 +318,5 @@ func _squirrel() -> Node3D:
 static func _animal(animal_name: String, parts: ToyParts) -> Node3D:
 	var node := Node3D.new()
 	node.name = animal_name
-	node.add_child(parts.instance())
+	node.add_child(parts.build())
 	return node

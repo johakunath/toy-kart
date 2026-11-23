@@ -75,7 +75,7 @@ const GARLAND_SAG := 1.0
 
 ## Owl tree gate: trunks this far from the centre line, branch this high over the road.
 const OWL_TRUNK_OUT := 6.6
-const OWL_BRANCH_HEIGHT := 7.2
+const OWL_BRANCH_HEIGHT := 5.6
 const OWL_BRANCH_R := 0.7
 
 var _pos: PackedVector3Array

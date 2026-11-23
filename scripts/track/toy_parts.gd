@@ -5,7 +5,7 @@ class_name ToyParts extends RefCounted
 ##
 ##   var parts := ToyParts.new(0.8)
 ##   parts.ball(Vector3(0, 1, 0), Vector3(1.0, 1.3, 0.9), Color("e8731e"))
-##   add_child(parts.instance())
+##   add_child(parts.build())
 
 var _rough := 0.6
 var _coat := 0.0
@@ -22,6 +22,8 @@ func ball(at: Vector3, radii: Vector3, color: Color, basis := Basis.IDENTITY, de
 	var key := "ball%d" % detail
 	if not _arrays.has(key):
 		var mesh := SphereMesh.new()
+		mesh.radius = 1.0
+		mesh.height = 2.0
 		mesh.radial_segments = 14 * detail
 		mesh.rings = 7 * detail
 		_arrays[key] = mesh.get_mesh_arrays()
@@ -65,7 +67,7 @@ func add(arrays: Array, xform: Transform3D, color: Color) -> void:
 		st.add_vertex(xform * verts[k])
 
 ## The finished figure as one MeshInstance3D (empty parts are fine).
-func instance(shadow := true) -> MeshInstance3D:
+func build(shadow := true) -> MeshInstance3D:
 	var mesh := ArrayMesh.new()
 	for color: Color in _parts:
 		var st := _parts[color] as SurfaceTool
