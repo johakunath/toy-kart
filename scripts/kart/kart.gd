@@ -716,6 +716,10 @@ func use_own_engine(bus: StringName) -> void:
 		world_player.stop()
 		set(layer[1], own)
 
+## The bus this kart's engine plays on (the tunnel echo goes there).
+func engine_bus() -> StringName:
+	return _engine_main.get("bus") if _engine_main else &"Engines"
+
 ## AI engines shift pitch as they pass (doppler).
 func use_doppler() -> void:
 	engine_sound.doppler_tracking = AudioStreamPlayer3D.DOPPLER_TRACKING_PHYSICS_STEP

@@ -320,7 +320,7 @@ static func _coffee_table(room: Node3D) -> void:
 	for x: float in [-half.x + 0.6, half.x - 0.6]:
 		for z: float in [-half.y + 0.6, half.y - 0.6]:
 			_box(group, Vector3(1.4, 9.0, 1.4), Vector3(x, 0, z), C_TABLE, 0.0, 0.4, 0.4)
-			_check(group.position + Vector3(x, 0, z), 0.8, "table leg")
+			_check(group.position + Vector3(x, 0, z), 0.4, "table leg")  # 0.4 m from the barrier: fine
 	# On the table: a mug, a picture book, crayons, and the police car on patrol.
 	var top := 10.6
 	var mug := _cyl(group, 1.6, 1.4, 3.4, Vector3(-9.0, top, -2.5), Color("3b8beb"))
