@@ -77,7 +77,9 @@ if (-not $Quick) {
         @{ Name = 'Wohnzimmer: 2 kids (hands off) + 3 AI, Kid speed'; Args = @('--track=wohnzimmer', '--input=none', '--speed=0') },
         @{ Name = 'Wohnzimmer: 2 kids holding left at the side lane (assist keeps the road), Kid speed'; Args = @('--track=wohnzimmer', '--input=left', '--speed=0') },
         @{ Name = 'Wohnzimmer: kid + full-mode driver, Fast speed';   Args = @('--track=wohnzimmer', '--control=mixed', '--input=right', '--speed=2') },
-        @{ Name = 'Pokal: three races in a row, kid + full-mode driver, Kid speed'; Args = @('--cup=1', '--control=mixed', '--input=none', '--speed=0') }
+        @{ Name = 'Pokal: three races in a row, kid + full-mode driver, Kid speed'; Args = @('--cup=1', '--control=mixed', '--input=none', '--speed=0') },
+        @{ Name = 'Wohnzimmer: free drive, kid steering well (gets rings)'; Args = @('--track=wohnzimmer', '--players=1', '--mode=free', '--input=skilled') },
+        @{ Name = 'Riesenrunde: free drive, kid + Papa (rings, catch Papa)'; Args = @('--track=riesenrunde', '--mode=free', '--control=mixed', '--input=none') }
     )
 }
 foreach ($s in $scenarios) {

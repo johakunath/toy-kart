@@ -37,6 +37,7 @@ var _karts: Node3D
 var _overlay: CanvasLayer
 var _pause_menu: PauseMenu
 var _finish_screen: FinishScreen
+var _playground: Playground
 var _countdown := COUNTDOWN_SECONDS + 1.0
 var _countdown_shown := 99
 var _finish_delay := -1.0
@@ -58,6 +59,12 @@ func _ready() -> void:
 	_place_bricks()
 	_build_views()
 	_build_overlay()
+	if Game.mode == Game.Mode.FREE_DRIVE:
+		# Rings, the brick jar and "catch Papa": things to do when nobody races.
+		_playground = Playground.new()
+		_playground.name = "Playground"
+		_playground.setup(track, humans, huds)
+		_world.add_child(_playground)
 	if humans.size() > 1:
 		_split_screen_shadows()
 	Music.stop(0.6)  # quiet for the countdown; the race tune starts with "Los!"
@@ -747,6 +754,10 @@ func _smoke_tick(delta: float) -> void:
 		print("PERF %s  %dx%d  players=%d  avg=%.0f fps  1%%-low=%.0f fps  frames=%d" % [
 			RenderingServer.get_video_adapter_name(), size.x, size.y, humans.size(),
 			_perf_frames.size() / total, 1.0 / worst, _perf_frames.size()])
+	if _playground:
+		print("SMOKE   " + _playground.summary())
+		if Game.smoke_args.get("input", "") == "skilled":
+			ok = ok and _playground.rings_done.values().max() > 0  # a good driver gets rings
 	if Game.cup and state == State.FINISHED:
 		var stars := []
 		for racer in racers:
