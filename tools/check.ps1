@@ -75,7 +75,7 @@ if (-not $Quick) {
         @{ Name = 'Kurvenkurs: free drive, 1 kid';                    Args = @('--track=kurvenkurs', '--players=1', '--mode=free') },
         @{ Name = 'Waldkurs: time trial, 1 full-mode driver';         Args = @('--track=waldkurs', '--players=1', '--control=full', '--mode=trial', '--speed=1') },
         @{ Name = 'Wohnzimmer: 2 kids (hands off) + 3 AI, Kid speed'; Args = @('--track=wohnzimmer', '--input=none', '--speed=0') },
-        @{ Name = 'Wohnzimmer: 2 kids holding left (into the side lane), Kid speed'; Args = @('--track=wohnzimmer', '--input=left', '--speed=0') },
+        @{ Name = 'Wohnzimmer: 2 kids holding left at the side lane (assist keeps the road), Kid speed'; Args = @('--track=wohnzimmer', '--input=left', '--speed=0') },
         @{ Name = 'Wohnzimmer: kid + full-mode driver, Fast speed';   Args = @('--track=wohnzimmer', '--control=mixed', '--input=right', '--speed=2') }
     )
 }

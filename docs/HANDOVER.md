@@ -1,6 +1,6 @@
 # Handover
 
-Updated 23 Nov 2026, fourteenth round: sound and camera (roadmap phase D).
+Updated 23 Nov 2026, fifteenth round: worlds (roadmap phase E), signature moments, the Duplo girl in 3D.
 
 ## Where it stands
 
@@ -11,6 +11,38 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## New in the fifteenth round (phase E: worlds)
+
+![Wohnzimmer: under the coffee table](img/wohnzimmer-table.png)
+![Wohnzimmer: the side lane round the brick island](img/wohnzimmer-side-lane.png)
+![Kurvenkurs: the toy train crosses over the road](img/kurvenkurs-train.png)
+![Riesenrunde: the caterpillar tunnel](img/riesenrunde-tunnel.png)
+
+- **New track "Wohnzimmer"** (living room, 3 laps): a toy road through a room seen from toy
+  height. Three zones with their own road colours: the wooden floor by the red sofa (start), the
+  round rug with the coffee table as a bridge, the play corner on foam puzzle mats behind a brick
+  arch. His toys stand around as giants: Bobo rocks on the sofa, Koba nods in the middle, the fox
+  watches by the window, the police car patrols the table with flashing lights, the Duplo plane
+  and the toy plane circle the room. Fans cheer on a picture book at the start.
+- **Cushion jump:** the start straight's jump is a fallen sofa cushion, a bit higher than the
+  others, with a longer landing.
+- **Side lane (fork):** in the play corner a narrower lane splits off round an island of brick
+  towers; it is shorter and has a turbo arrow and a star. The kid assist keeps him on the main
+  road; some computer drivers take the lane. Any round track can get one (`"fork"` entry).
+- **Signature moments:** Kurvenkurs has a toy train that crosses a brick bridge over the road
+  (whistle, steam, timed to pass over each player). Riesenrunde has a rainbow caterpillar tunnel
+  with blinking eyes and fairy lights; inside it gets darker and the engine echoes (per player).
+- **Grass in the wind and toon water** on Kurvenkurs and Riesenrunde: grass, flowers and reeds
+  sway; a pond (Kurvenkurs) and a lake (Riesenrunde) with ducks and lily pads.
+- **Background life everywhere:** fans by the start line and the Duplo plane overhead on the
+  outdoor round tracks too.
+- **The Duplo girl is 3D** (built in Blender from simple shapes after the photos,
+  `tools/blender/build_duplo_girl.py`). No paper cards left.
+- Frame rate (RTX 4070, 720p window): Wohnzimmer about 200 fps in split screen, outdoor tracks
+  300+ fps.
+
+![The Duplo girl in her kart](img/duplo-girl.png)
 
 ## New in the fourteenth round (phase D: sound and camera)
 
@@ -132,7 +164,7 @@ The couch test below is the gate for milestone 1.
 ## New in the ninth round (the 3D cast)
 
 - **3D now:** fox, police motorbike, police car (from Codex views), plus Koba, Bobo, plane and the
-  Duplo plane. Only the Duplo girl is still a card. Cars and bikes are sized nose to tail like a
+  Duplo plane. (The Duplo girl followed in round fifteen.) Cars and bikes are sized nose to tail like a
   kart (`--length`). The colour match only brightens now (it darkened the motorbike before).
 - **Bobo smiles:** a FLUX.2 edit of Codex's front view (original kept in
   `art/toys/turnaround/originals/`), then a new 3D run.
@@ -353,13 +385,12 @@ Tell Claude the answers by voice; they become the tuning list.
 
 ## What is next
 
-1. You: a race as Koba and as Duplo-Flieger. Colours, size, does it look like the toy?
-2. Claude: the Duplo girl in 3D, built in Blender like the Duplo plane (photos from all sides are
-   in `photos/toys/`). She is the last paper card; all 8 toys already have a portrait.
-3. You: on the projector, are the colours strong enough now (or too strong)? Can he pick his
-   driver by face? Do the boosts feel special, not constant?
-4. Rest of milestone 2: graphics presets for projector and monitor, scenery; faces also on the
-   HUD and finish podium (backlog).
+1. You: a race in the Wohnzimmer. Does he spot his toys? Does he laugh at the cushion jump, the
+   train and the caterpillar? Try the side lane yourself in Profi mode.
+2. You: on the projector, are the colours strong enough (or too strong), indoors and outdoors?
+3. Phase F (ROADMAP.md): a mini-cup of 3 races with a trophy, AI personalities, tow rope behind
+   dad, kid battle modes.
+4. Rest of milestone 2: graphics presets for projector and monitor; faces on the finish podium.
 
 ## Notes for the next Claude session
 
