@@ -140,6 +140,16 @@ func kart_by_id(id: String) -> KartDef:
 			return k
 	return karts[0] if not karts.is_empty() else null
 
+## The kart a driver belongs in (DriverDef.favourite_kart), or null: none set, no such kart,
+## or a toy that is a vehicle itself.
+func favourite_kart(driver: DriverDef) -> KartDef:
+	if driver == null or driver.is_vehicle or driver.favourite_kart == "":
+		return null
+	for k in karts:
+		if k.id == driver.favourite_kart:
+			return k
+	return null
+
 # --- Saved settings ------------------------------------------------------------------------
 
 func save_options() -> void:

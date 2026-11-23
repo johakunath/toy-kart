@@ -128,11 +128,14 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 
 # --- Leg piece, turned forward at the hip (seated) --------------------------------------------
 HIP_TOP = 1.0
+# Toes 1.55 in front of the hip pin: a real seated Duplo leg piece is short and stubby (side photos:
+# back of the hip to the toes is about 2.1 units, the torso is 1.1 deep). 2.05 looked too long.
+LEG_TIP = 1.55
 box(-1.0, 1.0, -0.55, 0.62, 0.0, HIP_TOP, "legs", bevel=0.28)          # hip block, round at the back
 for side in (-1, 1):
     x0, x1 = (0.06, 1.0) if side > 0 else (-1.0, -0.06)
-    box(x0, x1, -2.05, -0.2, 0.0, 0.92, "legs", bevel=0.18)             # thigh + shin, pointing forward
-    box(x0 + 0.02, x1 - 0.02, -2.05, -1.35, 0.6, 1.42, "legs", bevel=0.3, segments=4)  # shoe, toes up
+    box(x0, x1, -LEG_TIP, -0.2, 0.0, 0.92, "legs", bevel=0.18)             # thigh + shin, pointing forward
+    box(x0 + 0.02, x1 - 0.02, -LEG_TIP, -LEG_TIP + 0.62, 0.6, 1.36, "legs", bevel=0.28, segments=4)  # shoe, toes up
     cylinder(side * 1.0, 0.05, 0.5, 0.13, 0.06, "ink", rot=(0, math.pi / 2, 0), verts=12)  # hip pin hole
 
 # --- Torso: white shirt, striped print on the front, short white sleeves ----------------------
@@ -152,7 +155,7 @@ tube([(x, FRONT - 0.02, 2.02 - 0.12 * math.cos(x / 0.4 * math.pi / 2)) for x in
 # --- Arms: forward to the steering wheel, C-shaped Duplo hands ----------------------------------
 for side in (-1, 1):
     shoulder = Vector((side * 0.92, 0.0, 1.82))
-    elbow = Vector((side * 1.08, -0.75, 1.45))
+    elbow = Vector((side * 1.08, -0.75, 1.52))
     ball(*shoulder, 0.33, "shirt", seg=14, rings=8)
     rod(shoulder, elbow, 0.3, "shirt")
     ball(*elbow, 0.3, "shirt", seg=12, rings=7)

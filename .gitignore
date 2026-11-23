@@ -23,3 +23,6 @@ art/toys/portraits/variants/
 
 # Agent worktrees
 .claude/worktrees/
+
+# Local FLUX view variants to choose from (the picks are in art/toys/local_views)
+art/toys/local_views/variants/

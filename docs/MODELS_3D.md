@@ -142,10 +142,20 @@ blender -b --python tools/blender/build_duplo_figure.py -- --figure duplojunge
     --out assets/models/toys/duplojunge.glb --blend art/models/duplojunge_edit.blend --sheet <png>
 ```
 
+Legs (24 Nov, owner: "too long"): the seated leg piece now reaches 1.55 units in front of the hip
+instead of 2.05 (`LEG_TIP` in both scripts), with a lower shoe. Measured on the side photos
+(`11.59.19 (1)`, `11.59.20 (2)`): back of the hip to the toes is about twice the torso depth.
+
 `tools/blender/build_duplo_vehicle.py --vehicle krankenwagen|zug` builds a Duplo vehicle as a
-**kart** (`data/karts/`), not a driver: drivers sit in it. The ambulance is built with its
-flip-up roof left off, so the driver is seen sitting inside; the train car is open on top like
-the real one. The model has Kenney-style nodes, so the game animates it like a Kenney kart: one
+**kart** (`data/karts/`), not a driver: drivers sit in it. The ambulance is a van without a
+bonnet (a white tub with the round nose, stripes, grille and lamps); its roof shell (the upper
+half with the window frames and four studs) is built closed and then swung open about a hinge
+at the back of the tub (`hinge()`, `OPEN = 138` degrees). The real roof opens to about 100
+degrees, but then it stands behind the driver like a wall and the chase camera sees only the
+roof; at 138 degrees it leans back far enough that the driver shows over it. The vehicle is
+sized by its own length, not counting the swung roof. The train car is tall with a round nose
+(two studs), a rounded roof edge round an open top, an open front between round corner posts
+(the U cut of the real front) and a wide notch in the back, so the driver shows from every side. The model has Kenney-style nodes, so the game animates it like a Kenney kart: one
 mesh `body` and four wheels `wheel-front-left` ... with their origin at the wheel centre (they
 spin and the front ones steer). `--length 1.5` (metres, nose to tail). The script prints the
 `seat_position` for the kart `.tres` (top of the floor, middle of the seat well); `seat_scale
@@ -171,7 +181,11 @@ owner wants windows even though the real toy's wore off; stuck-on window boxes w
 see. The tractor front follows the photos: sloping bonnet with grille bars and round headlights,
 front axle with smaller lugged wheels, loader towers behind the front wheels, arms over the
 wheels and past the nose, bucket lowered to the ground so the bonnet stays visible. Before and
-after: `docs/img/toy-fixes-2026-11-24.png`. Clean and recognisable in the race; an
+after: `docs/img/toy-fixes-2026-11-24.png`. Second pass (24 Nov, owner: "still not quite
+right"), measured on the side photo `11.59.28 (10)` in rear wheel radii R: front wheel 0.7 R,
+wheelbase 2.6 R, a tall bonnet whose top (2.3 R) is above the rear wheels, the glass cab over
+the rear axle (not behind it), roof at 3.8 R, big white dished rims, thin blue mudguard arcs,
+grey (not black) loader with the arms level with the bonnet top, exhaust up past the roof. Clean and recognisable in the race; an
 optional Codex prompt for a more detailed look is at the end of `docs/CODEX_REDO_POLIZEI_KOBA.md`.
 
 ## Roadside buildings: police station and Duplo shop

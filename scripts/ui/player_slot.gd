@@ -304,6 +304,10 @@ func _change(step: int) -> void:
 	match row:
 		0:
 			driver_index = posmod(driver_index + step, Game.drivers.size())
+			# A toy with its own kart (the Sanitäter and the Krankenwagen) gets in it right away.
+			var favourite := Game.favourite_kart(Game.drivers[driver_index])
+			if favourite:
+				kart_index = Game.karts.find(favourite)
 		1:
 			kart_index = posmod(kart_index + step, Game.karts.size())
 		2:

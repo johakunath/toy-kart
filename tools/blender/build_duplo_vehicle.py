@@ -5,10 +5,11 @@
 
 Vehicles:
   krankenwagen  Duplo ambulance/van: white body, orange-red base, red-white stripes and a grille
-                at the front, black tyres with white hubs. The flip-up roof is left off (open top),
-                so the driver is seen sitting inside. Photos 2026-11-23 11.59.28 (11), 11.59.29*.
-  zug           Duplo train car: lime green body with window frames and an open roof, navy base,
-                railway logo and lamps at the front. Photos 2026-11-23 11.59.26*, 11.59.27, (1).
+                at the front, black tyres with white hubs. The flip-up roof shell is shown flipped
+                open behind the seats (hinged at the back), so the driver is seen sitting inside. Photos 2026-11-23 11.59.28 (11), 11.59.29*.
+  zug           Duplo train car: tall lime green body with a round roof edge round
+                an open top, open front above the round nose, a notch in the back, navy base,
+                railway logo and four lamps at the front. Photos 2026-11-23 11.59.26*, 11.59.27, (1).
 
 Built in Duplo units (one stud = 1, a brick layer = 1.2), then scaled to --length metres nose to
 tail. Kenney-style node names so the game animates it: one mesh "body" (bounces and leans) and
@@ -22,7 +23,7 @@ import os
 import sys
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 ap = argparse.ArgumentParser()
@@ -141,29 +142,38 @@ def wheel(name, u, v, r, width, tyre, hub, hub_r):
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 
+SWUNG = []    # parts swung open (not counted in the vehicle's length)
+
+
+def hinge(parts, u, z, degrees):
+    """Swing parts (built closed) open about a cross axis at (u, z): the front end lifts up and over
+    toward the back, like the toy's flip-up roof."""
+    h = W(u, 0, z)
+    m = Matrix.Translation(h) @ Matrix.Rotation(math.radians(-degrees), 4, "X") @ Matrix.Translation(-h)
+    for o in parts:
+        o.matrix_world = m @ o.matrix_world
+        SWUNG.append(o)
+
+
 if args.vehicle == "krankenwagen":
     L = 8.5
     HW = 2.0                    # half width of the body
     FLOOR = 1.15                # top of the red floor (the seat)
-    SILL = 2.75                 # top of the white walls (roof left off)
+    SILL = 2.45                 # top of the white tub, where the roof shell sits when closed
+    RT = 4.75                   # top of the roof shell, closed (side photo 11.59.29 (5))
     # base: orange-red chassis, wider at the bumpers
     box(0.0, L, -HW, HW, 0.45, 1.25, "base", bevel=0.3, segments=3)
     box(-0.1, 0.6, -HW + 0.1, HW - 0.1, 0.45, 1.1, "base", bevel=0.25)          # front bumper
     box(L - 0.6, L + 0.15, -HW + 0.1, HW - 0.1, 0.45, 1.1, "base", bevel=0.25)  # back bumper
     box(L - 0.1, L + 0.45, -0.3, 0.3, 0.55, 0.95, "base", bevel=0.1)            # tow hitch
-    # white lower body: bonnet at the front, walls round an open seat well
-    box(0.0, 2.4, -HW, HW, 1.2, 2.45, "white", bevel=0.45, segments=4)          # bonnet, round nose
-    box(2.2, L, -HW, -HW + 0.35, 1.2, SILL, "white", bevel=0.15)                # right wall
-    box(2.2, L, HW - 0.35, HW, 1.2, SILL, "white", bevel=0.15)                  # left wall
-    box(L - 0.4, L, -HW, HW, 1.2, SILL, "white", bevel=0.2)                     # back wall
-    box(2.2, 2.6, -HW, HW, 1.2, SILL, "white", bevel=0.12)                      # dashboard wall
-    box(2.6, L - 0.4, -HW + 0.35, HW - 0.35, FLOOR - 0.2, FLOOR, "seat", bevel=0.0)  # red floor
-    studs(5.4, -1.0, FLOOR, 2, 2, "seat")                                       # studs behind the seat
-    # low windscreen on the dashboard, a blue light on top
-    box(2.25, 2.45, -HW + 0.3, HW - 0.3, SILL, SILL + 0.75, "glass", bevel=0.08)
-    box(2.2, 2.5, -HW + 0.15, HW - 0.15, SILL + 0.75, SILL + 0.95, "white", bevel=0.08)
-    box(2.2, 2.5, -0.55, 0.55, SILL + 0.95, SILL + 1.3, "blue", bevel=0.12)
-    # front face: red-white stripes over the grille, headlights, the emblem
+    # white tub: a van, no bonnet. Round nose, walls round an open seat well.
+    box(0.0, 1.7, -HW, HW, 1.2, SILL, "white", bevel=0.55, segments=4)          # nose and dashboard
+    box(1.2, L, -HW, -HW + 0.35, 1.2, SILL, "white", bevel=0.15)                # right wall
+    box(1.2, L, HW - 0.35, HW, 1.2, SILL, "white", bevel=0.15)                  # left wall
+    box(L - 0.45, L, -HW, HW, 1.2, SILL, "white", bevel=0.25, segments=3)       # back wall
+    box(1.7, L - 0.45, -HW + 0.35, HW - 0.35, FLOOR - 0.2, FLOOR, "seat", bevel=0.0)  # red floor
+    studs(5.6, -1.0, FLOOR, 2, 2, "seat")                                       # studs behind the seat
+    # front face: red-white stripes with the blue emblem, grille, round lamps
     for k in range(7):
         v = -1.7 + k * 0.52
         box(-0.06, 0.25, v, v + 0.26, 1.95, 2.25, "red", bevel=0.0)
@@ -171,62 +181,87 @@ if args.vehicle == "krankenwagen":
     for v in (-1.35, 1.35):
         disc(-0.04, v, 1.55, 0.27, 0.2, "lamp", axis="u")
     disc(-0.05, 0.0, 2.1, 0.24, 0.2, "blue", axis="u")
-    # red-white side stripe and side windows' lower edge
+    # red-white side stripe and a red cross on each side of the tub
     for side in (-1, 1):
         v0 = side * HW - (0.02 if side > 0 else -0.02)
-        for k in range(9):
-            u = 2.7 + k * 0.62
-            box(u, u + 0.31, v0 - 0.03, v0 + 0.03, 2.25, 2.5, "red", bevel=0.0)
-        box(5.0, 6.2, v0 - 0.03, v0 + 0.03, 1.5, 2.0, "red", bevel=0.0)        # red cross bar
-        box(5.35, 5.85, v0 - 0.03, v0 + 0.03, 1.3, 2.2, "red", bevel=0.0)
+        for k in range(10):
+            u = 2.0 + k * 0.62
+            box(u, u + 0.31, v0 - 0.03, v0 + 0.03, 2.0, 2.25, "red", bevel=0.0)
+        box(5.0, 6.2, v0 - 0.03, v0 + 0.03, 1.4, 1.8, "red", bevel=0.0)        # red cross bar
+        box(5.4, 5.8, v0 - 0.03, v0 + 0.03, 1.25, 1.95, "red", bevel=0.0)
+    # The roof shell (the van's upper half with its window frames), built closed, then flipped
+    # open about the hinge at the back of the tub, like the toy with its roof open (photos
+    # 11.59.29, (1), (2), (3)). The toy opens it to about 100 degrees; here it leans further back
+    # (OPEN) so the chase camera behind still sees the driver over it.
+    OPEN = 138.0
+    first = len(BODY)
+    box(0.35, L, -HW, HW, RT - 0.42, RT, "white", bevel=0.4, segments=4)        # roof
+    studs(L / 2 - 1.0, -1.0, RT, 2, 2, "white")                                 # four studs on top
+    box(0.35, 0.85, -HW, HW, SILL, SILL + 0.3, "white", bevel=0.1)              # windscreen sill
+    for side in (-1, 1):
+        v0, v1 = (HW - 0.32, HW) if side > 0 else (-HW, -HW + 0.32)
+        box(0.35, L, v0, v1, SILL, SILL + 0.32, "white", bevel=0.1)             # window sill
+        for (u0, u1) in ((0.35, 0.95), (4.0, 4.45), (L - 0.7, L)):              # pillars
+            box(u0, u1, v0, v1, SILL, RT - 0.2, "white", bevel=0.14)
+        box(L - 0.4, L, v0 - side * 0.35, v1 - side * 0.35, SILL, RT - 0.2, "white", bevel=0.1)
+    box(L - 0.4, L, -HW, HW, SILL, SILL + 0.55, "white", bevel=0.12)            # back: low band
+    box(L - 0.4, L, -HW, HW, RT - 1.0, RT - 0.2, "white", bevel=0.12)           # back: high band
+    hinge(BODY[first:], L - 0.1, SILL, OPEN)
     for (name, u, v) in (("wheel-front-left", 1.9, 1.95), ("wheel-front-right", 1.9, -1.95),
                          ("wheel-back-left", 6.6, 1.95), ("wheel-back-right", 6.6, -1.95)):
-        wheel(name, u, v, 0.85, 0.7, "tyre", "hub", 0.55)
-    SEAT = (4.6, FLOOR)         # (u, z) of the driver's bottom
+        wheel(name, u, v, 0.9, 0.7, "tyre", "hub", 0.58)
+    SEAT = (4.0, FLOOR)         # (u, z) of the driver's bottom
 else:
     L = 8.0
     HW = 2.0
-    FLOOR = 1.3
-    TOP = 3.9                   # top of the window frames (no roof)
-    # navy base with small grey train wheels and buffers
-    box(0.1, L - 0.1, -HW + 0.15, HW - 0.15, 0.35, 1.35, "navy", bevel=0.25, segments=3)
-    for v in (-1.0, 1.0):
-        disc(-0.05, v, 0.85, 0.28, 0.3, "grey", axis="u")                       # buffers / lamps
+    FLOOR = 1.4
+    RT = 5.0                    # roof top (side photo 11.59.26 (3): a tall car with a round roof)
+    WIN = 2.9                   # lower edge of the windows
+    # navy base with four round lamps at the front, small grey train wheels, a coupling
+    box(0.1, L - 0.1, -HW + 0.1, HW - 0.1, 0.3, 1.5, "navy", bevel=0.3, segments=3)
+    for v in (-1.4, -0.6, 0.6, 1.4):
+        disc(0.06, v, 0.9, 0.24, 0.2, "lamp", axis="u")
     box(L - 0.2, L + 0.35, -0.25, 0.25, 0.45, 0.9, "navy", bevel=0.1)           # coupling
-    # lime body: low walls round the seat well, a rounded nose with studs, window frames
-    box(0.0, 2.0, -HW, HW, 1.3, 2.7, "lime", bevel=0.55, segments=4)            # nose
-    studs(0.5, -1.0, 2.7, 1, 2, "lime")
+    # lime body. The nose is round and low (two studs on it); above it the front is open
+    # between two rounded corner posts, the roof is a rounded rim round an open top, and the
+    # back has a wide notch, so the driver shows from every side (photos 11.59.26 (1), (2), 11.59.27).
+    box(0.0, 1.9, -HW, HW, 1.45, 3.4, "lime", bevel=0.85, segments=5)           # round nose
+    studs(0.4, -1.0, 3.4, 1, 2, "lime")
     for side in (-1, 1):
-        v0, v1 = (HW - 0.3, HW) if side > 0 else (-HW, -HW + 0.3)
-        box(1.8, L, v0, v1, 1.3, 2.5, "lime", bevel=0.15)                       # lower side wall
-        for (u0, u1) in ((1.8, 2.4), (4.6, 5.0), (L - 0.6, L)):                 # window pillars
-            box(u0, u1, v0, v1, 2.4, TOP, "lime", bevel=0.12)
-        box(1.8, L, v0, v1, TOP - 0.35, TOP, "lime", bevel=0.12)                # top rail
-    box(1.8, 2.3, -HW, HW, 1.3, 3.0, "lime", bevel=0.15)                        # front wall
-    box(1.85, 2.0, -HW + 0.3, HW - 0.3, 3.0, TOP - 0.35, "glass", bevel=0.04)   # windscreen
-    box(1.8, 2.3, -HW, HW, TOP - 0.35, TOP, "lime", bevel=0.12)                 # front rail
-    box(L - 0.4, L, -HW, -0.8, 1.3, 2.5, "lime", bevel=0.12)                    # back: open U
-    box(L - 0.4, L, 0.8, HW, 1.3, 2.5, "lime", bevel=0.12)
-    box(L - 0.4, L, -HW, HW, 1.3, 1.9, "lime", bevel=0.12)
-    box(2.3, L - 0.4, -HW + 0.3, HW - 0.3, FLOOR - 0.2, FLOOR, "navy", bevel=0.0)  # navy studded floor
-    studs(5.2, -1.0, FLOOR, 2, 2, "navy")
-    # front face: the railway logo (arrows and a ring), two lamps, a smile line
-    disc(-0.04, 0.0, 2.05, 0.32, 0.12, "logo", axis="u", verts=24)
-    disc(-0.07, 0.0, 2.05, 0.2, 0.12, "lime", axis="u", verts=20)
+        v0, v1 = (HW - 0.32, HW) if side > 0 else (-HW, -HW + 0.32)
+        box(1.2, L, v0, v1, 1.45, WIN, "lime", bevel=0.15)                      # lower side wall
+        for (u0, u1) in ((4.5, 4.85), (L - 1.3, L)):                            # window pillars
+            box(u0, u1, v0, v1, WIN - 0.2, RT - 0.3, "lime", bevel=0.12)
+        r0, r1 = (HW - 0.95, HW) if side > 0 else (-HW, -HW + 0.95)
+        box(0.25, L, r0, r1, RT - 0.8, RT, "lime", bevel=0.42, segments=5)      # round roof edge
+        box(0.15, 1.9, r0, r1, 2.6, RT, "lime", bevel=0.6, segments=5)          # front corner post
+    for side in (-1, 1):                                                        # back: wide notch
+        box(L - 0.45, L, side * 1.05, side * HW, 1.45, RT, "lime", bevel=0.3, segments=3)
+        studs(L - 0.73, side * 1.52 - 0.5, RT, 1, 1, "lime")
+    box(L - 0.45, L, -HW, HW, 1.45, 3.1, "lime", bevel=0.25, segments=3)
+    box(1.9, L - 0.45, -HW + 0.32, HW - 0.32, FLOOR - 0.2, FLOOR, "navy", bevel=0.0)  # navy studded floor
+    studs(5.4, -1.0, FLOOR, 2, 2, "navy")
+    # front face: the railway logo (arrows and a ring) and two smiling eye arcs
+    disc(-0.04, 0.0, 2.25, 0.32, 0.12, "logo", axis="u", verts=24)
+    disc(-0.07, 0.0, 2.25, 0.2, 0.12, "lime", axis="u", verts=20)
     for side in (-1, 1):
-        box(-0.07, 0.1, side * 0.42, side * 0.9, 1.98, 2.12, "logo", bevel=0.0)
-        disc(-0.04, side * 1.35, 1.6, 0.25, 0.12, "lamp", axis="u")
+        box(-0.07, 0.1, side * 0.42, side * 0.9, 2.18, 2.32, "logo", bevel=0.0)
+        box(0.05, 0.2, side * 1.2, side * 1.6, 1.8, 1.92, "logo", bevel=0.0)
     # side print: music notes and stars in navy
     for side in (-1, 1):
         v0 = side * (HW + 0.02)
         for k in range(5):
-            u = 2.8 + k * 1.0
-            disc(u, v0, 1.9, 0.14, 0.06, "logo", axis="v", verts=12)
-            box(u + 0.1, u + 0.16, v0 - 0.03, v0 + 0.03, 1.9, 2.3, "logo", bevel=0.0)
+            u = 2.2 + k * 1.0
+            disc(u, v0, 2.0, 0.14, 0.06, "logo", axis="v", verts=12)
+            box(u + 0.1, u + 0.16, v0 - 0.03, v0 + 0.03, 2.0, 2.4, "logo", bevel=0.0)
     for (name, u, v) in (("wheel-front-left", 1.6, 1.6), ("wheel-front-right", 1.6, -1.6),
                          ("wheel-back-left", 6.4, 1.6), ("wheel-back-right", 6.4, -1.6)):
         wheel(name, u, v, 0.55, 0.45, "grey", "grey", 0.35)
     SEAT = (4.1, FLOOR)
+
+# The length counts the vehicle itself, not a roof swung open behind it.
+pts = [o.matrix_world @ v.co for o in BODY if o not in SWUNG for v in o.data.vertices]
+length = max(p.y for p in pts) - min(p.y for p in pts)
 
 # Join the body.
 bpy.ops.object.select_all(action="DESELECT")
@@ -246,8 +281,6 @@ bpy.context.scene.cursor.location = (0, 0, 0)
 bpy.ops.object.origin_set(type="ORIGIN_CURSOR")
 
 # Scale to the length in metres (wheel origins stay at their centres).
-pts = [body.matrix_world @ v.co for v in body.data.vertices]
-length = max(p.y for p in pts) - min(p.y for p in pts)
 k = args.length / length
 for o in [body] + WHEELS:
     o.location = o.location * k

@@ -184,6 +184,9 @@ func _spawn_racers() -> void:
 	for i in ai_count:
 		var driver: DriverDef = ai_drivers[i % ai_drivers.size()] if not ai_drivers.is_empty() else null
 		var kart_def: KartDef = ai_karts[i % ai_karts.size()] if not ai_karts.is_empty() else null
+		var favourite := Game.favourite_kart(driver)
+		if favourite:
+			kart_def = favourite  # the Sanitäter drives his Krankenwagen
 		var racer := _make_racer(kart_def, driver, slot)
 		var ai := AiSource.new()
 		_wire_ai(ai, racer, 1.0 if _kid_context else skills[i % skills.size()])

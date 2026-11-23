@@ -106,7 +106,9 @@ def generate(toy_id, rig_dir, raw_glb, resolution):
 
 
 def prepare(toy_id, raw_glb, args):
-    sheet = os.path.join(ROOT, "art", "models", "%s_sheet.png" % toy_id)
+    sheet = os.path.join(ROOT, "art", "models", "%s%s_sheet.png" % (toy_id, args.tag))
+    model = os.path.abspath(args.model_out) if args.model_out else \
+        os.path.join(ROOT, "assets", "models", "toys", "%s.glb" % toy_id)
     size = ["--height", str(args.height)]
     tres = os.path.join(ROOT, "data", "drivers", "paper_%s.tres" % toy_id)
     if os.path.exists(tres):
@@ -117,9 +119,9 @@ def prepare(toy_id, raw_glb, args):
     if args.length > 0:
         size = ["--length", str(args.length)]
     cmd = [BLENDER, "-b", "--python", os.path.join(ROOT, "tools", "blender", "prepare_toy_model.py"), "--",
-           "--in", raw_glb, "--out", os.path.join(ROOT, "assets", "models", "toys", "%s.glb" % toy_id),
+           "--in", raw_glb, "--out", model,
            *size, "--matte", "--even", str(args.even), "--turn", str(args.turn),
-           "--blend", os.path.join(ROOT, "art", "models", "%s_edit.blend" % toy_id), "--sheet", sheet]
+           "--blend", os.path.join(ROOT, "art", "models", "%s%s_edit.blend" % (toy_id, args.tag)), "--sheet", sheet]
     drawing = os.path.join(args.views, "%s-front.png" % toy_id)
     if os.path.exists(drawing):
         cmd += ["--match", drawing]
@@ -163,10 +165,13 @@ def main():
     ap.add_argument("--views", default=os.path.join(ROOT, "art", "toys", "turnaround"),
                     help="folder with <id>-front|left|back|right.png (art/toys/photo_views for photo cut-outs)")
     ap.add_argument("--skip-generate", action="store_true", help="reuse art/models/<id>_pixal3d.glb")
+    ap.add_argument("--tag", default="", help="suffix for the work files (art/models/<id><tag>_*), e.g. _local")
+    ap.add_argument("--model-out", default="", help="game model path instead of assets/models/toys/<id>.glb "
+                                                     "(a trial model that must not replace the game's)")
     args = ap.parse_args()
     os.makedirs(os.path.join(ROOT, "art", "models"), exist_ok=True)
-    rig = os.path.join(ROOT, "art", "models", "%s_rig" % args.id)
-    raw = os.path.join(ROOT, "art", "models", "%s_pixal3d.glb" % args.id)
+    rig = os.path.join(ROOT, "art", "models", "%s%s_rig" % (args.id, args.tag))
+    raw = os.path.join(ROOT, "art", "models", "%s%s_pixal3d.glb" % (args.id, args.tag))
     if not args.skip_generate:
         frame_views(args.id, rig, os.path.abspath(args.views))
         generate(args.id, rig, raw, args.resolution)

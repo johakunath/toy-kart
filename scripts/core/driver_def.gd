@@ -10,6 +10,10 @@ enum AiLane { ANY, MIDDLE, INSIDE, OUTSIDE }
 @export var sort_order := 100
 ## Face picture for the selection menu (tools/make_portraits.py). Empty: no picture.
 @export var portrait: Texture2D
+## Id of the kart this toy belongs in (the Sanitäter in the Krankenwagen). Empty: none.
+## Picking the driver in the menu also picks this kart, and the computer drives it in it
+## (Game.favourite_kart). No reference to Game here: tool scripts load this class early.
+@export var favourite_kart := ""
 
 @export_group("3D model driver")
 @export var model_scene: PackedScene

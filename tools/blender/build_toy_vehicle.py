@@ -4,7 +4,8 @@
         --out assets/models/toys/jumbo.glb [--sheet <png>] [--blend <file>]
 
 Vehicles (after the 23 Nov photos, see photos/toys/INVENTORY-2026-11-23.md):
-  traktor  blue farm tractor with a dark grey front loader, black tyres with white rims.
+  traktor  blue farm tractor with a grey front loader, black tyres with big white rims, a tall
+           bonnet and a glass cab over the rear axle.
            Sized to --length metres nose (bucket) to tail, default 1.5.
   jumbo    white four-engine airliner, blue tail fin and wing tips. Sized to --width metres
            wing tip to wing tip, default 1.7 (it flies: vehicle_hover in the driver .tres).
@@ -37,7 +38,7 @@ COLOURS = {
     "glass": (40, 60, 90), "lamp": (255, 250, 215), "grey": (130, 135, 145), "red": (215, 35, 30),
     "white": (248, 248, 246), "engine": (215, 218, 224), "tail": (20, 60, 190), "window": (22, 48, 150),
     "door": (170, 192, 225),
-    "orange": (245, 140, 20),
+    "orange": (245, 140, 20), "loader": (78, 82, 92),
 }
 MATS = {}
 
@@ -188,72 +189,86 @@ def fin(outline, v0, v1, colour, bevel=0.05):
 bpy.ops.wm.read_factory_settings(use_empty=True)
 
 if args.vehicle == "traktor":
-    # Units: about a centimetre of the real toy. Loader bucket at the front (u ~ 0).
-    FU = 6.0                                                             # front axle
+    # Units: about a centimetre of the real toy, measured on the side photo 11.59.28 (10) in rear
+    # wheel radii (R = 3.3): front wheel 0.7 R, wheelbase 2.6 R, bonnet top 2.3 R (higher than the
+    # rear wheels), cab over the rear axle, roof at 3.8 R, loader arms level with the bonnet top,
+    # bucket a little off the ground ahead of the nose. Loader bucket at the front (u ~ 0).
+    RU, R = 14.5, 3.3                                                    # rear axle, rear wheel radius
+    FU, FR = 6.0, 2.3                                                    # front axle, front wheel radius
+    BON = 7.5                                                            # bonnet top
+    CAB0, CAB1 = 8.7, 14.4                                               # cab, nose side to back
+    ROOF = 12.4
     for side in (-1, 1):
-        # big rear wheels, small front wheels: black tyres, white rims, a dark hub
-        cyl(14.5, side * 3.6, 3.3, 3.3, 2.0, "black", bevel=0.5)
-        cyl(14.5, side * 4.55, 3.3, 2.0, 0.2, "rim", verts=20)
-        cyl(14.5, side * 4.65, 3.3, 0.7, 0.2, "grey", verts=12)
-        for k in range(12):                                             # tread lugs
-            a = k * 2 * math.pi / 12
-            box(14.5 + 3.3 * math.cos(a) - 0.25, 14.5 + 3.3 * math.cos(a) + 0.25, side * 2.7, side * 4.5,
-                3.3 + 3.3 * math.sin(a) - 0.25, 3.3 + 3.3 * math.sin(a) + 0.25, "black", bevel=0.08)
-        # small front wheels on the front axle, with tread lugs too
-        cyl(FU, side * 3.0, 2.2, 2.2, 1.5, "black", bevel=0.4)
-        cyl(FU, side * 3.8, 2.2, 1.35, 0.2, "rim", verts=20)
-        cyl(FU, side * 3.88, 2.2, 0.5, 0.2, "grey", verts=12)
-        for k in range(10):
-            a = k * 2 * math.pi / 10
-            box(FU + 2.2 * math.cos(a) - 0.2, FU + 2.2 * math.cos(a) + 0.2, side * 2.35, side * 3.65,
-                2.2 + 2.2 * math.sin(a) - 0.2, 2.2 + 2.2 * math.sin(a) + 0.2, "black", bevel=0.06)
-        # blue mudguards over the rear wheels
-        box(11.8, 17.2, side * 2.4, side * 4.7, 6.4, 6.9, "blue", bevel=0.2)
-        box(11.6, 12.2, side * 2.4, side * 4.7, 4.6, 6.9, "blue", bevel=0.2)
-    box(4.0, 17.0, -1.2, 1.2, 1.6, 3.4, "dark", bevel=0.2)               # chassis
-    box(FU - 0.3, FU + 0.3, -2.4, 2.4, 1.9, 2.5, "dark", bevel=0.1)       # front axle
-    box(2.6, 3.4, -1.3, 1.3, 1.3, 2.7, "dark", bevel=0.15)               # front frame / weight
-    # bonnet: long, a little lower at the nose, rounded edges
-    fin([(3.2, 2.6), (3.2, 5.2), (3.9, 5.8), (11.8, 6.2), (11.8, 2.6)], -1.65, 1.65, "blue", bevel=0.35)
-    box(3.0, 3.3, -1.25, 1.25, 2.8, 4.6, "black", bevel=0.08)            # grille
-    for z in (3.15, 3.6, 4.05):                                          # grille bars
-        box(2.95, 3.05, -1.15, 1.15, z, z + 0.18, "grey", bevel=0.0)
+        # big rear wheels, smaller front wheels: black tyres with lugs, big white dished rims
+        cyl(RU, side * 3.65, R, R, 2.3, "black", bevel=0.55)
+        cyl(RU, side * 4.72, R, 1.85, 0.22, "rim", verts=24)
+        cyl(RU, side * 4.62, R, 1.95, 0.22, "rim", verts=24, bevel=0.08)
+        cyl(RU, side * 4.8, R, 0.75, 0.25, "rim", verts=14, bevel=0.1)
+        for k in range(14):                                             # tread lugs
+            ang = k * 2 * math.pi / 14
+            box(RU + R * math.cos(ang) - 0.25, RU + R * math.cos(ang) + 0.25, side * 2.6, side * 4.7,
+                R + R * math.sin(ang) - 0.25, R + R * math.sin(ang) + 0.25, "black", bevel=0.08)
+        cyl(FU, side * 3.05, FR, FR, 1.7, "black", bevel=0.45)
+        cyl(FU, side * 3.92, FR, 1.3, 0.2, "rim", verts=20)
+        cyl(FU, side * 3.85, FR, 1.38, 0.2, "rim", verts=20, bevel=0.06)
+        cyl(FU, side * 4.0, FR, 0.5, 0.22, "rim", verts=12, bevel=0.08)
+        for k in range(12):
+            ang = k * 2 * math.pi / 12
+            box(FU + FR * math.cos(ang) - 0.2, FU + FR * math.cos(ang) + 0.2, side * 2.25, side * 3.85,
+                FR + FR * math.sin(ang) - 0.2, FR + FR * math.sin(ang) + 0.2, "black", bevel=0.06)
+        # blue mudguard: a thin arc over the top of the rear wheel
+        arc = [(RU + (R + 0.45) * math.cos(math.radians(d)), R + (R + 0.45) * math.sin(math.radians(d)))
+               for d in range(25, 171, 12)]
+        for (u0, z0), (u1, z1) in zip(arc, arc[1:]):
+            beam((u0, side * 3.6, z0), (u1, side * 3.6, z1), 2.45, 0.28, "blue")
+        # step and fuel tank between the wheels, under the cab door
+        box(9.4, 11.4, side * 1.6, side * 2.7, 2.4, 5.6, "dark", bevel=0.12)
+    box(3.4, 16.4, -1.3, 1.3, 1.6, 4.4, "dark", bevel=0.2)                # chassis
+    box(FU - 0.3, FU + 0.3, -2.3, 2.3, FR - 0.3, FR + 0.3, "dark", bevel=0.1)  # front axle
+    box(2.9, 4.0, -1.4, 1.4, 1.4, 4.6, "dark", bevel=0.15)                # front weight
+    # bonnet: tall and chunky, a little lower at the nose, blue with a dark band below
+    fin([(3.6, 4.2), (3.6, BON - 0.6), (4.4, BON - 0.3), (CAB0 + 0.4, BON), (CAB0 + 0.4, 4.2)],
+        -1.8, 1.8, "blue", bevel=0.45)
+    box(3.9, CAB0 + 0.4, -1.75, 1.75, 3.9, 4.5, "dark", bevel=0.1)
+    box(3.35, 3.65, -1.3, 1.3, 4.4, 6.5, "black", bevel=0.08)             # grille
+    for z in (4.8, 5.3, 5.8):                                            # grille bars
+        box(3.3, 3.4, -1.2, 1.2, z, z + 0.2, "grey", bevel=0.0)
     for side in (-1, 1):
-        cyl(3.15, side * 0.95, 5.0, 0.42, 0.2, "black", axis="u", verts=16)  # headlight rims
-        cyl(3.05, side * 0.95, 5.0, 0.32, 0.2, "lamp", axis="u", verts=16)   # headlights
-        box(5.0, 10.6, side * 1.64, side * 1.7, 4.0, 5.1, "dark", bevel=0.0)  # side vents
-    cyl(10.8, 1.2, 7.4, 0.25, 3.2, "black", axis="z", verts=10)          # exhaust
-    # cab: dark posts, tinted glass, blue roof
-    box(11.8, 17.0, -2.4, 2.4, 6.0, 6.6, "blue", bevel=0.15)             # cab floor
-    for u in (12.0, 16.6):
+        cyl(3.55, side * 1.2, BON - 1.0, 0.42, 0.2, "black", axis="u", verts=16)  # headlight rims
+        cyl(3.45, side * 1.2, BON - 1.0, 0.32, 0.2, "lamp", axis="u", verts=16)   # headlights
+        box(5.0, 8.4, side * 1.79, side * 1.84, 5.0, 6.6, "dark", bevel=0.0)      # side vents
+    cyl(CAB0 + 0.2, 1.35, BON + 2.6, 0.25, 5.4, "black", axis="z", verts=10)     # exhaust, up past the roof
+    # cab over the rear axle: black posts, glass all round, blue roof with lamps
+    box(CAB0, CAB1, -2.5, 2.5, BON - 0.6, BON + 0.1, "blue", bevel=0.15)          # cab floor
+    for u in (CAB0 + 0.25, CAB1 - 0.25):
         for side in (-1, 1):
-            box(u - 0.25, u + 0.25, side * 2.1, side * 2.4, 6.5, 10.4, "black", bevel=0.05)
-    box(12.0, 16.6, -2.15, 2.15, 6.6, 10.2, "glass", bevel=0.05)
-    box(13.4, 15.4, -0.9, 0.9, 6.6, 8.8, "dark", bevel=0.3)              # seat seen through glass
-    box(11.5, 17.2, -2.6, 2.6, 10.2, 11.0, "blue", bevel=0.3, segments=3)  # roof
-    box(11.6, 12.0, -1.6, 1.6, 9.7, 10.1, "lamp", bevel=0.05)            # roof lamps
-    box(16.6, 17.6, -0.6, 0.6, 1.8, 3.0, "dark", bevel=0.1)              # hitch
-    # front loader after the photos: a tower on each side behind the front wheels, arms up over
-    # the front wheels and forward past the nose, then down to a wide bucket lowered to the ground
-    # (so the bonnet, grille and lights stay visible from the front)
+            box(u - 0.25, u + 0.25, side * 2.15, side * 2.45, BON, ROOF - 0.6, "black", bevel=0.05)
+    box(CAB0 + 0.2, CAB1 - 0.2, -2.2, 2.2, BON + 0.1, ROOF - 0.7, "glass", bevel=0.05)
+    box(11.2, 13.2, -0.9, 0.9, BON + 0.1, BON + 2.4, "dark", bevel=0.3)   # seat seen through glass
+    box(CAB0 - 0.35, CAB1 + 0.35, -2.75, 2.75, ROOF - 0.75, ROOF, "blue", bevel=0.3, segments=3)  # roof
+    for side in (-1, 1):
+        box(CAB0 - 0.4, CAB0 - 0.1, side * 1.3, side * 2.2, ROOF - 0.65, ROOF - 0.3, "lamp", bevel=0.05)
+    box(16.4, 17.6, -0.6, 0.6, 1.8, 3.0, "dark", bevel=0.1)              # hitch
+    # front loader (grey): a tower on each side of the bonnet over the front wheel, arms level
+    # forward past the nose, then bent down to a wide bucket just off the ground
     for side in (-1, 1):
         v = side * 2.15
-        box(8.3, 9.7, side * 1.6, side * 2.5, 2.6, 6.4, "dark", bevel=0.15)       # tower
-        beam((9.0, v, 6.0), (2.4, v, 7.0), 0.55, 0.8, "dark")
-        beam((2.4, v, 7.0), (-0.3, v, 2.2), 0.55, 0.8, "dark")
-        rod((8.8, v, 3.4), (4.2, v, 6.7), 0.22, "grey")                  # lift ram
-        rod((2.6, side * 2.5, 6.6), (0.0, side * 2.5, 2.9), 0.16, "grey")  # bucket ram
-        box(-0.3, 0.3, side * 1.85, side * 2.45, 1.0, 2.9, "dark", bevel=0.08)  # bucket bracket
-    beam((0.15, -2.15, 2.6), (0.15, 2.15, 2.6), 0.5, 0.5, "dark")        # cross tube
-    box(-2.9, 0.0, -3.6, 3.6, 0.2, 0.5, "dark", bevel=0.08)              # bucket floor
-    box(-0.4, 0.0, -3.6, 3.6, 0.2, 2.8, "dark", bevel=0.08)              # bucket back
-    box(-3.0, -2.6, -3.55, 3.55, 0.2, 0.42, "grey", bevel=0.04)          # cutting edge
+        box(6.2, 7.6, side * 1.8, side * 2.5, 4.4, BON + 0.6, "loader", bevel=0.15)   # tower
+        beam((7.2, v, BON + 0.4), (1.2, v, BON + 0.8), 0.55, 0.85, "loader")
+        beam((1.2, v, BON + 0.8), (-1.0, v, 3.0), 0.55, 0.85, "loader")
+        rod((6.8, v, 5.0), (3.0, v, BON + 0.6), 0.22, "grey")                # lift ram
+        rod((1.6, side * 2.5, BON + 0.4), (-0.6, side * 2.5, 3.6), 0.16, "grey")  # bucket ram
+        box(-1.4, -0.7, side * 1.85, side * 2.45, 1.6, 3.6, "loader", bevel=0.08)  # bucket bracket
+    beam((-0.9, -2.15, 3.2), (-0.9, 2.15, 3.2), 0.5, 0.5, "loader")       # cross tube
+    box(-3.6, -1.0, -3.6, 3.6, 0.6, 0.9, "loader", bevel=0.08)            # bucket floor
+    box(-1.4, -1.0, -3.6, 3.6, 0.6, 4.0, "loader", bevel=0.08)            # bucket back
+    box(-3.7, -3.3, -3.55, 3.55, 0.6, 0.8, "grey", bevel=0.04)            # cutting edge
     for side in (-1, 1):
-        fin([(-2.9, 0.2), (0.0, 0.2), (0.0, 2.8), (-0.6, 2.8), (-2.9, 0.75)],
-            side * 3.35, side * 3.6, "dark")                             # bucket sides
+        fin([(-3.6, 0.6), (-1.0, 0.6), (-1.0, 4.0), (-1.6, 4.0), (-3.6, 1.2)],
+            side * 3.35, side * 3.6, "loader")                            # bucket sides
     for k in range(5):                                                   # ribs on the back
         v = -2.8 + k * 1.4
-        box(0.0, 0.25, v - 0.15, v + 0.15, 0.4, 2.6, "grey", bevel=0.04)
+        box(-1.0, -0.75, v - 0.15, v + 0.15, 0.8, 3.8, "grey", bevel=0.04)
 else:
     # Units: about a centimetre of the real toy. Nose at u = 0.
     L = 22.0

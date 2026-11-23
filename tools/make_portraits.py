@@ -52,6 +52,11 @@ MODEL_REFS = {
     "paper_duploflieger": "assets/models/toys/duploflieger.glb",
     "paper_jumbo": "assets/models/toys/jumbo.glb",
 }
+# Camera for a model reference (render_model_ref.py --turn, --tilt) where the default three-quarter
+# view hides a key part: the Duplo plane's brick wings only read as wings seen from higher up.
+MODEL_VIEWS = {
+    "paper_duploflieger": ("-30", "35"),
+}
 # What the toy is, where FLUX guesses wrong from the picture alone.
 HINTS = {
     "paper_junge": "a chunky plastic toy figure of a little girl",
@@ -60,8 +65,9 @@ HINTS = {
     "paper_traktor": "a blue toy farm tractor with a black front loader",
     "paper_jumbo": "a white toy jumbo jet airliner with four engines, a blue tail, a row of small dark "
                    "blue passenger windows and a dark blue cockpit window",
-    "paper_duploflieger": "a toy airplane built from colourful Duplo bricks, with long brick wings, an "
-                          "orange tail fin and small wheels",
+    "paper_duploflieger": "a toy airplane built from colourful Duplo bricks, with two long flat brick "
+                          "wings spreading wide to the left and to the right, an orange tail fin and "
+                          "small wheels; both wings fully visible",
 }
 # Strong toy-brick colours, one per driver, so neighbours in the menu look different.
 BACKGROUNDS = ["bright red", "bright blue", "sunny yellow", "bright green", "orange", "purple",
@@ -112,7 +118,9 @@ def generate(ids, count, refs_dir):
         if i in MODEL_REFS:
             subprocess.run([BLENDER, "-b", "--python", os.path.join(ROOT, "tools", "blender", "render_model_ref.py"),
                             "--", "--in", os.path.join(ROOT, MODEL_REFS[i]),
-                            "--out", os.path.join(work, i + "_model.png")], check=True, stdout=subprocess.DEVNULL)
+                            "--out", os.path.join(work, i + "_model.png")]
+                           + (["--turn", MODEL_VIEWS[i][0], "--tilt", MODEL_VIEWS[i][1]] if i in MODEL_VIEWS else []),
+                           check=True, stdout=subprocess.DEVNULL)
     all_ids = [i for i, _ in drivers()]
     vehicle = dict(drivers())
     started = time.time()
