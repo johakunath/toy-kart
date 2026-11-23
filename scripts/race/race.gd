@@ -186,6 +186,7 @@ func _spawn_racers() -> void:
 		racer.kart.engine_db_offset = -9.0
 		racer.kart.use_doppler()
 		slot += 1
+	_wire_personalities()
 
 func _make_racer(kart_def: KartDef, driver: DriverDef, slot: int) -> Racer:
 	var racer := Racer.new()
@@ -357,6 +358,23 @@ func _wire_ai(ai: AiSource, racer: Racer, skill: float) -> void:
 	ai.track = track
 	ai.skill = skill
 	ai.lane = randf_range(-1.5, 1.5)
+
+## AI karts drive with their toy's personality (DriverDef "AI personality"). They watch the
+## kids (friendly honks, giving way, cheers) and the others (show-offs after an overtake).
+func _wire_personalities() -> void:
+	for racer in racers:
+		var ai := racer.source as AiSource
+		if racer.is_human or ai == null:
+			continue
+		var kids: Array[TrackProgress] = []
+		var rivals: Array[TrackProgress] = []
+		for other in racers:
+			if other != racer:
+				if other.is_human and other.assist.kid:
+					kids.append(other.progress)
+				else:
+					rivals.append(other.progress)
+		ai.set_personality(racer.driver, kids, rivals, racer.laps)
 
 ## AI karts get 3D characters the humans did not pick; the toys stay with the players.
 func _ai_driver_pool(configs: Array[PlayerConfig]) -> Array[DriverDef]:
@@ -734,6 +752,8 @@ func _smoke_tick(delta: float) -> void:
 			racer.finish_time, racer.progress.distance(), racer.kart.wall_hits,
 			100.0 * racer.kart.boost_time / maxf(racer.finish_time if racer.finished else _smoke_time, 0.1),
 			racer.kart.tricks, racer.kart.bricks_picked, racer.kart.wobbles, racer.side_lanes])
+		if not racer.is_human and racer.source is AiSource:
+			print("SMOKE     mood: %s" % (racer.source as AiSource).mood_report())
 		if racer.is_human:
 			if Game.mode == Game.Mode.FREE_DRIVE:
 				ok = ok and racer.progress.distance() > 60.0

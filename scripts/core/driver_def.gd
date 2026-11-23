@@ -2,6 +2,7 @@ class_name DriverDef extends Resource
 ## One selectable driver. Add a driver by adding one .tres file in data/drivers/.
 
 enum Type { MODEL, PAPER }
+enum AiLane { ANY, MIDDLE, INSIDE, OUTSIDE }
 
 @export var id := ""
 @export var display_name := ""
@@ -29,3 +30,23 @@ enum Type { MODEL, PAPER }
 @export var vehicle_width := 1.0
 ## Height above the road in metres, for toys that fly.
 @export var vehicle_hover := 0.0
+
+@export_group("AI personality")
+## How this toy drives when the computer drives it (AiSource). Style only: the race's pacing
+## still decides how fast it goes, and none of this touches human karts or the kid assist.
+## Preferred lane: ANY wanders, MIDDLE stays near the racing line, INSIDE / OUTSIDE lean
+## toward that side of the coming bend.
+@export var ai_lane := AiLane.ANY
+## 0..1: how often it makes a harmless little weave on a straight (up to 4 per minute).
+@export_range(0.0, 1.0, 0.05) var ai_wobble := 0.2
+## 0..1: how often it honks just for fun (up to 4 per minute).
+@export_range(0.0, 1.0, 0.05) var ai_horn := 0.3
+## Honks like a siren: a quick high-low "tatü-tata" instead of a single honk.
+@export var ai_siren := false
+## 0..1: how often it shows off with a hop and a spin on straights and after overtaking.
+@export_range(0.0, 1.0, 0.05) var ai_show_off := 0.2
+## 0..1: chance of a happy honk and a little jump when a kid passes it, and of a cheer when
+## it crosses the line behind a kid.
+@export_range(0.0, 1.0, 0.05) var ai_friendly := 0.7
+## 0..1: chance it takes a side lane (Track.forks) on a lap.
+@export_range(0.0, 1.0, 0.05) var ai_brave := 0.4
