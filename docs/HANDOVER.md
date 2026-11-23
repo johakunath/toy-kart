@@ -12,6 +12,13 @@ The couch test below is the gate for milestone 1.
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
 
+## Since the seventeenth round
+
+- **Triple turbo on the HUD:** three small turbos next to the item slot go out one by one.
+- **Riesenrunde has a side lane** too: on the inside of the long left bend after the jump, round
+  brick towers, with a turbo arrow. Computer drivers now brake for the lane's own tighter curve.
+  Grass and flowers keep off side lanes.
+
 ## New in the seventeenth round (first playtest with him, 23 Nov)
 
 He had fun. Everything from the playtest list in BACKLOG.md is done except the police car and
@@ -35,7 +42,7 @@ Koba redraws, which wait for Codex (`docs/CODEX_REDO_POLIZEI_KOBA.md`, you paste
 - **Six new toys (3D, built in Blender):** Duplo-Junge and Bauarbeiterin (drivers), Krankenwagen
   and Zug (karts they sit in), Traktor (its own vehicle), Jumbo (flies like the Flieger).
   Pixal3D from the photos failed for tractor and airliner; Codex views are optional.
-- Still open: HUD count for the triple turbo; 3D models of the station and shop.
+- Still open: 3D models of the station and shop (the triple turbo count is done).
 
 ## New in the sixteenth round (phase F: more to play)
 
