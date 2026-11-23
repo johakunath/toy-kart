@@ -29,6 +29,7 @@ const TRACKS := [
 		"pads": [[12.0, [-1.4, 1.4]], [106.0, [0.0]], [200.0, [1.2]]],
 		"hills": [[112.0, 182.0, 2.2]],
 		"jump": 24.0,
+		"grass": true, "water": [[Vector2(13, -16), 7.0]],  # tools/track_nature.gd
 	},
 	{
 		# The long one: a big loop with an S, a wide hairpin and a long home straight. Two laps.
@@ -49,6 +50,7 @@ const TRACKS := [
 			[505.0, [-1.4, 1.4]]],
 		"hills": [[150.0, 230.0, 2.6], [330.0, 400.0, 1.8]],
 		"jump": 46.0,
+		"grass": true, "water": [[Vector2(-3, -93), 13.0]],  # tools/track_nature.gd
 	},
 	{
 		# Indoors: a toy road through the living room, his toys as giants. Three zones (wooden
@@ -230,6 +232,7 @@ func _build(cfg: Dictionary) -> Error:
 		_add_world_marks(root, cfg, length)
 	else:
 		_add_grass(root, center, size)
+		TrackNature.add(root, self, cfg)
 		_add_trees(root, lo, hi)
 	_add_gate(root)
 

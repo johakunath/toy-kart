@@ -22,7 +22,7 @@ ready (PLAN.md, milestone 5). Pick by what you want to play.
 | Look | More weather: rain with a wet road, snow, night with headlights | Later |
 | Look | A weather or time-of-day choice per track instead of one fixed mood | Later |
 | Tracks | Hills and banked curves on the generated track (needs a sloped floor collider) | Later |
-| Tracks | Scenery on Kurvenkurs: stands, tents, signs, a pond | Milestone 2 |
+| Tracks | Scenery on Kurvenkurs: stands, tents, signs | Milestone 2 |
 | Tech | Driving on the Kenney ramp and bump tiles (the kit's tile library has no collision for them) | With new tracks |
 
 ## From PLAN.md
