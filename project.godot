@@ -18,9 +18,11 @@ config/name="Toy Racer"
 config/description="Kart racing for a parent and a 4-year-old. Built on Kenney Starter Kit Racing."
 run/main_scene="res://scenes/menu.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
-boot_splash/bg_color=Color(0.921875, 0.921875, 0.957031, 1)
-boot_splash/image="res://assets/kenney_racing/splash-screen.png"
-config/icon="res://assets/kenney_racing/icon.png"
+boot_splash/bg_color=Color(0.07, 0.43, 0.92, 1)
+boot_splash/stretch_mode=4
+boot_splash/image="res://assets/ui/splash.png"
+config/icon="res://assets/ui/icon.png"
+config/windows_native_icon="res://assets/ui/icon.ico"
 
 [autoload]
 
