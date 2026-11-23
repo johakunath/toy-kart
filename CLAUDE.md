@@ -20,7 +20,7 @@ checks yourself. Give him steps only in the Godot editor or on websites.
 | `scripts/input/` | `Intent`, `InputSource` (keyboard, pad, AI, test), `Assist` (kid/full), `LineFollow` |
 | `scripts/kart/` | `Kart` (rolling-ball arcade physics, items, tricks), `KartVisual`, `DriverRig` (3D model or paper card), `Items` (item set and odds), `ToyLook` (rim light, clear coat) |
 | `scripts/track/` | `Track` (racing line lookups), `TrackProgress` (laps), `BoostStar`, `BoostPad` (turbo arrows), `Brick` (toy bricks, placed by the race), `Atmosphere` (light, sky, weather), `Scatter` (trees), `GrassField`, `Pond`, `ToyMotion` (background life), `ToyTrain`, `Tunnel` |
-| `scripts/race/` | `race.gd` (builds the race at runtime), `Racer`, `ChaseCamera` |
+| `scripts/race/` | `race.gd` (builds the race at runtime), `Racer`, `ChaseCamera`, `CoopHelp` + `MagicRope` (rope and gifts from dad) |
 | `scripts/ui/` | `menu.gd`, `PlayerSlot`, `PlayerHud`, `FinishScreen`, `PauseMenu`, `KartPreview`, `UiKit` |
 | `scenes/` | `menu.tscn` (main), `race.tscn`, `kart.tscn`, `boost_star.tscn`, `tracks/kurvenkurs.tscn`, `tracks/waldkurs.tscn`, `tracks/riesenrunde.tscn`, `tracks/wohnzimmer.tscn` |
 | `data/drivers/`, `data/karts/`, `data/tracks/` | one `.tres` per driver / kart / track; the game lists these folders at start |
@@ -45,7 +45,7 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1       # builds\ToyKart
 ```
 - Headless race by hand: `godot --headless --path . --fixed-fps 60 res://scenes/race.tscn -- --smoke`
   Options after `--smoke`: `--players=1|2 --control=kid|full|mixed --input=none|left|right|random|gas|skilled
-  --mode=race|free|trial --speed=0|1|2 --ai=0..3 --track=kurvenkurs|waldkurs|riesenrunde --seconds=N --trace=T --driver=N`.
+  --mode=race|free|trial --speed=0|1|2 --ai=0..3 --track=kurvenkurs|waldkurs|riesenrunde --seconds=N --trace=T --driver=N --coop=1` (dad tows and gifts).
   Prints `SMOKE RESULT: PASS|FAIL`.
 - Look at the game: same command without `--headless`, plus `--windowed --shot=<png> --shot_at=<s|finish>`
   (race) or `res://scenes/menu.tscn -- --windowed --shot=<png> --page=mode|options|players` (menu).

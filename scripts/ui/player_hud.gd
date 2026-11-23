@@ -30,6 +30,8 @@ var _keys_left := 9.0  ## the key help shows during the countdown and a few seco
 var _all: Array[Racer] = []
 var _faces := {}           ## Racer -> Control in the face column
 var _lap_dots: Array[Panel] = []
+var _gift_hint: PanelContainer   ## "give your item to the kid" hint (CoopHelp shows it)
+var _gift_pulse := 0.0
 
 func setup(p_racer: Racer, mode: int, total_racers: int, all_racers: Array[Racer] = []) -> void:
 	racer = p_racer
@@ -196,6 +198,34 @@ func refresh(race_time: float, delta: float) -> void:
 		_message_left -= delta
 		if _message_left <= 0.0:
 			_message.visible = false
+
+## Co-op: a present and the gift button above the item slot, pointing toward the kid's half,
+## while this player could give his item to the kid. Built the first time it is needed.
+func show_gift_hint(on: bool, source: InputSource, delta: float) -> void:
+	if _gift_hint == null:
+		if not on:
+			return
+		_gift_hint = PanelContainer.new()
+		_gift_hint.add_theme_stylebox_override("panel", UiKit.box(Color(1, 1, 1, 0.9), 40, UiKit.INK, 5))
+		_gift_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 4)
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(UiKit.icon_rect("arrow_left", 44, Color("e8483f")))
+		row.add_child(UiKit.icon_rect("gift", 80, Color.WHITE))
+		if source and source.gift_icon != "":
+			row.add_child(UiKit.icon_rect(source.gift_icon, 64, Color.WHITE))
+		elif source and source.gift_key != "":
+			row.add_child(UiKit.label(source.gift_key, 52, UiKit.INK))
+		_gift_hint.add_child(row)
+		UiKit.pin(_gift_hint, Control.PRESET_CENTER_BOTTOM, Vector2(-110, -320), Vector2(220, 110))
+		_gift_hint.pivot_offset = Vector2(110, 55)
+		_gift_hint.modulate.a = 0.0
+		add_child(_gift_hint)
+	_gift_hint.modulate.a = move_toward(_gift_hint.modulate.a, 1.0 if on else 0.0, delta * 5.0)
+	_gift_hint.visible = _gift_hint.modulate.a > 0.01
+	_gift_pulse += delta * 6.0
+	_gift_hint.scale = Vector2.ONE * (1.0 + 0.05 * sin(_gift_pulse))
 
 func _make_face(other: Racer, own: bool) -> Control:
 	var size := OWN_FACE_SIZE if own else FACE_SIZE

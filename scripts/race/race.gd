@@ -57,6 +57,7 @@ func _ready() -> void:
 	_spawn_racers()
 	_place_bricks()
 	_build_views()
+	add_child(CoopHelp.new(track, humans, huds))  # magic rope and gifts between humans
 	_build_overlay()
 	if humans.size() > 1:
 		_split_screen_shadows()
@@ -720,6 +721,9 @@ func _smoke_tick(delta: float) -> void:
 	if Game.speed_class == Game.SpeedClass.KID and _resets > 0:
 		print("SMOKE   a kart needed a reset at Kid speed")
 		ok = false
+	var coop := get_node_or_null("CoopHelp") as CoopHelp
+	if coop:
+		ok = coop.smoke_report() and ok
 	if not _perf_frames.is_empty():
 		# Frame rate report for "-- --smoke --perf" (run with a window and --disable-vsync).
 		_perf_frames.sort()

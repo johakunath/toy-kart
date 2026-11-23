@@ -24,6 +24,11 @@ func _process(_delta: float) -> bool:
 	if _frame == 1:
 		_game = get_root().get_node("Game")
 		_game.save_enabled = false
+		# Start from a fresh install: the family's saved picks (a keyboard remembered in
+		# Profi mode, 0 AI karts) must not change what this check expects.
+		_game.set("_settings", ConfigFile.new())
+		_game.set("ai_count", 3)
+		_game.set("speed_class", 0)
 		_game.players.clear()
 		change_scene_to_file("res://scenes/menu.tscn")
 		return false
