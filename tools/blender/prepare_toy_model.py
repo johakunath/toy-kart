@@ -34,6 +34,7 @@ ap.add_argument("--length", type=float, default=0.0, help="size by length, nose 
 ap.add_argument("--tris", type=int, default=12000)
 ap.add_argument("--tex", type=int, default=1024)
 ap.add_argument("--turn", type=float, default=0.0)
+ap.add_argument("--seat-back", type=float, default=0.0, help="origin this share of the depth in front of the back (seated figures)")
 ap.add_argument("--mirror", action="store_true", help="flip left and right (Pixal3D gave a mirror image)")
 ap.add_argument("--sheet", default="")
 ap.add_argument("--matte", action="store_true", help="plush look: no shadow map, not metallic, soft")
@@ -128,7 +129,10 @@ factor = (args.length / max(size.y, 1e-6) if args.length > 0 else
 obj.scale = (factor, factor, factor)
 bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 lo, hi = world_bounds(obj)
-obj.location -= Vector(((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, lo.z))
+# A seated figure's seat point is under its bottom, not in the middle of its forward legs:
+# --seat-back F puts the origin F of the depth in front of the back (Duplo figures: about 0.3).
+mid_y = hi.y - args.seat_back * (hi.y - lo.y) if args.seat_back > 0 else (lo.y + hi.y) / 2
+obj.location -= Vector(((lo.x + hi.x) / 2, mid_y, lo.z))
 bpy.ops.object.transform_apply(location=True, rotation=False, scale=False)
 bpy.ops.object.shade_smooth_by_angle() if hasattr(bpy.ops.object, "shade_smooth_by_angle") else None
 

@@ -10,7 +10,7 @@
 script = ExtResource("1")
 model_scene = ExtResource("4")
 animation = ""
-model_scale = 1.0
+model_scale = 1.15
 id = "paper_traktor"
 display_name = "Traktor"
 type = 0

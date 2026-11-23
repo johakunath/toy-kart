@@ -6,6 +6,9 @@ All 8 toys are 3D now; the paper cards stay in the `.tres` files. Blocky Duplo t
 The 23 Nov toys are all 3D, built in Blender: Duplo-Junge and Bauarbeiterin (drivers,
 `build_duplo_figure.py`), Krankenwagen and Zug (karts, `build_duplo_vehicle.py`), Traktor and
 Jumbo (toy vehicles, `build_toy_vehicle.py`). Close-ups in the game: `docs/img/new-toys-2026-11-23.png`.
+24 Nov: Sanitäter, Polizei and Koba come from Codex views + Pixal3D, the Traktor from local
+FLUX views of the photos + Pixal3D; Krankenwagen (with an animated roof), Zug, Duplo-Mädchen and
+Bauarbeiterin stay Blender builds. Which and why: "Local views from real photos" below.
 
 Everything runs on this PC; nothing is uploaded and no account is needed. Johannes does nothing
 in a terminal: Claude runs every step.
@@ -191,6 +194,58 @@ wheelbase 2.6 R, a tall bonnet whose top (2.3 R) is above the rear wheels, the g
 the rear axle (not behind it), roof at 3.8 R, big white dished rims, thin blue mudguard arcs,
 grey (not black) loader with the arms level with the bonnet top, exhaust up past the roof. Clean and recognisable in the race; an
 optional Codex prompt for a more detailed look is at the end of `docs/CODEX_REDO_POLIZEI_KOBA.md`.
+
+## Local views from real photos: FLUX.2 klein + Pixal3D (24 Nov)
+
+The owner asked whether the PC can make the four views itself, without Codex.
+`tools/make_local_views.py --id <id>` cuts each of four photos out (rembg), puts it on white and
+asks FLUX.2 klein for "a clean studio product render of the exact toy in image 1 ... seen
+exactly from its left side ... orthographic, plain black background, keep the toy identical",
+3 seeds per view, and saves a contact sheet (`art/toys/local_views/variants/`, not in git).
+`--pick front=2,left=1,back=photo,right=1` cuts the chosen ones out and brings all four to one
+common height (`art/toys/local_views/<id>-*.png`); `photo` takes the photo cut-out itself,
+`flip-right-2` mirrors the other side's pick (symmetric toys). Then
+`make_3d_toy.py --id <id> --views art/toys/local_views --tag _local --model-out art/models/<id>_local.glb`
+(trial models never replace the game's). About 2 minutes of FLUX and 8 to 9 minutes of
+Pixal3D per toy.
+
+What came out (sheets in `docs/img/toy-models-2026-11-24b.png`):
+
+| Toy | FLUX views | Pixal3D model |
+| --- | --- | --- |
+| Traktor | all four clean and faithful (the photos already show each side) | very close to the real toy: wheels, cab, loader, bucket. Blue came out light cyan and the loader light grey: fixed with `recolor_model.py` |
+| Zug | front and sides very good; the back got an invented window | round roof, windows and front right; pale lime (recoloured), prints smeared |
+| Krankenwagen | front and right good; left and back invented a closed van (used the mirrored right view and the back photo) | lumpy: the photos show the roof at different angles, so the views do not fit together |
+| Sanitäter | good, but arms hang down (photo pose) | right shape and short legs; face and prints smeared, print copied onto the back |
+
+Codex views arrived later for polizei, loewe, krankenwagen, zug, traktor and duplojunge (Codex is
+done now; junge and bauarbeiterin stay local). All were run through Pixal3D too
+(`--tag _codex --model-out art/models/<id>_codex.glb`). **Kept in the game** (green frames in
+`docs/img/toy-models-2026-11-24b.png`):
+
+| Toy | Kept | Why |
+| --- | --- | --- |
+| Traktor | local FLUX views + Pixal3D, recoloured (`--hue 170-215:224 --sat 1.35 --val 0.8 --grey 0.55`), `model_scale 1.15` | closest to the real toy; the Codex-view model was as good in shape but cyan with a messy bucket |
+| Krankenwagen | Blender | the only one with a separate roof that can open and close, and spinning wheels; both Pixal3D versions are lumpy and have the roof fixed open |
+| Zug | Blender | both Pixal3D trains look more like the toy but hide the driver from the chase camera (round roof, tall back): only the top of the head showed |
+| Sanitäter | Codex views + Pixal3D, `--seat-back 0.3` | clean face and print, short legs; the local-view model had a smeared face |
+| Polizei | Codex views + Pixal3D, `--length 1.5`, POLIZEI added with `add_lettering.py` | Pixal3D wrote the lettering scrambled and mirrored on one side |
+| Koba | Codex views + Pixal3D, warmer colour (`recolor_model.py --hue 20-80:-14 --sat 1.35`) | friendlier, rounder face |
+| Mädchen, Bauarbeiterin | Blender (shorter legs) | no Codex views; the local-view figure test (Sanitäter) smeared the face |
+
+A Pixal3D run at the default upsample resolution hung for 15 minutes in the texture bake when
+the GPU memory was full (Codex tractor: 11.7 of 12 GB); `--resolution 1024` finished it.
+
+So: local FLUX + Pixal3D is good enough for hard toys whose photos show each side cleanly
+(tractor, train), not for toys with a moving part photographed in different poses (ambulance
+roof) or with a printed face (figures). Codex views, where they exist, are cleaner still.
+
+Helpers: `tools/blender/recolor_model.py` (hue range to a hue or a shift, saturation, mid greys;
+fixes Pixal3D colour drift), `tools/blender/assemble_kart.py` (a one-piece model becomes a kart:
+`body` plus four wheel nodes, seat floor found by a ray cast), `tools/blender/add_lettering.py`
+(clean raised lettering on both sides: Pixal3D scrambled POLIZEI), `prepare_toy_model.py --mirror`
+(a mirror-image model), `tools/blender/render_model_sheet.py` (four views in one row, same
+scale, `--roof 100` opens a flip-up roof).
 
 ## Roadside buildings: police station and Duplo shop
 
