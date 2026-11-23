@@ -20,6 +20,12 @@ The couch test below is the gate for milestone 1.
   brick towers, with a turbo arrow. Computer drivers now brake for the lane's own tighter curve.
   Grass and flowers keep off side lanes.
 - **Physics runs at 120 steps a second** (was 60): less delay between pad and kart.
+- **Police station and Duplo shop are 3D** (built in Blender from simple shapes after the photos,
+  `tools/blender/build_duplo_buildings.py`, `docs/MODELS_3D.md`). The "tower" card was the
+  station seen end-on, so it is gone: the 3D station has that side. Trees in front of a building
+  are cleared. No measurable frame-rate cost.
+
+![Police station and Duplo shop in 3D](img/roadside-3d-2026-11-23.png)
 
 ## New in the seventeenth round (first playtest with him, 23 Nov)
 
@@ -44,7 +50,6 @@ Koba redraws, which wait for Codex (`docs/CODEX_REDO_POLIZEI_KOBA.md`, you paste
 - **Six new toys (3D, built in Blender):** Duplo-Junge and Bauarbeiterin (drivers), Krankenwagen
   and Zug (karts they sit in), Traktor (its own vehicle), Jumbo (flies like the Flieger).
   Pixal3D from the photos failed for tractor and airliner; Codex views are optional.
-- Still open: 3D models of the station and shop (the triple turbo count is done).
 
 ## New in the sixteenth round (phase F: more to play)
 

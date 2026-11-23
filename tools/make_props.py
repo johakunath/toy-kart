@@ -3,7 +3,9 @@
 Same cut-out as the paper drivers (tools/make_paper_drivers.py: rembg, trim, white sticker
 outline), but bigger, and written to
   assets/props/<id>_front.png, assets/props/<id>_back.png
-scripts/track/roadside.gd stands them beside the tracks as two-sided cards.
+scripts/track/roadside.gd stands them beside the tracks as two-sided cards, but only when there
+is no 3D model (tools/blender/build_duplo_buildings.py); the tower card is no longer used (it was
+the station seen end-on).
 
 Run: tools\\.venv\\Scripts\\python.exe tools\\make_props.py [--only=id,id]
 """

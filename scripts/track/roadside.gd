@@ -1,7 +1,8 @@
 class_name Roadside extends Node3D
 ## Life beside the start/finish line, built by the race at runtime:
-## - toy buildings (photo cards of the police station, its tower and the Duplo shop,
-##   made by tools/make_props.py) standing well off the road, facing the karts coming up;
+## - toy buildings (3D models of the police station and the Duplo shop, built by
+##   tools/blender/build_duplo_buildings.py; the photo cards from tools/make_props.py only if a
+##   model is missing) standing well off the road, facing the karts coming up;
 ## - every driver that is not in this race, standing at the roadside to watch. They sway,
 ##   hop when a human kart drives past and cheer when a human finishes.
 ## Nothing here has a collider: no kart can ever touch or get stuck on it.
@@ -17,13 +18,14 @@ const GATE_CLEAR := 1.8          ## metres around the start line kept free (gate
 const HOP_RANGE := 6.0           ## metres: a human kart this close makes a fan hop
 const HOP_COOLDOWN := 1.6
 const CHEER_SECONDS := 4.0
-## Each prop: photo id, card height in metres, metres after the start line (negative: before),
-## side (+1 right of travel, -1 left; 0 = whichever side has room), metres from the line,
-## and how far (radians) the card turns toward the karts coming up.
+## Each prop: id (model `assets/models/props/<id>.glb`, else the photo card
+## `assets/props/<id>_front.png`), height in metres, metres after the start line (negative:
+## before), side (+1 right of travel, -1 left; 0 = whichever side has room), metres from the
+## line, and how far (radians) it turns toward the karts coming up.
+## (The old "polizeiwache_turm" card was the station seen end-on: the 3D station has that side.)
 const PROPS: Array[Dictionary] = [
-	{"id": "polizeiwache", "height": 6.0, "s": 22.0, "side": 1.0, "lateral": 13.0, "turn": 0.5},
-	{"id": "polizeiwache_turm", "height": 7.5, "s": 13.0, "side": 1.0, "lateral": 12.0, "turn": 0.4},
-	{"id": "duplo_laden", "height": 5.5, "s": 31.0, "side": 1.0, "lateral": 11.0, "turn": 0.6},
+	{"id": "polizeiwache", "height": 7.0, "s": 18.0, "side": 1.0, "lateral": 12.5, "turn": 0.85},
+	{"id": "duplo_laden", "height": 6.5, "s": 31.0, "side": 1.0, "lateral": 11.0, "turn": 0.6},
 ]
 ## Per-track changes, by track id: {prop id: {key: value}}, "fans_s" (metres after the line
 ## where the fan rows start) or "prop_scale".
@@ -74,12 +76,17 @@ func _ready() -> void:
 # --- Props ---------------------------------------------------------------------------------
 
 func _add_prop(cfg: Dictionary) -> void:
-	var front := load("res://assets/props/%s_front.png" % cfg["id"]) as Texture2D
-	var back := load("res://assets/props/%s_back.png" % cfg["id"]) as Texture2D
-	if front == null:
-		return
 	var height: float = cfg["height"]
-	var half := height * float(front.get_width()) / maxf(1.0, float(front.get_height())) * 0.5
+	var building := _model(String(cfg["id"]), height)
+	var half := 0.0
+	if building:
+		var box := _local_box(building)
+		half = maxf(box.size.x, box.size.z) * 0.5
+	else:
+		building = _card_for(String(cfg["id"]), height)
+		if building == null:
+			return
+		half = float(building.get_meta("half_width"))
 	var sides: Array[float] = [1.0, -1.0]
 	if float(cfg["side"]) != 0.0:
 		sides = [float(cfg["side"]), -float(cfg["side"])]  # the other side if there is no room
@@ -89,13 +96,65 @@ func _add_prop(cfg: Dictionary) -> void:
 			var spot := _spot(s, side * (float(cfg["lateral"]) + shift.y))
 			if not _is_free(spot, half + 1.0):
 				continue
-			var card := _two_sided_card(front, back if back else front, height)
-			card.name = String(cfg["id"]).to_pascal_case()
-			add_child(card)
-			card.global_transform = Transform3D(_facing(s, side, float(cfg["turn"])), spot)
+			building.name = String(cfg["id"]).to_pascal_case()
+			add_child(building)
+			building.global_transform = Transform3D(_facing(s, side, float(cfg["turn"])), spot)
 			_taken.append(Vector3(spot.x, spot.z, half + 0.5))
+			_clear_trees(spot + building.global_basis.z * 2.0, half + 3.0)
 			return
+	building.free()
 	push_warning("Roadside: no room for %s." % cfg["id"])
+
+## Trees (and other scattered copies) standing in or just in front of a building go away,
+## so the karts see it.
+func _clear_trees(center: Vector3, radius: float) -> void:
+	for node in _track.find_children("*", "MultiMeshInstance3D", true, false):
+		if node is Scatter:
+			(node as Scatter).clear_circle(center, radius)
+
+## The 3D toy building scaled to `height` metres, or null when there is no model.
+## The model's origin is the middle of its footprint on the ground; it looks along +Z.
+func _model(id: String, height: float) -> Node3D:
+	var path := "res://assets/models/props/%s.glb" % id
+	if not ResourceLoader.exists(path):
+		return null
+	var scene := load(path) as PackedScene
+	if scene == null:
+		return null
+	var model := scene.instantiate() as Node3D
+	var holder := Node3D.new()
+	holder.add_child(model)
+	var box := _local_box(holder)
+	if box.size.y > 0.0:
+		model.scale = Vector3.ONE * (height / box.size.y)
+	ToyLook.apply(model, ToyLook.Kind.DRIVER)  # the same soft rim of light as the toys
+	return holder
+
+## Bounding box of all meshes under `root`, in root's own space (root is not in the tree yet).
+func _local_box(root: Node3D) -> AABB:
+	var box := AABB()
+	var first := true
+	for node in root.find_children("*", "MeshInstance3D", true, false):
+		var mi := node as MeshInstance3D
+		var xf := Transform3D.IDENTITY
+		var n: Node = mi
+		while n != root and n is Node3D:
+			xf = (n as Node3D).transform * xf
+			n = n.get_parent()
+		var b := xf * mi.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	return box
+
+## Fallback: the two-sided photo card; meta "half_width" is half its width in metres.
+func _card_for(id: String, height: float) -> Node3D:
+	var front := load("res://assets/props/%s_front.png" % id) as Texture2D
+	var back := load("res://assets/props/%s_back.png" % id) as Texture2D
+	if front == null:
+		return null
+	var card := _two_sided_card(front, back if back else front, height)
+	card.set_meta("half_width", height * float(front.get_width()) / maxf(1.0, float(front.get_height())) * 0.5)
+	return card
 
 ## Areas props must keep out of, as rectangles on the ground (x, z): the fan stand, and
 ## circles (x, z, radius): ponds and props already placed.

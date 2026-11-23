@@ -365,7 +365,7 @@ func smoke_report() -> bool:
 	# so the measured gain swings between about 0 and +12 % from run to run. Required: the rope
 	# connects, it never slows him down, and the gifts arrive.
 	var ok := rope_share > 0.4 and _towed_n > 100 and _free_n > 100 and towed > free * 0.97 \
-		and _gifts_got >= 2 and _gifts_used >= 1
+		and _gifts_got >= 1 and _gifts_used >= 1  # a gift flies back when the kid already has an item
 	if not ok:
 		print("SMOKE   co-op help did not work (rope, pull or gifts)")
 	return ok

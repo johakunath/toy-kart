@@ -162,6 +162,35 @@ mesh, origin at the bottom middle. Tractor `--length 1.5`, airliner `--width 1.7
 `vehicle_hover = 0.4` in its `.tres` makes it fly). Clean and recognisable in the race; an
 optional Codex prompt for a more detailed look is at the end of `docs/CODEX_REDO_POLIZEI_KOBA.md`.
 
+## Roadside buildings: police station and Duplo shop
+
+`tools/blender/build_duplo_buildings.py --building polizeiwache|duplo_laden` builds the two toy
+buildings beside the start from simple shapes, after the photos in the inventory:
+
+- **Polizeiwache**: blue walls on the white two-step base plate, measured on the front photo
+  (window, white door, badge, balcony railing over the garage, garage annex with the beacon),
+  open at the back like the toy, darker groove lines for the bricks. The inventory's "tower"
+  photos are this station seen end-on, so there is no separate tower.
+- **Duplo-Laden**: in Duplo units (6 x 4 studs): two layers of 2x2 bricks and curved 2x4 bricks,
+  a core of two tall bricks with a window at each end, tall 2x2 bricks on top, studs, the number
+  prints 5 and 2 as raised strokes. The photo's pale Duplo tones are pushed to strong colours.
+
+One mesh, a few colour materials, 4.6k / 9.4k triangles, faces Blender -Y (the side that looks
+at the road), origin at the bottom middle.
+
+```
+blender -b --python tools/blender/build_duplo_buildings.py -- --building polizeiwache
+    --out assets/models/props/polizeiwache.glb --height 6.0
+    --blend art/models/polizeiwache_edit.blend --sheet <scratchpad>/station_sheet.png
+blender -b --python tools/blender/build_duplo_buildings.py -- --building duplo_laden
+    --out assets/models/props/duplo_laden.glb --height 5.5
+    --blend art/models/duplo_laden_edit.blend --sheet <scratchpad>/shop_sheet.png
+```
+
+`scripts/track/roadside.gd` loads `assets/models/props/<id>.glb`, scales it to the height in its
+`PROPS` list (7 m and 6.5 m; 1.5 times that in the living room) and clears trees in front of it.
+Without a model it falls back to the photo card from `tools/make_props.py`.
+
 ## Using ComfyUI yourself (Johannes)
 
 Desktop shortcut **ComfyUI (3D-Modelle)**: a black window starts, then the browser opens ComfyUI.
