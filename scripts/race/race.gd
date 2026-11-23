@@ -156,6 +156,8 @@ func _spawn_racers() -> void:
 			_wire_ai(cfg.source as AiSource, racer, 0.93)
 		racer.kart.set_marker_color(racer.color)
 		racer.kart.visual.add_stickers(Game.sticker_ids())
+		# His own kart shows through walls in his colour (only in his own half: see _build_views).
+		XRay.apply(racer.kart.visual, racer.player_index, racer.color)
 		cfg.source.swallow_held()
 		humans.append(racer)
 		_kid_context = _kid_context or racer.assist.kid
@@ -439,6 +441,7 @@ func _build_views() -> void:
 			camera.use_split_screen_setup()
 		viewport.add_child(camera)
 		camera.attach(racer.kart)
+		camera.cull_mask &= ~XRay.others_mask(racer.player_index)
 		camera.current = true
 		var atmosphere := track.get_node_or_null("Atmosphere") as Atmosphere
 		if atmosphere:
@@ -745,6 +748,68 @@ func _smoke_track_features() -> bool:
 		ok = false
 	return ok
 
+## Dev helper for "--shot_at=hidden": is something of the track between the player's camera and
+## his kart? Scenery has no collision, so the first call gives the track's meshes ray-only
+## colliders on a layer nothing else uses (karts never touch them).
+const _SIGHT_LAYER := 1 << 19
+var _sight_ready := false
+
+func _kart_hidden(racer: Racer) -> bool:
+	if not _sight_ready:
+		_sight_ready = true
+		for node in track.find_children("*", "MeshInstance3D", true, false):
+			var mi := node as MeshInstance3D
+			if mi.mesh != null and mi.is_visible_in_tree():
+				_add_sight_shape(mi, mi.mesh, Transform3D.IDENTITY)
+		for node in track.find_children("*", "MultiMeshInstance3D", true, false):
+			var mmi := node as MultiMeshInstance3D
+			if mmi.multimesh == null or mmi.multimesh.mesh == null or not mmi.is_visible_in_tree():
+				continue
+			for i in mmi.multimesh.visible_instance_count if mmi.multimesh.visible_instance_count >= 0 else mmi.multimesh.instance_count:
+				_add_sight_shape(mmi, mmi.multimesh.mesh, mmi.multimesh.get_instance_transform(i))
+		return false
+	var camera: ChaseCamera = null
+	for node in find_children("*", "ChaseCamera", true, false):
+		if (node as ChaseCamera).target == racer.kart:
+			camera = node
+	if camera == null:
+		return false
+	# Another kart right between the camera and his kart.
+	var eye := camera.global_position
+	var own := racer.kart.container.global_position + Vector3(0, 0.5, 0)
+	for other in racers:
+		if other == racer:
+			continue
+		var at := other.kart.container.global_position + Vector3(0, 0.5, 0)
+		var along := (at - eye).dot((own - eye).normalized())
+		if along > 1.0 and along < eye.distance_to(own) - 1.2 and Geometry3D.get_closest_point_to_segment(at, eye, own).distance_to(at) < 0.45:
+			return true
+	var space := track.get_world_3d().direct_space_state
+	for up: float in [0.35, 0.9]:
+		var kart_at := racer.kart.container.global_position + Vector3(0, up, 0)
+		var query := PhysicsRayQueryParameters3D.create(camera.global_position, kart_at, _SIGHT_LAYER)
+		if space.intersect_ray(query).is_empty():
+			return false
+	return true
+
+## Small things (item stars, flowers, grass) do not count as hiding the kart.
+func _add_sight_shape(parent: Node3D, mesh: Mesh, local: Transform3D) -> void:
+	var size := mesh.get_aabb().get_longest_axis_size() * local.basis.get_scale().x * parent.global_basis.get_scale().x
+	if size < 2.5:
+		return
+	var shape := mesh.create_trimesh_shape()
+	if shape == null:
+		return
+	shape.backface_collision = true
+	var body := StaticBody3D.new()
+	body.collision_layer = _SIGHT_LAYER
+	body.collision_mask = 0
+	var col := CollisionShape3D.new()
+	col.shape = shape
+	body.add_child(col)
+	parent.add_child(body)
+	body.transform = local
+
 func _smoke_tick(delta: float) -> void:
 	_smoke_time += delta
 	var limit := float(Game.smoke_args.get("seconds", "240"))
@@ -766,6 +831,10 @@ func _smoke_tick(delta: float) -> void:
 		if Game.smoke_args.get("shot_at", "8") == "finish":
 			_shot_wait = _shot_wait + delta if state == State.FINISHED else 0.0
 			shot_now = _shot_wait > 3.2
+		elif Game.smoke_args.get("shot_at", "8") == "hidden":
+			# The first moment a player's kart is hidden from his camera (X-ray pictures).
+			_shot_wait = _shot_wait + delta if _smoke_time > 4.0 and humans.any(_kart_hidden) else 0.0
+			shot_now = _shot_wait > 0.15
 		else:
 			shot_now = _smoke_time >= float(Game.smoke_args.get("shot_at", "8"))
 	if shot_now:
