@@ -11,7 +11,6 @@ ready (PLAN.md, milestone 5). Pick by what you want to play.
 | --- | --- | --- |
 | Test | Play with his small pad (only your Xbox pad and simulated pads so far) | Milestone 5 |
 | Tuning | Kid mode after watching him: how strongly the stick answers, edge strip, AI gaps, Kid speed | Milestone 5 |
-| Art | The Duplo girl is the last paper card. Build her in Blender from simple shapes like the Duplo plane (`tools/blender/build_duplo_plane.py`); the side and back photos are in `photos/toys/`. Or Codex turnaround views, then `make_3d_toy.py --id junge --apply` | Milestone 3, next |
 | Art | Police car: the "POLICE" lettering on the 3D model is scrambled (AI texture). Fix by painting the lettering into its texture in Blender, or new views | When it bothers him |
 | Art | Vehicle proportions in FLUX pictures are off (police car, motorbike); fine for portraits, not for new views | If new vehicle views are needed |
 | Art | Portraits also on the HUD and the finish podium (the menu has them since round ten) | Milestone 2 |

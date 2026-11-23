@@ -1,8 +1,8 @@
 # 3D toys
 
 How a toy becomes a 3D driver. Milestone 3. Done: Koba (from a video); Bobo, plane, fox, motorbike,
-police car (from Codex turnaround views); the Duplo plane (built in Blender). Still a card: the Duplo girl.
-Blocky Duplo toys are built by Claude from simple shapes in Blender instead.
+police car (from Codex turnaround views); the Duplo plane and the Duplo girl (built in Blender).
+All 8 toys are 3D now; the paper cards stay in the `.tres` files. Blocky Duplo toys are built by Claude from simple shapes in Blender instead.
 
 Everything runs on this PC; nothing is uploaded and no account is needed. Johannes does nothing
 in a terminal: Claude runs every step.
@@ -106,6 +106,20 @@ and `portrait` in the driver `.tres`). A new driver without a portrait simply sh
 `tools/blender/build_duplo_plane.py` builds the Duplo plane brick by brick (Duplo units: a stud
 is 1, a layer 1.2) after the photos, then `prepare_toy_model.py --width 1.3`. The plane is a toy
 vehicle (it has the red Duplo car base with wheels), so it replaces the kart.
+
+`tools/blender/build_duplo_girl.py` builds the Duplo girl (`paper_junge`) after the photos
+`17.04.08*` / `17.04.09*` (front, side, back): a Duplo child figure seated the Duplo way (leg
+piece turned forward at the hip, shoes pointing up), arms forward with C-hands, curly hair from
+small balls sunk into a cap, printed face and striped shirt as thin shapes. Colours are pushed to
+strong toy colours (sky-blue legs instead of the photo's pale blue). She is a driver, not a
+vehicle: the script scales her to 0.7 m seated height itself and puts the origin under her
+bottom (the seat point), so it does not use `prepare_toy_model.py` (that centres the bounding
+box, which would shift her back by half her legs). One command does model, edit file and sheet:
+
+```
+blender -b --python tools/blender/build_duplo_girl.py -- --out assets/models/toys/junge.glb
+    --blend art/models/junge_edit.blend --sheet <scratchpad>/junge_sheet.png
+```
 
 ## Using ComfyUI yourself (Johannes)
 
