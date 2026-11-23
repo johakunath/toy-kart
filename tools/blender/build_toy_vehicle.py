@@ -35,7 +35,8 @@ args = ap.parse_args(argv)
 COLOURS = {
     "blue": (18, 72, 205), "dark": (52, 54, 60), "black": (24, 24, 28), "rim": (246, 246, 240),
     "glass": (40, 60, 90), "lamp": (255, 250, 215), "grey": (130, 135, 145), "red": (215, 35, 30),
-    "white": (248, 248, 246), "engine": (215, 218, 224), "tail": (20, 60, 190), "window": (35, 45, 70),
+    "white": (248, 248, 246), "engine": (215, 218, 224), "tail": (20, 60, 190), "window": (22, 48, 150),
+    "door": (170, 192, 225),
     "orange": (245, 140, 20),
 }
 MATS = {}
@@ -121,9 +122,12 @@ def beam(a, b, w, h, colour):
     return finish(o, colour, 0.04)
 
 
-def loft(rings, colour, verts=24):
-    """A closed tube through rings (u, half width, half height, z centre); r = 0 closes an end."""
-    pts, faces = [], []
+def loft(rings, colour, verts=24, paint=None):
+    """A closed tube through rings (u, half width, half height, z centre); r = 0 closes an end.
+    paint(u0, u1, k) may return another colour name for the face between rings u0..u1 and
+    around-steps k..k+1 (k = 0 is the toy's left side at mid height, counting upwards): windows
+    painted flush into the body instead of boxes stuck on it."""
+    pts, faces, paints = [], [], []
     for (u, rx, rz, zc) in rings:
         for k in range(verts):
             a = 2 * math.pi * k / verts
@@ -132,10 +136,31 @@ def loft(rings, colour, verts=24):
         for k in range(verts):
             a, b = i * verts + k, i * verts + (k + 1) % verts
             faces.append((a, b, b + verts, a + verts))
+            paints.append(paint(rings[i][0], rings[i + 1][0], k) if paint else None)
     faces.append(tuple(range(verts))[::-1])
     faces.append(tuple(range((len(rings) - 1) * verts, len(rings) * verts)))
+    paints += [None, None]
     o = mesh_object("loft", pts, faces)
-    return finish(o, colour)
+    finish(o, colour)
+    slots = [colour]
+    for f, p in zip(o.data.polygons, paints):
+        if p:
+            if p not in slots:
+                slots.append(p)
+                o.data.materials.append(mat(p))
+            f.material_index = slots.index(p)
+    return o
+
+
+def rings_with(rings, extra):
+    """Insert rings at the u values in extra, linearly between the given rings."""
+    out = list(rings)
+    for u in extra:
+        for (a, b) in zip(rings, rings[1:]):
+            if a[0] < u < b[0]:
+                t = (u - a[0]) / (b[0] - a[0])
+                out.append(tuple(a[j] + (b[j] - a[j]) * t for j in range(4)))
+    return sorted(out)
 
 
 def slab(outline, z0, z1, colour, bevel=0.05):
@@ -164,6 +189,7 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 
 if args.vehicle == "traktor":
     # Units: about a centimetre of the real toy. Loader bucket at the front (u ~ 0).
+    FU = 6.0                                                             # front axle
     for side in (-1, 1):
         # big rear wheels, small front wheels: black tyres, white rims, a dark hub
         cyl(14.5, side * 3.6, 3.3, 3.3, 2.0, "black", bevel=0.5)
@@ -173,18 +199,29 @@ if args.vehicle == "traktor":
             a = k * 2 * math.pi / 12
             box(14.5 + 3.3 * math.cos(a) - 0.25, 14.5 + 3.3 * math.cos(a) + 0.25, side * 2.7, side * 4.5,
                 3.3 + 3.3 * math.sin(a) - 0.25, 3.3 + 3.3 * math.sin(a) + 0.25, "black", bevel=0.08)
-        cyl(7.2, side * 3.0, 2.2, 2.2, 1.5, "black", bevel=0.4)
-        cyl(7.2, side * 3.8, 2.2, 1.35, 0.2, "rim", verts=20)
-        cyl(7.2, side * 3.88, 2.2, 0.5, 0.2, "grey", verts=12)
+        # small front wheels on the front axle, with tread lugs too
+        cyl(FU, side * 3.0, 2.2, 2.2, 1.5, "black", bevel=0.4)
+        cyl(FU, side * 3.8, 2.2, 1.35, 0.2, "rim", verts=20)
+        cyl(FU, side * 3.88, 2.2, 0.5, 0.2, "grey", verts=12)
+        for k in range(10):
+            a = k * 2 * math.pi / 10
+            box(FU + 2.2 * math.cos(a) - 0.2, FU + 2.2 * math.cos(a) + 0.2, side * 2.35, side * 3.65,
+                2.2 + 2.2 * math.sin(a) - 0.2, 2.2 + 2.2 * math.sin(a) + 0.2, "black", bevel=0.06)
         # blue mudguards over the rear wheels
         box(11.8, 17.2, side * 2.4, side * 4.7, 6.4, 6.9, "blue", bevel=0.2)
         box(11.6, 12.2, side * 2.4, side * 4.7, 4.6, 6.9, "blue", bevel=0.2)
-    box(5.5, 17.0, -1.3, 1.3, 1.6, 3.4, "dark", bevel=0.2)               # chassis
-    box(4.6, 12.0, -1.8, 1.8, 3.0, 6.0, "blue", bevel=0.6, segments=3)   # bonnet
-    box(4.3, 4.7, -1.4, 1.4, 3.3, 5.6, "dark", bevel=0.15)              # grille
+    box(4.0, 17.0, -1.2, 1.2, 1.6, 3.4, "dark", bevel=0.2)               # chassis
+    box(FU - 0.3, FU + 0.3, -2.4, 2.4, 1.9, 2.5, "dark", bevel=0.1)       # front axle
+    box(2.6, 3.4, -1.3, 1.3, 1.3, 2.7, "dark", bevel=0.15)               # front frame / weight
+    # bonnet: long, a little lower at the nose, rounded edges
+    fin([(3.2, 2.6), (3.2, 5.2), (3.9, 5.8), (11.8, 6.2), (11.8, 2.6)], -1.65, 1.65, "blue", bevel=0.35)
+    box(3.0, 3.3, -1.25, 1.25, 2.8, 4.6, "black", bevel=0.08)            # grille
+    for z in (3.15, 3.6, 4.05):                                          # grille bars
+        box(2.95, 3.05, -1.15, 1.15, z, z + 0.18, "grey", bevel=0.0)
     for side in (-1, 1):
-        box(4.25, 4.6, side * 0.9, side * 1.5, 4.9, 5.4, "lamp", bevel=0.08)  # headlights
-        box(6.0, 11.0, side * 1.81, side * 1.85, 4.2, 5.2, "dark", bevel=0.0)  # side vents
+        cyl(3.15, side * 0.95, 5.0, 0.42, 0.2, "black", axis="u", verts=16)  # headlight rims
+        cyl(3.05, side * 0.95, 5.0, 0.32, 0.2, "lamp", axis="u", verts=16)   # headlights
+        box(5.0, 10.6, side * 1.64, side * 1.7, 4.0, 5.1, "dark", bevel=0.0)  # side vents
     cyl(10.8, 1.2, 7.4, 0.25, 3.2, "black", axis="z", verts=10)          # exhaust
     # cab: dark posts, tinted glass, blue roof
     box(11.8, 17.0, -2.4, 2.4, 6.0, 6.6, "blue", bevel=0.15)             # cab floor
@@ -196,33 +233,60 @@ if args.vehicle == "traktor":
     box(11.5, 17.2, -2.6, 2.6, 10.2, 11.0, "blue", bevel=0.3, segments=3)  # roof
     box(11.6, 12.0, -1.6, 1.6, 9.7, 10.1, "lamp", bevel=0.05)            # roof lamps
     box(16.6, 17.6, -0.6, 0.6, 1.8, 3.0, "dark", bevel=0.1)              # hitch
-    # front loader: two arms from the cab to the bucket, a cross bar, the bucket
+    # front loader after the photos: a tower on each side behind the front wheels, arms up over
+    # the front wheels and forward past the nose, then down to a wide bucket lowered to the ground
+    # (so the bonnet, grille and lights stay visible from the front)
     for side in (-1, 1):
         v = side * 2.15
-        beam((12.4, v, 6.2), (6.0, v, 8.0), 0.55, 0.8, "dark")
-        beam((6.0, v, 8.0), (1.6, v, 3.0), 0.55, 0.8, "dark")
-        beam((1.6, v, 3.0), (0.6, v, 1.6), 0.55, 0.8, "dark")
-        rod((9.5, v, 4.2), (5.0, v, 7.6), 0.25, "grey")                 # hydraulic ram
-    beam((5.2, -2.15, 7.2), (5.2, 2.15, 7.2), 0.6, 0.6, "dark")
-    box(-2.3, 0.6, -3.6, 3.6, 0.3, 0.7, "dark", bevel=0.08)              # bucket floor
-    box(0.2, 0.7, -3.6, 3.6, 0.3, 3.6, "dark", bevel=0.08)               # bucket back
+        box(8.3, 9.7, side * 1.6, side * 2.5, 2.6, 6.4, "dark", bevel=0.15)       # tower
+        beam((9.0, v, 6.0), (2.4, v, 7.0), 0.55, 0.8, "dark")
+        beam((2.4, v, 7.0), (-0.3, v, 2.2), 0.55, 0.8, "dark")
+        rod((8.8, v, 3.4), (4.2, v, 6.7), 0.22, "grey")                  # lift ram
+        rod((2.6, side * 2.5, 6.6), (0.0, side * 2.5, 2.9), 0.16, "grey")  # bucket ram
+        box(-0.3, 0.3, side * 1.85, side * 2.45, 1.0, 2.9, "dark", bevel=0.08)  # bucket bracket
+    beam((0.15, -2.15, 2.6), (0.15, 2.15, 2.6), 0.5, 0.5, "dark")        # cross tube
+    box(-2.9, 0.0, -3.6, 3.6, 0.2, 0.5, "dark", bevel=0.08)              # bucket floor
+    box(-0.4, 0.0, -3.6, 3.6, 0.2, 2.8, "dark", bevel=0.08)              # bucket back
+    box(-3.0, -2.6, -3.55, 3.55, 0.2, 0.42, "grey", bevel=0.04)          # cutting edge
     for side in (-1, 1):
-        slab([(-2.3, side * 3.6), (0.7, side * 3.6), (0.7, side * 3.3), (-2.3, side * 3.3)], 0.3, 2.4, "dark")
-    for k in range(5):                                                   # ribs
+        fin([(-2.9, 0.2), (0.0, 0.2), (0.0, 2.8), (-0.6, 2.8), (-2.9, 0.75)],
+            side * 3.35, side * 3.6, "dark")                             # bucket sides
+    for k in range(5):                                                   # ribs on the back
         v = -2.8 + k * 1.4
-        box(0.7, 0.95, v - 0.15, v + 0.15, 0.6, 3.4, "grey", bevel=0.04)
+        box(0.0, 0.25, v - 0.15, v + 0.15, 0.4, 2.6, "grey", bevel=0.04)
 else:
     # Units: about a centimetre of the real toy. Nose at u = 0.
     L = 22.0
     rings = [(0.0, 0.0, 0.0, 1.55), (0.3, 0.75, 0.7, 1.55), (0.9, 1.15, 1.1, 1.6), (1.8, 1.4, 1.38, 1.65),
              (3.2, 1.5, 1.5, 1.7), (16.0, 1.5, 1.5, 1.7), (18.0, 1.2, 1.15, 1.95), (20.0, 0.75, 0.7, 2.3),
              (21.6, 0.3, 0.3, 2.6), (22.0, 0.0, 0.0, 2.65)]
-    loft(rings, "white", verts=28)
-    box(0.9, 1.6, -0.9, 0.9, 2.15, 2.55, "window", bevel=0.15)           # cockpit windows
-    for k in range(16):                                                  # cabin windows
-        u = 3.2 + k * 0.8
-        for side in (-1, 1):
-            box(u, u + 0.3, side * 1.49, side * 1.53, 2.0, 2.35, "window", bevel=0.0)
+    # The real toy's windows wore off; the owner wants them back. They are painted into the body
+    # faces (28 steps around): one row of passenger windows per side (step 1 on the left, 12 on
+    # the right, 13 to 26 degrees above the middle), a two-pane cockpit window over the nose, and two doors
+    # per side as pale panels with a window. Rings are added at every window edge.
+    WIN0, WIN_PITCH, WIN_LEN, WIN_N = 3.75, 0.8, 0.45, 14
+    windows = [(WIN0 + n * WIN_PITCH, WIN0 + n * WIN_PITCH + WIN_LEN) for n in range(WIN_N)]
+    doors = [(2.45, 3.1), (15.0, 15.6)]
+    cockpit = (0.95, 1.8)
+    cuts = [u for w in windows + doors + [cockpit] for u in w]
+    cuts += [d0 + 0.12 for d0, _ in doors] + [d1 - 0.12 for _, d1 in doors]
+    rings = rings_with(rings, cuts)
+
+    def paint(u0, u1, k):
+        um = (u0 + u1) / 2
+        if cockpit[0] < um < cockpit[1] and (2 <= k <= 5 or 8 <= k <= 11):   # two panes, a post between
+            return "window"
+        for d0, d1 in doors:
+            if d0 < um < d1:
+                if k in (1, 12) and d0 + 0.12 < um < d1 - 0.12:
+                    return "window"
+                if k in (27, 0, 1, 12, 13, 14):
+                    return "door"
+        if k in (1, 12) and any(w0 < um < w1 for w0, w1 in windows):
+            return "window"
+        return None
+
+    loft(rings, "white", verts=28, paint=paint)
     for side in (-1, 1):                                                 # blue swirl near the tail
         box(15.0, 19.5, side * 1.3, side * 1.52, 1.0, 1.4, "tail", bevel=0.1)
     # wings: low, swept back, tips turned up, blue tips

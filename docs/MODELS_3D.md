@@ -103,6 +103,11 @@ characters) a front render made by `tools/render_driver_refs.gd`, each on its ow
 background colour, and saves a sheet to choose from (`art/toys/portraits/variants/sheet.png`,
 not in git). `--pick paper_baer=2,...` installs the chosen ones (`assets/portraits/`, 256 px,
 and `portrait` in the driver `.tres`). A new driver without a portrait simply shows no face.
+Toys built in Blender (Duplo-Flieger, Jumbo: `MODEL_REFS` in the script) use a three-quarter
+render of their game model as the reference instead (`tools/blender/render_model_ref.py`, run by
+the script). The front photo of the Duplo plane made FLUX draw a generic brick pile; the model
+render shows wings, tail and wheels at once, so the portrait looks like the real toy. Rebuild the
+portrait after changing such a model (`--ids paper_jumbo --count 4`, then `--pick`).
 
 ## Duplo toys: built in Blender, no AI
 
@@ -159,7 +164,14 @@ Both were rejected (kept in `art/models/pixal3d_rejected/`, not in git).
 Instead `tools/blender/build_toy_vehicle.py --vehicle traktor|jumbo` builds them from simple
 shapes (boxes, cylinders, a lofted plane body, flat wing plates) as toy-vehicle drivers: one
 mesh, origin at the bottom middle. Tractor `--length 1.5`, airliner `--width 1.7` (wing span;
-`vehicle_hover = 0.4` in its `.tres` makes it fly). Clean and recognisable in the race; an
+`vehicle_hover = 0.4` in its `.tres` makes it fly). Fixes after the owner's look (24 Nov): the
+jumbo's windows are painted into the body faces (`loft(..., paint=...)`: one row of dark-blue
+passenger windows per side, a two-pane cockpit window, two pale doors per side) because the
+owner wants windows even though the real toy's wore off; stuck-on window boxes were too small to
+see. The tractor front follows the photos: sloping bonnet with grille bars and round headlights,
+front axle with smaller lugged wheels, loader towers behind the front wheels, arms over the
+wheels and past the nose, bucket lowered to the ground so the bonnet stays visible. Before and
+after: `docs/img/toy-fixes-2026-11-24.png`. Clean and recognisable in the race; an
 optional Codex prompt for a more detailed look is at the end of `docs/CODEX_REDO_POLIZEI_KOBA.md`.
 
 ## Roadside buildings: police station and Duplo shop
