@@ -2,13 +2,18 @@ class_name PlayerSlot extends PanelContainer
 ## One player's panel on the selection screen. Each panel is driven only by its own device:
 ## up/down picks a row, left/right changes it, A = ready, B = back.
 ## Rows: driver, kart, control mode (Kind / Profi), colour.
-## Keys and buttons are shown as pictures of the real keys (KeyHints), not as words.
+## Keys and buttons are shown as pictures of the real keys (KeyHints), each with a short word.
+## Every panel has the same fixed size, whatever is picked: nothing jumps when a pick changes.
 
 enum SlotState { EMPTY, JOINED, READY }
 
 const ROW_COUNT := 4
 const ROW_ICONS: Array[String] = ["kid", "wheel", "gamepad", "star"]
-const KEY_SIZE := 50.0
+const KEY_SIZE := 40.0
+const WORD_SIZE := 28
+const CARD_SIZE := Vector2(700, 880)
+const PREVIEW_MIN_HEIGHT := 150.0
+const DRIVE_ROW_GAP := 6
 
 var state := SlotState.EMPTY
 var source: InputSource
@@ -40,7 +45,7 @@ var _mode_icon: TextureRect
 ## Driver faces in the first row: before, chosen, after.
 var _faces: Array[Panel] = []
 var _swatch: Panel
-var _drive_flow: HFlowContainer
+var _drive_grid: GridContainer
 var _drive_shown := ""
 var _ready_banner: PanelContainer
 var _ready_key: TextureRect
@@ -48,6 +53,7 @@ var _ready_label: Label
 var _ready_icon: TextureRect
 var _back_key: TextureRect
 var _back_icon: TextureRect
+var _back_label: Label
 var _time := 0.0
 var _side_icon: TextureRect
 ## 0 = left half of the screen, 1 = right half, -1 = the only seat (one player).
@@ -55,7 +61,9 @@ var side := 0
 
 func _init(p_side := 0) -> void:
 	side = p_side
-	custom_minimum_size = Vector2(640, 780)
+	custom_minimum_size = CARD_SIZE
+	size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_build()
 	_refresh()
 
@@ -100,7 +108,7 @@ func _build() -> void:
 
 	_preview = KartPreview.new()
 	_preview.stickers = Game.sticker_ids()
-	_preview.custom_minimum_size = Vector2(580, 150)
+	_preview.custom_minimum_size = Vector2(0, PREVIEW_MIN_HEIGHT)
 	_preview.set_view_angle(22.0, 0.55)
 	_preview.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_joined_view.add_child(_preview)
@@ -132,6 +140,12 @@ func _build() -> void:
 		else:
 			middle.add_child(UiKit.icon_rect(ROW_ICONS[i], 46, Color(UiKit.INK, 0.5)))
 		var text := UiKit.label("", 38)
+		if i == 0:
+			# Long driver names are cut with "…" instead of widening the panel.
+			text.clip_text = true
+			text.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+			text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		text.visible = i != 3  # the colour row shows only the colour
 		middle.add_child(text)
 		if i == 0:
 			var next_face := UiKit.rounded_picture(50.0, 11)
@@ -147,37 +161,60 @@ func _build() -> void:
 		_row_arrows.append(left_arrow)
 		_row_arrows.append(right_arrow)
 
-	# How to drive: key pictures, each followed by what it does.
-	_drive_flow = HFlowContainer.new()
-	_drive_flow.alignment = FlowContainer.ALIGNMENT_CENTER
-	_drive_flow.add_theme_constant_override("h_separation", 22)
-	_drive_flow.add_theme_constant_override("v_separation", 8)
-	_drive_flow.custom_minimum_size = Vector2(580, 0)
-	_drive_flow.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_joined_view.add_child(_drive_flow)
+	# How to drive: one control per line, key pictures + action icon + short word. The area
+	# always has room for the longest list, so kid and Profi panels are the same size.
+	var drive_area := CenterContainer.new()
+	drive_area.custom_minimum_size = Vector2(0, _drive_area_height())
+	drive_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_drive_grid = GridContainer.new()
+	_drive_grid.add_theme_constant_override("h_separation", 10)
+	_drive_grid.add_theme_constant_override("v_separation", DRIVE_ROW_GAP)
+	_drive_grid.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	drive_area.add_child(_drive_grid)
+	_joined_view.add_child(drive_area)
 
-	# Ready: [accept key] + tick. Below: [back key] + leave.
+	# Bottom line: [accept key] + tick + "Bereit" in a big banner, then [back key] + "Zurück".
+	var bottom := HBoxContainer.new()
+	bottom.add_theme_constant_override("separation", 10)
+	_joined_view.add_child(bottom)
 	_ready_banner = PanelContainer.new()
+	_ready_banner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var ready_row := HBoxContainer.new()
 	ready_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	ready_row.add_theme_constant_override("separation", 14)
-	_ready_key = KeyHints.key("key_space", 56)
+	ready_row.add_theme_constant_override("separation", 12)
+	_ready_key = KeyHints.key("key_space", 48)
 	ready_row.add_child(_ready_key)
-	_ready_icon = UiKit.icon_rect("check", 56, Color.WHITE)
+	_ready_icon = UiKit.icon_rect("check", 48, Color.WHITE)
 	ready_row.add_child(_ready_icon)
-	_ready_label = UiKit.label("", 44, Color.WHITE)
+	_ready_label = UiKit.label("Bereit", 38, Color.WHITE)
 	ready_row.add_child(_ready_label)
 	_ready_banner.add_child(ready_row)
-	_joined_view.add_child(_ready_banner)
+	bottom.add_child(_ready_banner)
 
+	var back_panel := PanelContainer.new()
+	back_panel.add_theme_stylebox_override("panel", _slim(UiKit.box(Color(UiKit.INK, 0.06), 22)))
 	var back_row := HBoxContainer.new()
 	back_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	back_row.add_theme_constant_override("separation", 10)
+	back_row.add_theme_constant_override("separation", 8)
 	_back_key = KeyHints.key("key_q", 40)
 	back_row.add_child(_back_key)
-	_back_icon = UiKit.icon_rect("exit", 40, Color(UiKit.INK, 0.6))
+	_back_icon = UiKit.icon_rect("exit", 36, Color(UiKit.INK, 0.6))
 	back_row.add_child(_back_icon)
-	_joined_view.add_child(back_row)
+	_back_label = UiKit.label("Zurück", 28, Color(UiKit.INK, 0.75))
+	back_row.add_child(_back_label)
+	back_panel.add_child(back_row)
+	bottom.add_child(back_panel)
+
+## Room for the longest control list: four lines (seven controls stand in two columns).
+func _drive_area_height() -> float:
+	var lines := ceili(KeyHints.MAX_CONTROLS / 2.0)
+	return lines * KEY_SIZE + (lines - 1) * DRIVE_ROW_GAP
+
+## Less padding above and below, so the fixed-size panel has room for the preview.
+func _slim(style: StyleBoxFlat, vertical := 6.0) -> StyleBoxFlat:
+	style.content_margin_top = vertical
+	style.content_margin_bottom = vertical
+	return style
 
 # --- Joining and leaving -------------------------------------------------------------------
 
@@ -194,6 +231,7 @@ func join(p_source: InputSource, slot_number: int) -> void:
 		_step_color(1)
 	UiKit.play(self, "select")
 	_refresh()
+	MenuStyle.bounce(self, 0.95)
 
 ## A device seen for the first time: in a two-seat race the W A S D keys belong to the
 ## grown-up (Profi, left), the arrow keys to the kid. Everything else starts in kid mode.
@@ -240,6 +278,7 @@ func handle(poll: Dictionary) -> void:
 			state = SlotState.READY
 			save_prefs()
 			UiKit.play(self, "select")
+			MenuStyle.bounce(_ready_banner, 0.85)
 		elif poll.get("back", false):
 			leave()
 			return
@@ -361,11 +400,11 @@ func _refresh() -> void:
 	_empty_view.visible = state == SlotState.EMPTY
 	_joined_view.visible = state != SlotState.EMPTY
 	if state == SlotState.EMPTY:
-		add_theme_stylebox_override("panel", UiKit.box(Color(UiKit.PAPER, 0.55), 36, Color(UiKit.INK, 0.25), 6))
+		add_theme_stylebox_override("panel", MenuStyle.card(Color(UiKit.PAPER, 0.8), 36, Color(UiKit.INK, 0.25), 6, 12))
 		return
 	var color := Game.PLAYER_COLORS[color_index]
-	add_theme_stylebox_override("panel", UiKit.box(UiKit.PAPER, 36, color, 14))
-	_header.add_theme_stylebox_override("panel", UiKit.box(color, 22))
+	add_theme_stylebox_override("panel", MenuStyle.card(UiKit.PAPER, 36, color, 14, 18))
+	_header.add_theme_stylebox_override("panel", _slim(MenuStyle.bevel(color, 22), 8.0))
 	_refresh_header()
 
 	var driver := Game.drivers[driver_index]
@@ -390,10 +429,8 @@ func _refresh() -> void:
 	var move_keys := KeyHints.left_right(source)
 	for i in ROW_COUNT:
 		var selected := i == row and not is_ready
-		var row_box := UiKit.box(UiKit.SUN if selected else Color(UiKit.INK, 0.06), 20)
-		if i == 0:
-			row_box.content_margin_top = 5
-			row_box.content_margin_bottom = 5
+		var row_box := _slim(MenuStyle.bevel(UiKit.SUN, 20, Color(UiKit.SUN, 0.6)) if selected
+			else UiKit.box(Color(UiKit.INK, 0.06), 20), 5.0 if i == 0 else 6.0)
 		_row_panels[i].add_theme_stylebox_override("panel", row_box)
 		_row_panels[i].modulate.a = 0.45 if is_ready or (i == 1 and toy_vehicle) else 1.0
 		# The chosen row shows the real keys that change it (A / D or the arrow keys).
@@ -407,15 +444,16 @@ func _refresh() -> void:
 	var drive_key := "%s:%d" % [source.id, control_mode]
 	if drive_key != _drive_shown:
 		_drive_shown = drive_key
-		KeyHints.fill_driving(_drive_flow, source, control_mode, KEY_SIZE)
+		KeyHints.fill_driving_grid(_drive_grid, source, control_mode, KEY_SIZE, WORD_SIZE)
 
-	_ready_banner.add_theme_stylebox_override("panel", UiKit.box(UiKit.GRASS if is_ready else Color(UiKit.INK, 0.35), 22))
+	_ready_banner.add_theme_stylebox_override("panel",
+		_slim(MenuStyle.bevel(UiKit.GRASS, 22, Color(UiKit.GRASS, 0.7)) if is_ready
+			else MenuStyle.bevel(Color(UiKit.INK, 0.35), 22), 8.0))
 	var accept := KeyHints.accept_key(source)
 	_ready_key.texture = UiKit.icon(accept) if accept != "" else null
 	_ready_key.visible = not is_ready and accept != ""
-	_fit_key(_ready_key, 56)
-	_ready_label.text = "Bereit!" if is_ready else ""
-	_ready_label.visible = is_ready
+	_fit_key(_ready_key, 48)
+	_ready_label.text = "Bereit!" if is_ready else "Bereit"
 	var back := KeyHints.back_key(source)
 	_back_key.texture = UiKit.icon(back) if back != "" else null
 	_back_key.visible = back != ""

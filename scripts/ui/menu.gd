@@ -37,8 +37,10 @@ func _ready() -> void:
 		# The exported game cannot be started on another scene; "-- --smoke" jumps to the race.
 		Game.start_race.call_deferred()
 		return
-	theme = UiKit.theme()
+	theme = MenuStyle.theme()
 	add_child(UiKit.background())
+	if MenuBackdrop.wanted():
+		add_child(MenuBackdrop.new())  # a slow flight over the tracks behind the cards
 	Music.play("menu")
 	_build_mode_page()
 	_build_options_page()
@@ -48,6 +50,8 @@ func _ready() -> void:
 	_show(Page.MODE)
 	if Game.smoke_args.has("shot"):
 		_dev_shot()
+	elif Game.smoke_args.has("perf"):
+		_dev_perf()
 
 # --- Page 1: mode --------------------------------------------------------------------------
 
@@ -56,32 +60,42 @@ func _build_mode_page() -> void:
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 50)
 	page.add_child(column)
-	column.add_child(UiKit.label("Toy Racer", 170, Color.WHITE, 36, UiKit.INK))
+	# The logo (or the cartoon title) gently bobs; the holder keeps the layout still.
+	var logo := MenuStyle.logo(220)
+	var logo_holder := MenuStyle.holder(logo)
+	logo_holder.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	column.add_child(logo_holder)
+	MenuStyle.bob(logo)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 44)
+	row.add_theme_constant_override("separation", 34)
 	column.add_child(row)
-	var icons := ["wheel", "flag", "clock"]
-	var card := Vector2(340, 400)
-	row.add_theme_constant_override("separation", 30)
-	for i in 3:
-		var button := UiKit.card_button(icons[i], Game.MODE_NAMES[i], card, 210)
-		button.pressed.connect(_on_mode_picked.bind(i))
-		row.add_child(button)
-		_mode_buttons.append(button)
-		if i == Game.Mode.RACE:
-			_team_button = UiKit.card_button("team", "Team", card, 210)
-			_team_button.pressed.connect(_on_mode_picked.bind(Game.Mode.RACE, true))
-			row.add_child(_team_button)
-			_cup_button = UiKit.card_button("trophy", "Pokal", card, 210)
-			_cup_button.pressed.connect(_on_mode_picked.bind(Game.Mode.RACE, false, true))
-			row.add_child(_cup_button)
+	# Big coloured cards, one colour per mode (MenuStyle.MODE_COLORS, in screen order).
+	var cards := [
+		["wheel", Game.MODE_NAMES[Game.Mode.FREE_DRIVE], [Game.Mode.FREE_DRIVE]],
+		["flag", Game.MODE_NAMES[Game.Mode.RACE], [Game.Mode.RACE]],
+		["team", "Team", [Game.Mode.RACE, true]],
+		["trophy", "Pokal", [Game.Mode.RACE, false, true]],
+		["clock", Game.MODE_NAMES[Game.Mode.TIME_TRIAL], [Game.Mode.TIME_TRIAL]],
+	]
+	var card_size := Vector2(330, 420)
+	for i in cards.size():
+		var spec: Array = cards[i]
+		var button := MenuStyle.mode_card(spec[0], spec[1], MenuStyle.MODE_COLORS[i], card_size)
+		button.pressed.connect(_on_mode_picked.bindv(spec[2]))
+		row.add_child(MenuStyle.holder(button))
+		MenuStyle.pop_on_focus(button)
+		match i:
+			2: _team_button = button
+			3: _cup_button = button
+			_: _mode_buttons.append(button)
 	var quit_row := HBoxContainer.new()
 	quit_row.alignment = BoxContainer.ALIGNMENT_END
 	column.add_child(quit_row)
 	var quit := UiKit.pill_button("exit", "Ende", Vector2(220, 84))
 	quit.pressed.connect(func() -> void: Game.quit_clean())
 	quit_row.add_child(quit)
+	MenuStyle.pop_on_focus(quit, 1.05)
 
 func _on_mode_picked(mode: int, team := false, cup := false) -> void:
 	Game.mode = mode as Game.Mode
@@ -103,7 +117,7 @@ func _build_options_page() -> void:
 	title_row.add_theme_constant_override("separation", 24)
 	_options_icon = UiKit.icon_rect("flag", 90, Color.WHITE)
 	title_row.add_child(_options_icon)
-	_options_title = UiKit.label("", 84, Color.WHITE, 22, UiKit.INK)
+	_options_title = MenuStyle.shadowed(UiKit.label("", 84, Color.WHITE, 22, UiKit.INK))
 	title_row.add_child(_options_title)
 	column.add_child(title_row)
 
@@ -183,11 +197,14 @@ func _build_options_page() -> void:
 	_refresh_rumble_button()
 	_next_button = UiKit.pill_button("arrow_right", "Weiter", Vector2(420, 112))
 	_next_button.add_theme_font_size_override("font_size", 56)
+	MenuStyle.primary(_next_button)
 	_next_button.pressed.connect(func() -> void:
 		Game.save_options()
 		UiKit.play(self, "select")
 		_show(Page.PLAYERS))
 	nav.add_child(_next_button)
+	for nav_button in nav.get_children():
+		MenuStyle.pop_on_focus(nav_button as Control, 1.06)
 
 ## Icon only: a faded pad means "no rumble".
 func _refresh_rumble_button() -> void:
@@ -200,7 +217,7 @@ func _option_row(parent: Control, title: String) -> HBoxContainer:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 6)
 	parent.add_child(block)
-	block.add_child(UiKit.label(title, 40, Color.WHITE, 12, UiKit.INK))
+	block.add_child(MenuStyle.shadowed(UiKit.label(title, 40, Color.WHITE, 12, UiKit.INK)))
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 24)
@@ -227,6 +244,7 @@ func _option_button(icons: Array[String], text: String, group: ButtonGroup, min_
 		content.add_child(gap)
 		content.move_child(gap, content.get_child_count() - 2)
 	button.add_child(content)
+	MenuStyle.pop_on_focus(button, 1.05)
 	return button
 
 # --- Page 3: players -----------------------------------------------------------------------
@@ -240,7 +258,7 @@ func _build_players_page() -> void:
 	title_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	title_row.add_theme_constant_override("separation", 20)
 	title_row.add_child(UiKit.icon_rect("gamepad", 70, Color.WHITE))
-	title_row.add_child(UiKit.label("Wer fährt mit?", 66, Color.WHITE, 18, UiKit.INK))
+	title_row.add_child(MenuStyle.title("Wer fährt mit?", 62, UiKit.SUN))
 	column.add_child(title_row)
 	_slot_row = HBoxContainer.new()
 	_slot_row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -418,6 +436,7 @@ func _show(page: Page) -> void:
 	_page = page
 	for key: Page in _pages:
 		(_pages[key] as Control).visible = key == page
+	MenuStyle.page_in(_pages[page] as Control)
 	match page:
 		Page.MODE:
 			(_cup_button if Game.cup else _team_button if Game.team_race else _mode_buttons[Game.mode]).grab_focus()
@@ -480,13 +499,43 @@ func _dev_shot() -> void:
 		# Both on the keyboard, as a new family would see it: W A S D (Profi) left,
 		# arrow keys (Kind) right and ready. "--swap=1" presses the swap button.
 		Game.set("_settings", ConfigFile.new())
-		_slots[0].join(_sources[0], 0)
-		_slots[1].join(_sources[1], 1)
+		# "--pad=1": two (pretend) pads instead of the two keyboard halves, left Profi.
+		var pads: bool = Game.smoke_args.get("pad", "0") == "1"
+		_slots[0].join(PadSource.new(0, 0) if pads else _sources[0], 0)
+		_slots[1].join(PadSource.new(1, 1) if pads else _sources[1], 1)
+		if pads:
+			_slots[0].control_mode = Game.ControlMode.FULL
 		_slots[1].handle({"accept": true})
 		_slots[0].handle({"down": true})
 		if Game.smoke_args.get("swap", "0") == "1":
 			_swap_sides()
 		set_process(false)
-	await get_tree().create_timer(1.0).timeout
+	await get_tree().create_timer(float(Game.smoke_args.get("shot_at", "1.0"))).timeout
 	get_viewport().get_texture().get_image().save_png(Game.smoke_args["shot"])
+	Game.quit_clean()
+
+## "-- --perf=<page> [--seconds=N]": average frame rate of a menu page (run with --disable-vsync).
+func _dev_perf() -> void:
+	var page_name: String = Game.smoke_args.get("perf", "mode")
+	if page_name == "players":
+		Game.mode = Game.Mode.RACE
+		_show(Page.PLAYERS)
+		Game.set("_settings", ConfigFile.new())
+		_slots[0].join(_sources[0], 0)
+		_slots[1].join(_sources[1], 1)
+		set_process(false)
+	await get_tree().create_timer(2.0).timeout
+	var seconds := float(Game.smoke_args.get("seconds", "10"))
+	var frames := Engine.get_frames_drawn()
+	var start := Time.get_ticks_usec()
+	var last := start
+	var worst := 0
+	while Time.get_ticks_usec() - start < seconds * 1000000.0:
+		await get_tree().process_frame
+		var now := Time.get_ticks_usec()
+		worst = maxi(worst, now - last)
+		last = now
+	var fps := (Engine.get_frames_drawn() - frames) / ((Time.get_ticks_usec() - start) / 1000000.0)
+	print("MENU PERF page=%s backdrop=%s fps=%.1f worst_frame_ms=%.1f" % [page_name,
+		Game.smoke_args.get("backdrop", "1"), fps, worst / 1000.0])
 	Game.quit_clean()

@@ -5,6 +5,8 @@ extends SceneTree
 ##
 ##   godot --headless --path . --fixed-fps 60 --script res://tools/menu_check.gd
 ##
+## Every panel must keep one size (and one preview size), whatever is picked or joined.
+##
 ## Exit code 0 = the whole flow works. Used by tools/check.ps1.
 
 # This script must not name classes that use the Game autoload (PlayerSlot, Racer ...):
@@ -19,6 +21,8 @@ var _fails: Array[String] = []
 var _checks := 0
 var _game: Node
 var _driver_before := 0
+var _card_size := Vector2.ZERO
+var _preview_size := Vector2.ZERO
 
 func _process(_delta: float) -> bool:
 	_frame += 1
@@ -54,15 +58,21 @@ func _process(_delta: float) -> bool:
 		4:
 			_expect("the arrow keys take the right seat", _slot(1).state == JOINED and _slot(0).state == 0 and _slot_id(1) == "kb2")
 			_expect("new arrow-key players start in kid mode", _slot(1).control_mode == 0)
+			_card_size = (_slot(1) as Control).size
+			_preview_size = _preview(1).size
+			_expect("a panel has a real size", _card_size.x > 300.0 and _card_size.y > 300.0 and _preview_size.y > 100.0)
+			_expect("an empty panel is as big as a joined one", (_slot(0) as Control).size == _card_size)
 			_key(KEY_SPACE)                          # ... then W A S D
 		5:
 			_expect("W A S D takes the left seat", _slot(0).state == JOINED and _slot_id(0) == "kb1")
 			_expect("new W A S D players start as Profi", _slot(0).control_mode == 1)
 			_expect("the two players have different colours", _slot(0).color_index != _slot(1).color_index)
+			_expect_same_size("Profi (W A S D) and Kind (arrows)")
 			_driver_before = _slot(0).driver_index
 			_key(KEY_D)                              # W A S D: next driver
 		6:
 			_expect("left/right changes the driver", _slot(0).driver_index == (_driver_before + 1) % _driver_count())
+			_expect_same_size("another driver")
 			_expect("Profi left, Kind right: the panels stay where they are", _sides_are("kb1", "kb2"))
 			_click(_slot(1) as Control)              # a mouse click on the right panel
 		7:
@@ -73,13 +83,17 @@ func _process(_delta: float) -> bool:
 			_key(KEY_TAB)
 		9:
 			_expect("Tab swaps them back", _sides_are("kb1", "kb2"))
+			_pick_driver(0, _longest_name_driver())
 			_key(KEY_DOWN)                           # arrow keys: down to the vehicle row
 		10:
+			_expect_same_size("the longest driver name")
+			_pick_driver(0, _vehicle_driver())
 			_key(KEY_DOWN)                           # arrow keys: down to the control row
 		11:
 			_key(KEY_RIGHT)                          # arrow keys: Kind -> Profi
 		12:
 			_expect("the right player switched to full mode", _slot(1).control_mode == 1)
+			_expect_same_size("a toy vehicle and Profi on both")
 			_key(KEY_RIGHT)                          # and back: Profi -> Kind
 		13:
 			_expect("the right player is Kind again", _slot(1).control_mode == 0)
@@ -129,6 +143,36 @@ func _finish() -> bool:
 	_game.quit_clean(0 if _fails.is_empty() else 1)
 	_wait = 100000
 	return false
+
+## Both panels (and their kart pictures) as big as the first joined panel was.
+func _expect_same_size(what: String) -> void:
+	for i in 2:
+		_expect("panel %d keeps its size with %s" % [i, what], (_slot(i) as Control).size == _card_size)
+		_expect("preview %d keeps its size with %s" % [i, what], _preview(i).size == _preview_size)
+
+func _preview(i: int) -> Control:
+	return _slot(i).get("_preview") as Control
+
+func _pick_driver(slot: int, index: int) -> void:
+	if index < 0:
+		return
+	_slot(slot).driver_index = index
+	_slot(slot).call("_refresh")
+
+func _longest_name_driver() -> int:
+	var best := -1
+	var drivers: Array = _game.get("drivers")
+	for i in drivers.size():
+		if best < 0 or String(drivers[i].display_name).length() > String(drivers[best].display_name).length():
+			best = i
+	return best
+
+func _vehicle_driver() -> int:
+	var drivers: Array = _game.get("drivers")
+	for i in drivers.size():
+		if drivers[i].is_vehicle:
+			return i
+	return -1
 
 func _driver_count() -> int:
 	return (_game.get("drivers") as Array).size()
