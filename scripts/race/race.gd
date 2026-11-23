@@ -816,6 +816,9 @@ func _smoke_tick(delta: float) -> void:
 	# Dev helper: "--boost_at=S" fires a boost for the first player S seconds in (for screenshots).
 	if Game.smoke_args.has("boost_at") and _smoke_time - delta < float(Game.smoke_args["boost_at"]) and _smoke_time >= float(Game.smoke_args["boost_at"]):
 		humans[0].kart.boost(1.6, 0.4)
+	# Dev helper: "--item_at=S" gives the first player a triple turbo S seconds in (HUD screenshots).
+	if Game.smoke_args.has("item_at") and _smoke_time - delta < float(Game.smoke_args["item_at"]) and _smoke_time >= float(Game.smoke_args["item_at"]):
+		humans[0].kart.receive_item(Items.TRIPLE_TURBO)
 	# Dev helper: "--rescue_at=S" rescues the first player S seconds in (helicopter screenshots).
 	if Game.smoke_args.has("rescue_at") and _smoke_time - delta < float(Game.smoke_args["rescue_at"]) and _smoke_time >= float(Game.smoke_args["rescue_at"]):
 		_reset_racer(humans[0])

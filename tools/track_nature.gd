@@ -92,6 +92,11 @@ func _ground(x: float, z: float) -> float:
 	var ad := absf(d)
 	if ad < _edge + 0.12:
 		return BLOCKED
+	# A side lane (fork) on this side: keep off it and its island too.
+	var fork: Dictionary = _b.get("_fork")
+	if not fork.is_empty() and side == float(_b.get("_fork_side")):
+		if ad < float(_b.call("_lane_outer", k)) + (_edge - float(_b.get_script().get_script_constant_map()["HALF_WIDTH"])) + 0.12:
+			return BLOCKED
 	# Same embankment as build_round_track.gd _add_skirts.
 	var top: Vector3 = _b.call("_at", k, side * _edge, -0.1)
 	var rise := top.y - _ground_y

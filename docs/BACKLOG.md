@@ -20,7 +20,7 @@ He had fun and likes it. Being fixed now unless marked "waits".
 | Koba | Face looks bulky and odd: new Codex views, then rebuild the 3D model locally | Waits for Codex |
 | Menu | Two players: the panels swap sides when clicking. Both on keyboard: grown-up left with WASD, kid right with arrow keys; easy to switch | Done: auto-swap removed, W A S D left / arrows right, swap button + Tab |
 | Menu | Pictures of the real keys and pad buttons instead of written key names; less text overall | Done: `tools/make_key_icons.py`, `KeyHints` |
-| Track | New photos: blue police station and the Duplo shop become props beside the track, not vehicles | Done: photo cards beside the start straight (`scripts/track/roadside.gd`, `tools/make_props.py`, `docs/img/roadside-2026-11-23.png`). Waits: local 3D models of the station, tower and shop (Pixal3D, `local-game-assets`) to replace the cards; trees can still poke through a card outdoors |
+| Track | New photos: blue police station and the Duplo shop become props beside the track, not vehicles | Done: photo cards beside the start straight (`scripts/track/roadside.gd`, `tools/make_props.py`, `docs/img/roadside-2026-11-23.png`). Then 3D models built in Blender (`tools/blender/build_duplo_buildings.py`); the tower card was the station's end view and is gone; trees in front are cleared |
 | Track | Toys that are not racing stand at the roadside and watch | Done: two rows beside the start grid, no colliders; they sway, hop when a human kart passes and cheer at a human finish |
 
 ## Ideas, 23 Nov 2026 (Johannes, not refined)
@@ -49,7 +49,6 @@ He had fun and likes it. Being fixed now unless marked "waits".
 | Look | A weather or time-of-day choice per track instead of one fixed mood | Later |
 | Tracks | Hills and banked curves on the generated track (needs a sloped floor collider) | Later |
 | Tracks | Scenery on Kurvenkurs: tents, signs (fans at the start exist since round 15) | Milestone 2 |
-| Tracks | Side lanes on the other round tracks (one `"fork"` entry each, on flat road) | When he likes the Wohnzimmer one |
 | Tracks | Toy train on Kurvenkurs looks small from far away (bigger train needs bigger portals) | If he does not notice it |
 | Tech | Wohnzimmer draws many separate furniture pieces (~200 fps vs 300+ outdoors): merge into fewer meshes if the projector PC struggles | If needed |
 | Tech | Driving on the Kenney ramp and bump tiles (the kit's tile library has no collision for them) | With new tracks |

@@ -102,7 +102,12 @@ func _read_raw(_control_mode: int) -> Dictionary:
 	var corner := LineFollow.corner_speed(kart, progress, track)
 	if not is_nan(fork_lane):
 		want_lane = fork_lane
-		corner *= 0.8  # the side lane bends tighter than the road
+		# The lane runs inside the bend, so it bends tighter than the road: brake for its own
+		# curve (curvature k of the line becomes k / (1 - offset * k) at the lane).
+		var k := track.max_curvature(progress.s(), 4.0 + speed * 0.7)
+		var lane_k := k / maxf(0.25, 1.0 - absf(fork_lane) * k)
+		if lane_k > 0.02:
+			corner = minf(corner, kart.steer_rate() * 0.9 / lane_k)
 	var steer := LineFollow.steer_to_lane(kart, progress, track, want_lane)
 	var top := maxf(kart.top_speed(), 0.1)
 	var target_speed := minf(top * skill, corner)
