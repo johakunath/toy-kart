@@ -2,6 +2,9 @@ class_name FinishScreen extends Control
 ## The finish screen celebrates everyone: confetti, applause, every kart on show.
 ## The placing is there, but small: medals for the first three. In a team race the banner shows
 ## how the team did. The family brick jar shows what everyone collected together.
+## In a cup every card also shows the stars from this race and the stars so far, a row of track
+## shapes shows how far the cup is, and after the last race the cards line up by stars and
+## every player gets a trophy.
 
 const LOCK_SECONDS := 2.5
 const MEDALS: Array[Color] = [Color("ffc81e"), Color("dfe6ee"), Color("e0894a")]
@@ -29,7 +32,7 @@ func open(racers: Array[Racer], humans: Array[Racer], new_record: bool, bricks :
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 	var column := VBoxContainer.new()
-	var extra_rows := int(team) + int(bricks > 0 or Game.family_bricks() > 0)
+	var extra_rows := int(team) + int(bricks > 0 or Game.family_bricks() > 0) + int(Game.cup) * 2
 	column.add_theme_constant_override("separation", 26 - 6 * extra_rows)
 	center.add_child(column)
 
@@ -43,19 +46,37 @@ func open(racers: Array[Racer], humans: Array[Racer], new_record: bool, bricks :
 	var title := "Super gemacht!"
 	if team:
 		title = "Team gewinnt!" if best_place == 1 else "Super, Team!"
+	var cup_end := Game.cup and Game.is_last_cup_race()
+	if cup_end:
+		title = "Pokal!"
+		title_row.get_child(0).queue_free()
+		title_row.add_child(UiKit.icon_rect("trophy", 120, MEDALS[0]))
+		title_row.move_child(title_row.get_child(title_row.get_child_count() - 1), 0)
 	title_row.add_child(UiKit.label(title, 120, Color.WHITE, 26, UiKit.INK))
 	title_row.add_child(UiKit.icon_rect("star", 110, UiKit.SUN))
 	column.add_child(title_row)
 
 	var order := racers.duplicate()
 	order.sort_custom(func(a: Racer, b: Racer) -> bool: return a.place < b.place)
+	if cup_end:
+		# Most stars first; on a tie the better place in the last race.
+		order.sort_custom(func(a: Racer, b: Racer) -> bool:
+			var sa := int(Game.cup_stars.get(a.cup_key(), 0))
+			var sb := int(Game.cup_stars.get(b.cup_key(), 0))
+			return sa > sb or (sa == sb and a.place < b.place))
+	if Game.cup:
+		column.add_child(_cup_progress())
 	var cards := HBoxContainer.new()
 	cards.alignment = BoxContainer.ALIGNMENT_CENTER
 	cards.add_theme_constant_override("separation", 22)
 	column.add_child(cards)
 	var card_width := (330.0 if order.size() <= 3 else 290.0) - 30.0 * extra_rows
-	for racer: Racer in order:
-		cards.add_child(_make_card(racer, card_width, Game.mode == Game.Mode.RACE and order.size() > 1))
+	for k in order.size():
+		var racer: Racer = order[k]
+		var card := _make_card(racer, card_width, Game.mode == Game.Mode.RACE and order.size() > 1 and not cup_end)
+		if Game.cup:
+			(card.get_child(0) as VBoxContainer).add_child(_cup_stars(racer, k, cup_end))
+		cards.add_child(card)
 
 	if team:
 		column.add_child(_team_row(humans, best_place))
@@ -82,8 +103,15 @@ func open(racers: Array[Racer], humans: Array[Racer], new_record: bool, bricks :
 	_buttons.modulate.a = 0.0
 	column.add_child(_buttons)
 	var button_size := Vector2(300, 230 - 25 * extra_rows)
-	_again = UiKit.card_button("restart", "Nochmal", button_size, 110 - 15 * extra_rows)
-	_again.pressed.connect(func() -> void: Game.start_race())
+	if Game.cup and not cup_end:
+		_again = UiKit.card_button("play", "Weiter", button_size, 110 - 15 * extra_rows)
+		_again.pressed.connect(func() -> void: Game.next_cup_race())
+	elif Game.cup:
+		_again = UiKit.card_button("restart", "Nochmal", button_size, 110 - 15 * extra_rows)
+		_again.pressed.connect(func() -> void: Game.start_cup())
+	else:
+		_again = UiKit.card_button("restart", "Nochmal", button_size, 110 - 15 * extra_rows)
+		_again.pressed.connect(func() -> void: Game.start_race())
 	_again.disabled = true
 	_buttons.add_child(_again)
 	var home := UiKit.card_button("home", "Menü", button_size, 110 - 15 * extra_rows)
@@ -140,6 +168,47 @@ func _make_card(racer: Racer, width: float, show_place: bool) -> Control:
 		else:
 			column.add_child(UiKit.label("%d." % racer.place, 30, Color(UiKit.INK, 0.6)))
 	return card
+
+## The cup so far: one track shape per race; done races bright, this one ringed, next ones dim.
+func _cup_progress() -> Control:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 26)
+	var tracks := Game.cup_tracks()
+	for i in tracks.size():
+		var panel := PanelContainer.new()
+		var here := i == Game.cup_round
+		var fill := Color(1, 1, 1, 0.9) if i <= Game.cup_round else Color(1, 1, 1, 0.3)
+		panel.add_theme_stylebox_override("panel", UiKit.box(fill, 24, UiKit.SUN if here else UiKit.INK, 8 if here else 3))
+		var icon := TrackIcon.new(tracks[i].outline)
+		icon.custom_minimum_size = Vector2(78, 78)
+		panel.add_child(icon)
+		row.add_child(panel)
+	return row
+
+## A card's cup line: this race's stars as little stars, and the total so far (with a trophy
+## after the last race: gold, silver, bronze; every player gets one, in their colour if 4th+).
+func _cup_stars(racer: Racer, rank: int, cup_end: bool) -> Control:
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 2)
+	var key := racer.cup_key()
+	var won := int(Game.cup_last.get(key, 0))
+	var little := HBoxContainer.new()
+	little.alignment = BoxContainer.ALIGNMENT_CENTER
+	little.add_theme_constant_override("separation", -6)
+	for i in won:
+		little.add_child(UiKit.icon_rect("star", 30, UiKit.SUN))
+	column.add_child(little)
+	var total := HBoxContainer.new()
+	total.alignment = BoxContainer.ALIGNMENT_CENTER
+	total.add_theme_constant_override("separation", 8)
+	if cup_end and (rank < MEDALS.size() or racer.is_human):
+		var color := MEDALS[rank] if rank < MEDALS.size() else racer.color
+		total.add_child(UiKit.icon_rect("trophy", 64, color))
+	total.add_child(UiKit.icon_rect("star", 44, UiKit.SUN))
+	total.add_child(UiKit.label("%d" % int(Game.cup_stars.get(key, 0)), 44, UiKit.INK))
+	column.add_child(total)
+	return column
 
 ## Team banner: the team icon, every human's face, and the team's place (its best driver's).
 func _team_row(humans: Array[Racer], best_place: int) -> Control:

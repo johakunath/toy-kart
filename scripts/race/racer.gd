@@ -20,6 +20,10 @@ var place := 1
 var finished := false
 var finish_time := 0.0
 var lap_times: Array[float] = []
+## Who this racer is across the races of a cup: the player, or the computer driver's number.
+func cup_key() -> String:
+	return "p%d" % player_index if is_human else "ai%d" % ai_number
+
 ## Times this racer drove through a side lane (the checks report it).
 var side_lanes := 0
 var _in_side_lane := false

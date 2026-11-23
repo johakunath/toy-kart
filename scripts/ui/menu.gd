@@ -1,6 +1,7 @@
 extends Control
 ## The menu: three pages, all usable without reading.
-##   1. Mode:    Freie Fahrt / Rennen / Team (a race: all players against the toys) / Zeitfahren
+##   1. Mode:    Freie Fahrt / Rennen / Team (a race: all players against the toys) / Pokal
+##               (three races in a row, Game.cup) / Zeitfahren
 ##   2. Options: Tempo (Kind / Normal / Schnell) and, for races, the number of AI karts
 ##   3. Players: press a button to join; each player picks driver, kart, control mode and colour
 ## Pages 1 and 2 use normal button focus (any pad or keyboard). Page 3 is per device.
@@ -13,6 +14,8 @@ var _page := Page.MODE
 var _pages := {}
 var _mode_buttons: Array[Button] = []
 var _team_button: Button
+var _cup_button: Button
+var _track_block: Control
 var _options_title: Label
 var _options_icon: TextureRect
 var _speed_buttons: Array[Button] = []
@@ -59,15 +62,20 @@ func _build_mode_page() -> void:
 	row.add_theme_constant_override("separation", 44)
 	column.add_child(row)
 	var icons := ["wheel", "flag", "clock"]
+	var card := Vector2(340, 400)
+	row.add_theme_constant_override("separation", 30)
 	for i in 3:
-		var button := UiKit.card_button(icons[i], Game.MODE_NAMES[i], Vector2(400, 420), 230)
+		var button := UiKit.card_button(icons[i], Game.MODE_NAMES[i], card, 210)
 		button.pressed.connect(_on_mode_picked.bind(i))
 		row.add_child(button)
 		_mode_buttons.append(button)
 		if i == Game.Mode.RACE:
-			_team_button = UiKit.card_button("team", "Team", Vector2(400, 420), 230)
+			_team_button = UiKit.card_button("team", "Team", card, 210)
 			_team_button.pressed.connect(_on_mode_picked.bind(Game.Mode.RACE, true))
 			row.add_child(_team_button)
+			_cup_button = UiKit.card_button("trophy", "Pokal", card, 210)
+			_cup_button.pressed.connect(_on_mode_picked.bind(Game.Mode.RACE, false, true))
+			row.add_child(_cup_button)
 	var quit_row := HBoxContainer.new()
 	quit_row.alignment = BoxContainer.ALIGNMENT_END
 	column.add_child(quit_row)
@@ -75,9 +83,10 @@ func _build_mode_page() -> void:
 	quit.pressed.connect(func() -> void: Game.quit_clean())
 	quit_row.add_child(quit)
 
-func _on_mode_picked(mode: int, team := false) -> void:
+func _on_mode_picked(mode: int, team := false, cup := false) -> void:
 	Game.mode = mode as Game.Mode
 	Game.team_race = team
+	Game.cup = cup
 	UiKit.play(self, "select")
 	_show(Page.OPTIONS)
 
@@ -101,6 +110,7 @@ func _build_options_page() -> void:
 	# Strecke: each button shows the shape of its track.
 	var track_group := ButtonGroup.new()
 	var track_row := _option_row(column, "Strecke")
+	_track_block = track_row.get_parent() as Control
 	# Four or more tracks share the row: narrower buttons, smaller outlines.
 	var track_width := minf(500.0, (1820.0 - 24.0 * (Game.tracks.size() - 1)) / maxf(1.0, Game.tracks.size()))
 	var outline_size := 140.0 if track_width >= 480.0 else 112.0
@@ -366,7 +376,10 @@ func _start_race() -> void:
 		if slot.state == PlayerSlot.SlotState.READY:
 			Game.players.append(slot.config())
 	set_process(false)
-	Game.start_race()
+	if Game.cup:
+		Game.start_cup()
+	else:
+		Game.start_race()
 
 # --- Page switching ------------------------------------------------------------------------
 
@@ -383,10 +396,11 @@ func _show(page: Page) -> void:
 		(_pages[key] as Control).visible = key == page
 	match page:
 		Page.MODE:
-			(_team_button if Game.team_race else _mode_buttons[Game.mode]).grab_focus()
+			(_cup_button if Game.cup else _team_button if Game.team_race else _mode_buttons[Game.mode]).grab_focus()
 		Page.OPTIONS:
-			_options_title.text = "Team-Rennen" if Game.team_race else Game.MODE_NAMES[Game.mode]
-			_options_icon.texture = UiKit.icon("team" if Game.team_race else ["wheel", "flag", "clock"][Game.mode])
+			_options_title.text = "Pokal" if Game.cup else "Team-Rennen" if Game.team_race else Game.MODE_NAMES[Game.mode]
+			_options_icon.texture = UiKit.icon("trophy" if Game.cup else "team" if Game.team_race else ["wheel", "flag", "clock"][Game.mode])
+			_track_block.visible = not Game.cup  # a cup always drives its three tracks
 			_ai_row.visible = Game.mode == Game.Mode.RACE
 			_speed_buttons[Game.speed_class].button_pressed = true
 			var track_index := Game.tracks.find(Game.track)

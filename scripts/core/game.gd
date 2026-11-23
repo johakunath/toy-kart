@@ -32,6 +32,19 @@ var rumble_on := true
 ## Team race: all humans are one team against the AI toys (a race, scored by the best human).
 var team_race := false
 
+## Cup ("Pokal"): three races in a row, each a lap shorter than usual (about ten minutes in
+## all). Every racer gets stars by place in each race; after the last race everyone's stars are
+## added up and every player gets a trophy. The computer drivers stay the same for the cup.
+const CUP_TRACKS: Array[String] = ["kurvenkurs", "wohnzimmer", "riesenrunde"]
+var cup := false
+var cup_round := 0
+## Stars per racer (Racer.cup_key()): total so far and the last race's.
+var cup_stars := {}
+var cup_last := {}
+## The computer drivers and karts of the first race, kept for the whole cup.
+var cup_ai_drivers: Array[DriverDef] = []
+var cup_ai_karts: Array[KartDef] = []
+
 var drivers: Array[DriverDef] = []
 var karts: Array[KartDef] = []
 var tracks: Array[TrackDef] = []
@@ -167,6 +180,54 @@ func _save() -> void:
 	if save_enabled:
 		_settings.save(SETTINGS_PATH)
 
+# --- Cup ---------------------------------------------------------------------------------
+
+## Laps of the next race: a cup race is one lap shorter (never less than one).
+func race_laps() -> int:
+	if track == null:
+		return 1
+	return maxi(1, track.laps - 1) if cup else track.laps
+
+func cup_tracks() -> Array[TrackDef]:
+	var out: Array[TrackDef] = []
+	for id in CUP_TRACKS:
+		var def := track_by_id(id)
+		if def and def.id == id:
+			out.append(def)
+	if out.is_empty():
+		out = tracks.slice(0, 3)
+	return out
+
+func is_last_cup_race() -> bool:
+	return cup_round >= cup_tracks().size() - 1
+
+## Starts a new cup from its first race (the menu's "Pokal" card, and "Nochmal" after a cup).
+func start_cup() -> void:
+	cup = true
+	mode = Mode.RACE
+	team_race = false
+	cup_round = 0
+	cup_stars.clear()
+	cup_last.clear()
+	cup_ai_drivers.clear()
+	cup_ai_karts.clear()
+	track = cup_tracks()[0]
+	start_race()
+
+func next_cup_race() -> void:
+	cup_round = mini(cup_round + 1, cup_tracks().size() - 1)
+	track = cup_tracks()[cup_round]
+	start_race()
+
+## Hands out this race's stars: last place 1, every place ahead one more.
+func award_cup_stars(order: Array[Racer]) -> void:
+	cup_last.clear()
+	for i in order.size():
+		var key := order[i].cup_key()
+		var stars := order.size() - i
+		cup_last[key] = stars
+		cup_stars[key] = int(cup_stars.get(key, 0)) + stars
+
 # --- Scene switching -----------------------------------------------------------------------
 
 func start_race() -> void:
@@ -174,6 +235,7 @@ func start_race() -> void:
 	get_tree().change_scene_to_file(RACE_SCENE)
 
 func go_to_menu() -> void:
+	cup = false
 	get_tree().paused = false
 	get_tree().change_scene_to_file(MENU_SCENE)
 

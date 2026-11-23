@@ -66,12 +66,12 @@ func setup(p_racer: Racer, mode: int, total_racers: int, all_racers: Array[Racer
 	_lap_box = HBoxContainer.new()
 	_lap_box.add_theme_constant_override("separation", 10)
 	_lap_box.add_child(UiKit.icon_rect("flag", 72, Color.WHITE))
-	_lap = UiKit.label("1/%d" % Game.track.laps, 64, Color.WHITE, 16, UiKit.INK)
+	_lap = UiKit.label("1/%d" % Game.race_laps(), 64, Color.WHITE, 16, UiKit.INK)
 	_lap_box.add_child(_lap)
 	if racer.control_mode == Game.ControlMode.KID:
 		# Dots instead of numbers: one dot per lap, filled when he is on it or past it.
 		_lap.visible = false
-		for i in Game.track.laps:
+		for i in Game.race_laps():
 			var dot := Panel.new()
 			dot.custom_minimum_size = Vector2(44, 44)
 			dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -169,7 +169,7 @@ func refresh(race_time: float, delta: float) -> void:
 		var on := i < racer.display_lap()
 		_lap_dots[i].add_theme_stylebox_override("panel", UiKit.box(UiKit.SUN if on else Color(1, 1, 1, 0.35), 22, UiKit.INK, 4))
 	_place_faces(delta)
-	_lap.text = "%d/%d" % [racer.display_lap(), Game.track.laps]
+	_lap.text = "%d/%d" % [racer.display_lap(), Game.race_laps()]
 	if _time.visible:
 		_time.text = UiKit.format_time(racer.finish_time if racer.finished else race_time)
 	if _item_back.visible:

@@ -81,6 +81,11 @@ func _use_default_setup() -> void:
 		Game.speed_class = clampi(int(args.get("speed", "0")), 0, 2) as Game.SpeedClass
 		Game.ai_count = clampi(int(args.get("ai", "3")), 0, Game.MAX_AI)
 		Game.team_race = args.get("team", "0") == "1"
+		# --cup=1 plays all cup races one after another (--cup_round=N starts at race N, from 0).
+		if args.get("cup", "0") == "1" and not Game.cup:
+			Game.cup = true
+			Game.cup_round = clampi(int(args.get("cup_round", "0")), 0, Game.cup_tracks().size() - 1)
+			Game.track = Game.cup_tracks()[Game.cup_round]
 		# --control=kid|full|mixed   --input=none|left|right|random (what the kid "does")
 		var control: String = args.get("control", "kid")
 		for i in count:
@@ -149,6 +154,13 @@ func _spawn_racers() -> void:
 	if ai_karts.is_empty():
 		ai_karts = Game.karts.duplicate()
 	ai_karts.shuffle()
+	if Game.cup:
+		# The same toys race the whole cup, so their stars add up.
+		if Game.cup_ai_drivers.is_empty():
+			Game.cup_ai_drivers.assign(ai_drivers)
+			Game.cup_ai_karts.assign(ai_karts)
+		ai_drivers = Game.cup_ai_drivers
+		ai_karts = Game.cup_ai_karts
 	var skills := AI_SKILLS.duplicate()
 	skills.shuffle()
 	for i in ai_count:
@@ -170,7 +182,7 @@ func _spawn_racers() -> void:
 
 func _make_racer(kart_def: KartDef, driver: DriverDef, slot: int) -> Racer:
 	var racer := Racer.new()
-	racer.laps = Game.track.laps
+	racer.laps = Game.race_laps()
 	var kart := KART_SCENE.instantiate() as Kart
 	_karts.add_child(kart)
 	kart.setup(kart_def, driver)
@@ -483,9 +495,9 @@ func _check_laps() -> void:
 		var laps_done := racer.progress.lap
 		if laps_done > racer.lap_times.size():
 			racer.note_lap(race_time)
-			if laps_done >= Game.track.laps:
+			if laps_done >= Game.race_laps():
 				_finish_racer(racer)
-			elif racer.is_human and laps_done == Game.track.laps - 1:
+			elif racer.is_human and laps_done == Game.race_laps() - 1:
 				huds[humans.find(racer)].show_message("Letzte Runde!", 1.6, 120, UiKit.SUN)
 				Music.hurry()
 				UiKit.play(self, "select")
@@ -662,6 +674,10 @@ func _show_finish_screen() -> void:
 		picked += racer.kart.bricks_picked
 	if picked > 0:
 		Game.add_family_bricks(picked)
+	if Game.cup:
+		var order: Array[Racer] = racers.duplicate()
+		order.sort_custom(func(a: Racer, b: Racer) -> bool: return a.place < b.place)
+		Game.award_cup_stars(order)
 	_finish_screen.open(racers, humans, record, picked, Game.team_race and Game.mode == Game.Mode.RACE)
 
 # --- Headless smoke test (tools/check.ps1) -------------------------------------------------
@@ -731,6 +747,15 @@ func _smoke_tick(delta: float) -> void:
 		print("PERF %s  %dx%d  players=%d  avg=%.0f fps  1%%-low=%.0f fps  frames=%d" % [
 			RenderingServer.get_video_adapter_name(), size.x, size.y, humans.size(),
 			_perf_frames.size() / total, 1.0 / worst, _perf_frames.size()])
+	if Game.cup and state == State.FINISHED:
+		var stars := []
+		for racer in racers:
+			stars.append("%s=%d" % [racer.display_name, int(Game.cup_stars.get(racer.cup_key(), 0))])
+		print("SMOKE   cup race %d/%d stars: %s" % [Game.cup_round + 1, Game.cup_tracks().size(), ", ".join(stars)])
+		if ok and not Game.is_last_cup_race():
+			set_physics_process(false)
+			Game.next_cup_race()
+			return
 	print("SMOKE RESULT: %s" % ("PASS" if ok else "FAIL"))
 	set_physics_process(false)
 	Game.quit_clean(0 if ok else 1)
