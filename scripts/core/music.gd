@@ -1,29 +1,36 @@
 extends Node
-## Autoload "Music": one player for the background music, on the "Music" bus.
-## play("menu") / play("race") cross-fade; the race tune speeds up a little on the last lap.
+## Autoload "Music": the background music on the "Music" bus, with two players so tunes
+## cross-fade. play("menu") / play("race"); hurry() on the last lap fades into the faster
+## version of the race tune (Mario Kart style).
 ## Switched off with Game.music_on (options page). Test runs stay silent.
 
 const TRACKS := {
 	"menu": "res://assets/music/menu.wav",
 	"race": "res://assets/music/race.wav",
+	"race_final": "res://assets/music/race_final.wav",
 }
 const FADE_SECONDS := 0.8
+const SILENT := -40.0
 
-var _player: AudioStreamPlayer
+var _players: Array[AudioStreamPlayer] = []
+var _active := 0
 var _current := ""
-var _tween: Tween
+var _tweens: Array[Tween] = [null, null]
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS  # keeps playing in the pause menu
-	_player = AudioStreamPlayer.new()
-	_player.bus = &"Music"
-	add_child(_player)
+	for i in 2:
+		var player := AudioStreamPlayer.new()
+		player.bus = &"Music"
+		player.volume_db = SILENT
+		add_child(player)
+		_players.append(player)
 
-func play(track: String) -> void:
+func play(track: String, fade := FADE_SECONDS) -> void:
 	if not _allowed():
 		stop()
 		return
-	if track == _current and _player.playing:
+	if track == _current and _players[_active].playing:
 		return
 	_current = track
 	var stream := load(TRACKS[track]) as AudioStream
@@ -33,25 +40,26 @@ func play(track: String) -> void:
 		wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		wav.loop_begin = 0
 		wav.loop_end = int(wav.get_length() * wav.mix_rate)
-	_fade_to(-40.0, 0.25 if _player.playing else 0.0)
-	await get_tree().create_timer(0.25 if _player.playing else 0.0).timeout
-	_player.stream = stream
-	_player.pitch_scale = 1.0
-	_player.volume_db = -40.0
-	_player.play()
-	_fade_to(0.0, FADE_SECONDS)
+	var old := _active
+	_active = 1 - _active
+	var player := _players[_active]
+	player.stream = stream
+	player.volume_db = SILENT
+	player.play()
+	_fade(_active, 0.0, fade)
+	if _players[old].playing:
+		_fade(old, SILENT, fade, true)
 
-## Last lap: a touch faster and higher, like in the big kart games.
+## Last lap: cross-fade into the faster race tune.
 func hurry() -> void:
-	if _player.playing:
-		create_tween().tween_property(_player, "pitch_scale", 1.08, 1.0)
+	if _players[_active].playing and _current == "race":
+		play("race_final", 1.2)
 
 func stop(seconds := 1.2) -> void:
 	_current = ""
-	if not _player.playing:
-		return
-	_fade_to(-40.0, seconds)
-	_tween.tween_callback(_player.stop)
+	for i in 2:
+		if _players[i].playing:
+			_fade(i, SILENT, seconds, true)
 
 ## Called when the music switch changes.
 func refresh(track_if_on: String) -> void:
@@ -64,8 +72,11 @@ func _allowed() -> bool:
 	# Test and screenshot runs (save_enabled off) stay silent.
 	return Game.music_on and Game.save_enabled
 
-func _fade_to(db: float, seconds: float) -> void:
-	if _tween:
-		_tween.kill()
-	_tween = create_tween()
-	_tween.tween_property(_player, "volume_db", db, maxf(seconds, 0.01))
+func _fade(index: int, db: float, seconds: float, stop_after := false) -> void:
+	if _tweens[index]:
+		_tweens[index].kill()
+	var tween := create_tween()
+	tween.tween_property(_players[index], "volume_db", db, maxf(seconds, 0.01))
+	if stop_after:
+		tween.tween_callback(_players[index].stop)
+	_tweens[index] = tween

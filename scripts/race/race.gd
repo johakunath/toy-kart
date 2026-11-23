@@ -62,9 +62,11 @@ func _ready() -> void:
 		_split_screen_shadows()
 	Music.stop(0.6)  # quiet for the countdown; the race tune starts with "Los!"
 	if humans.size() > 1:
-		# Two listeners hear every engine twice in split screen: turn the human karts down a bit.
+		# Split screen: each player's own engine plays on their side (left half = left speaker),
+		# instead of as a 3D sound that both cameras would hear.
 		for racer in humans:
-			racer.kart.engine_db_offset = -3.0
+			racer.kart.engine_db_offset = -2.0
+			racer.kart.use_own_engine(_player_bus(humans.find(racer), humans.size()))
 	_update_places()
 	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 
@@ -163,6 +165,7 @@ func _spawn_racers() -> void:
 		racer.color = Color(0.75, 0.78, 0.85)
 		racer.display_name = driver.display_name if driver else "Computer %d" % (i + 1)
 		racer.kart.engine_db_offset = -9.0
+		racer.kart.use_doppler()
 		slot += 1
 
 func _make_racer(kart_def: KartDef, driver: DriverDef, slot: int) -> Racer:
@@ -294,6 +297,20 @@ func _place_bricks() -> void:
 			number += 1
 			holder.add_child(brick)
 			brick.global_transform = track.transform_at(s, lateral)
+
+## An audio bus per player half, panned to that side, feeding the Engines bus.
+func _player_bus(index: int, count: int) -> StringName:
+	var bus_name := StringName("Player%d" % (index + 1))
+	var bus := AudioServer.get_bus_index(bus_name)
+	if bus < 0:
+		AudioServer.add_bus()
+		bus = AudioServer.bus_count - 1
+		AudioServer.set_bus_name(bus, bus_name)
+		AudioServer.set_bus_send(bus, &"Engines")
+		AudioServer.add_bus_effect(bus, AudioEffectPanner.new())
+	var panner := AudioServer.get_bus_effect(bus, 0) as AudioEffectPanner
+	panner.pan = 0.0 if count < 2 else lerpf(-0.6, 0.6, float(index) / (count - 1))
+	return bus_name
 
 ## Split screen draws the world twice: the sun's shadows get 2 splits and a shorter reach,
 ## which costs much less and is hard to tell apart on a half screen.

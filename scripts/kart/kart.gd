@@ -129,6 +129,11 @@ var _star_left := 0.0
 var _shield: MeshInstance3D
 var _star_light: OmniLight3D
 var _pop_sound: AudioStreamPlayer3D
+## Engine sound: the recorded engine plus a high whine layer that fades in at speed.
+## In split screen a player's own kart plays both without position on that player's bus
+## (panned to their half); otherwise they are 3D sounds in the world.
+var _engine_main: Node
+var _engine_high: Node
 var _prev_position := Vector3.ZERO
 var _normal := Vector3.UP
 var _marker_time := 0.0
@@ -141,6 +146,15 @@ func _ready() -> void:
 	_build_flames()
 	_build_sparks()
 	_build_shield()
+	var high := AudioStreamPlayer3D.new()
+	high.name = "EngineHigh"
+	high.stream = _looped(load("res://assets/sfx/engine_high.wav") as AudioStreamWAV)
+	high.bus = &"Engines"
+	high.volume_db = -60.0
+	high.max_distance = 45.0
+	container.add_child(high)
+	_engine_main = engine_sound
+	_engine_high = high
 	_pop_sound = AudioStreamPlayer3D.new()
 	_pop_sound.name = "PopSound"
 	_pop_sound.stream = load("res://assets/sfx/pop.wav")
@@ -174,6 +188,7 @@ func setup(p_kart: KartDef, p_driver: DriverDef) -> void:
 	if kart_def and kart_def.engine_sound:
 		engine_sound.stream = kart_def.engine_sound
 		engine_sound.play()
+		(_engine_high as AudioStreamPlayer3D).play()
 	if kart_def:
 		horn_sound.pitch_scale = kart_def.horn_pitch
 		if driver_def:
@@ -671,13 +686,46 @@ func _effect_engine(delta: float) -> void:
 	var speed_factor := clampf(absf(linear_speed), 0.0, 1.0)
 	var throttle_factor := clampf(absf(input.z), 0.0, 1.0)
 	var target_volume := remap(speed_factor + (throttle_factor * 0.5), 0.0, 1.5, -15.0, -5.0) + engine_db_offset
-	engine_sound.volume_db = lerpf(engine_sound.volume_db, target_volume, delta * 5.0)
+	_engine_main.volume_db = lerpf(_engine_main.volume_db, target_volume, delta * 5.0)
 	var target_pitch := remap(speed_factor, 0.0, 1.0, 0.5, 3.0) * lerpf(0.85, 1.15, clampf(class_factor - 0.5, 0.0, 1.0))
 	if throttle_factor > 0.1:
 		target_pitch += 0.2
 	if _boost_left > 0.0:
 		target_pitch += 0.5
-	engine_sound.pitch_scale = lerpf(engine_sound.pitch_scale, target_pitch, delta * 2.0)
+	_engine_main.pitch_scale = lerpf(_engine_main.pitch_scale, target_pitch, delta * 2.0)
+	# The whine comes in over the top of the speed range and with every boost.
+	var high := smoothstep(0.55, 1.0, speed_factor) + (0.4 if _boost_left > 0.0 else 0.0)
+	var high_volume := lerpf(-40.0, -11.0, clampf(high, 0.0, 1.0)) + engine_db_offset
+	_engine_high.volume_db = lerpf(_engine_high.volume_db, high_volume, delta * 4.0)
+	var high_pitch := (0.8 + 0.45 * speed_factor + (0.15 if _boost_left > 0.0 else 0.0)) * lerpf(0.9, 1.1, clampf(class_factor - 0.5, 0.0, 1.0))
+	_engine_high.pitch_scale = lerpf(_engine_high.pitch_scale, high_pitch, delta * 3.0)
+
+## Split screen: this kart's engine plays without position on `bus` (panned to the player's half),
+## so each player hears their own kart from their side of the couch.
+func use_own_engine(bus: StringName) -> void:
+	for layer: Array in [[engine_sound, "_engine_main"], [_engine_high, "_engine_high"]]:
+		var world_player := layer[0] as AudioStreamPlayer3D
+		var own := AudioStreamPlayer.new()
+		own.stream = world_player.stream
+		own.bus = bus
+		own.volume_db = world_player.volume_db
+		own.pitch_scale = world_player.pitch_scale
+		container.add_child(own)
+		if world_player.playing:
+			own.play()
+		world_player.stop()
+		set(layer[1], own)
+
+## AI engines shift pitch as they pass (doppler).
+func use_doppler() -> void:
+	engine_sound.doppler_tracking = AudioStreamPlayer3D.DOPPLER_TRACKING_PHYSICS_STEP
+	(_engine_high as AudioStreamPlayer3D).doppler_tracking = AudioStreamPlayer3D.DOPPLER_TRACKING_PHYSICS_STEP
+
+static func _looped(wav: AudioStreamWAV) -> AudioStreamWAV:
+	wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	wav.loop_begin = 0
+	wav.loop_end = int(wav.get_length() * wav.mix_rate)
+	return wav
 
 func _effect_trails(delta: float) -> void:
 	var drift_intensity := absf(linear_speed - acceleration) + (absf(calculated_lean) * 2.0)

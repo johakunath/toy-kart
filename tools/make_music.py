@@ -3,7 +3,7 @@ No downloads, no licences: everything is synthesised here, like tools/make_sfx.p
 
     tools\\.venv\\Scripts\\python.exe tools\\make_music.py
 
-Writes assets/music/menu.wav and assets/music/race.wav (16-bit stereo). The .import files are
+Writes assets/music/menu.wav, race.wav and race_final.wav (16-bit stereo). The .import files are
 set to loop, so Godot plays them round and round without a gap.
 
 Songs are written as text: one bar per string, eight eighth notes per bar.
@@ -230,3 +230,5 @@ RACE_MELODY = [
 if __name__ == "__main__":
     save("menu.wav", render_song(100, MENU_CHORDS, MENU_MELODY, marimba, "calm"))
     save("race.wav", render_song(144, RACE_CHORDS, RACE_MELODY, lead, "race"))
+    # Last lap: the same tune, faster (Mario Kart style); the game cross-fades into it.
+    save("race_final.wav", render_song(166, RACE_CHORDS, RACE_MELODY, lead, "race"))

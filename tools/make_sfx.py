@@ -151,6 +151,17 @@ def rumble():
     save("rumble.wav", buf, 0.8)
 
 
+def engine_high():
+    """High engine layer, faded in at speed on top of the recorded engine: a buzzy toy-motor
+    whine. A seamless 1 s loop (whole cycles of every partial and of the flutter)."""
+    x = t(1.0)
+    f = 180
+    y = np.tanh(2.5 * np.sin(2 * np.pi * f * x)) * 0.6
+    y += 0.35 * np.sin(2 * np.pi * 2 * f * x) + 0.15 * np.sin(2 * np.pi * 3 * f * x)
+    y *= 0.8 + 0.2 * np.sin(2 * np.pi * 15 * x)  # cylinder flutter
+    save("engine_high.wav", y, 0.6)
+
+
 def turbo():
     """Turbo arrows: a short rising zip."""
     n = t(0.35)
@@ -216,6 +227,7 @@ if __name__ == "__main__":
     applause()
     rumble()
     turbo()
+    engine_high()
     sparkle_png()
     dot_png()
     leaf_png()
