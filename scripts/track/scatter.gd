@@ -38,6 +38,33 @@ func _ready() -> void:
 			multi.set_instance_color(j, tints[i % tints.size()])
 	multimesh = multi
 
+## Removes the copies standing within `radius` (on the ground) of `center` (world space), e.g.
+## trees where a roadside building is placed after the track has loaded.
+func clear_circle(center: Vector3, radius: float) -> void:
+	if multimesh == null or multimesh.mesh == null:
+		return
+	var keep: Array[Transform3D] = []
+	var colours := PackedColorArray()
+	for i in multimesh.instance_count:
+		var t := multimesh.get_instance_transform(i)
+		var p := global_transform * t.origin
+		if Vector2(p.x - center.x, p.z - center.z).length() >= radius:
+			keep.append(t)
+			if multimesh.use_colors:
+				colours.append(multimesh.get_instance_color(i))
+	if keep.size() == multimesh.instance_count:
+		return
+	var multi := MultiMesh.new()
+	multi.transform_format = MultiMesh.TRANSFORM_3D
+	multi.use_colors = multimesh.use_colors
+	multi.mesh = multimesh.mesh
+	multi.instance_count = keep.size()
+	for j in keep.size():
+		multi.set_instance_transform(j, keep[j])
+		if multi.use_colors:
+			multi.set_instance_color(j, colours[j])
+	multimesh = multi
+
 ## Indices of the placements that no keep-out sibling covers.
 func _free_copies() -> PackedInt32Array:
 	var blockers: Array[Node3D] = []

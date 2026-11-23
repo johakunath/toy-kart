@@ -26,11 +26,13 @@ const TRACKS := [
 			Vector2(-32, -6), Vector2(-18, -1),
 		],
 		"stars": [[58.0, [-1.8, 0.0, 1.8]], [124.0, [-1.4]], [186.0, [-1.8, 0.0, 1.8]], [240.0, [1.6]]],
-		"pads": [[12.0, [-1.4, 1.4]], [106.0, [0.0]], [200.0, [1.2]]],
+		"pads": [[12.0, [-1.4, 1.4]], [106.0, [0.0]], [200.0, [1.2]], [220.0, [-9.5]]],
 		"hills": [[112.0, 182.0, 2.2]],
 		"jump": 24.0,
 		"grass": true, "water": [[Vector2(13, -16), 7.0]],  # tools/track_nature.gd
 		"moment": {"kind": "train", "at": 68.0, "left": 18.0, "right": 20.0, "clearance": 5.0},
+		# A side lane on the inside of the west bend after the hill, round brick towers.
+		"fork": {"from": 194.0, "to": 248.0, "side": -1.0, "offset": 9.5, "lane": 2.6, "ease": 17.0},
 	},
 	{
 		# The long one: a big loop with an S, a wide hairpin and a long home straight. Two laps.
@@ -47,12 +49,14 @@ const TRACKS := [
 		],
 		"stars": [[40.0, [-1.8, 0.0, 1.8]], [140.0, [-1.4]], [205.0, [-1.8, 0.0, 1.8]], [300.0, [1.6]],
 			[395.0, [-1.4]], [480.0, [-1.8, 0.0, 1.8]]],
-		"pads": [[16.0, [-1.4, 1.4]], [120.0, [1.2]], [235.0, [0.0]], [325.0, [0.0]], [420.0, [-1.2]],
+		"pads": [[16.0, [-1.4, 1.4]], [112.0, [-10.0]], [120.0, [1.2]], [235.0, [0.0]], [325.0, [0.0]], [420.0, [-1.2]],
 			[505.0, [-1.4, 1.4]]],
 		"hills": [[150.0, 230.0, 2.6], [330.0, 400.0, 1.8]],
 		"jump": 46.0,
 		"grass": true, "water": [[Vector2(-3, -93), 13.0]],  # tools/track_nature.gd
 		"moment": {"kind": "tunnel", "from": 404.0, "to": 440.0},
+		# A side lane on the inside of the long left bend after the jump, round brick towers.
+		"fork": {"from": 82.0, "to": 150.0, "side": -1.0, "offset": 10.0, "lane": 2.6, "ease": 22.0},
 	},
 	{
 		# Indoors: a toy road through the living room, his toys as giants. Three zones (wooden
@@ -237,6 +241,7 @@ func _build(cfg: Dictionary) -> Error:
 		_add_grass(root, center, size)
 		TrackNature.add(root, self, cfg)
 		_add_trees(root, lo, hi)
+		_add_world_marks(root, cfg, length)  # brick towers on a side lane's island
 		_add_life(root, center, size)
 	_add_gate(root)
 	_add_moment(root, cfg)

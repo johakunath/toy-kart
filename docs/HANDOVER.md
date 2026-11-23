@@ -1,6 +1,6 @@
 # Handover
 
-Updated 23 Nov 2026, seventeenth round: fixes from the first playtest with him, six new toys.
+Updated 23 Nov 2026, after the seventeenth round: 3D station and shop, side lanes on every round track, 120 Hz physics, gifts that wait.
 
 ## Where it stands
 
@@ -11,6 +11,23 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## Since the seventeenth round
+
+- **Triple turbo on the HUD:** three small turbos next to the item slot go out one by one.
+- **Kurvenkurs and Riesenrunde have side lanes** too (Kurvenkurs: inside the west bend after
+  the hill). Riesenrunde: on the inside of the long left bend after the jump, round
+  brick towers, with a turbo arrow. Computer drivers now brake for the lane's own tighter curve.
+  Grass and flowers keep off side lanes.
+- **Dad's presents never get lost:** if the kid's hands are full when a present lands, it waits
+  and fills his item slot as soon as it is free (before, most presents flew back to dad).
+- **Physics runs at 120 steps a second** (was 60): less delay between pad and kart.
+- **Police station and Duplo shop are 3D** (built in Blender from simple shapes after the photos,
+  `tools/blender/build_duplo_buildings.py`, `docs/MODELS_3D.md`). The "tower" card was the
+  station seen end-on, so it is gone: the 3D station has that side. Trees in front of a building
+  are cleared. No measurable frame-rate cost.
+
+![Police station and Duplo shop in 3D](img/roadside-3d-2026-11-23.png)
 
 ## New in the seventeenth round (first playtest with him, 23 Nov)
 
@@ -35,7 +52,6 @@ Koba redraws, which wait for Codex (`docs/CODEX_REDO_POLIZEI_KOBA.md`, you paste
 - **Six new toys (3D, built in Blender):** Duplo-Junge and Bauarbeiterin (drivers), Krankenwagen
   and Zug (karts they sit in), Traktor (its own vehicle), Jumbo (flies like the Flieger).
   Pixal3D from the photos failed for tractor and airliner; Codex views are optional.
-- Still open: HUD count for the triple turbo; 3D models of the station and shop.
 
 ## New in the sixteenth round (phase F: more to play)
 
@@ -441,6 +457,10 @@ Tell Claude the answers by voice; they become the tuning list.
 4. Phase G (ROADMAP.md) or the rest of milestone 2: graphics presets, side lanes on more tracks.
 
 ## Notes for the next Claude session
+
+- Seven old helper copies are still in `.claude/worktrees/` (all merged into main). Removing them
+  was blocked by the permission system on 23 Nov 2026; they are safe to delete
+  (`git worktree remove` per copy, then delete their `worktree-agent-*` branches).
 
 - Read CLAUDE.md first. The Godot MCP server is configured in `.mcp.json` and loads at session
   start; this session used the Godot command line instead.

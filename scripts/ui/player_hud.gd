@@ -25,6 +25,8 @@ var _brick_dots: Array[Panel] = []
 var _message: Label
 var _message_left := 0.0
 var _item_pulse := 0.0
+var _charge_row: HBoxContainer    ## triple turbo: one small turbo per charge left, under the slot
+var _charges_shown := -1
 var _keys: PanelContainer
 var _keys_left := 9.0  ## the key help shows during the countdown and a few seconds after
 var _all: Array[Racer] = []
@@ -113,6 +115,13 @@ func setup(p_racer: Racer, mode: int, total_racers: int, all_racers: Array[Racer
 	_item.offset_right = -18
 	_item.offset_bottom = -18
 	_item_back.add_child(_item)
+	_charge_row = HBoxContainer.new()
+	_charge_row.alignment = BoxContainer.ALIGNMENT_BEGIN
+	_charge_row.add_theme_constant_override("separation", 2)
+	_charge_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	UiKit.pin(_charge_row, Control.PRESET_CENTER_BOTTOM, Vector2(86, -136), Vector2(156, 52))
+	_charge_row.visible = false
+	add_child(_charge_row)
 
 	# Bricks: a brick and ten dots that fill up (each brick = a little more speed).
 	var brick_row := HBoxContainer.new()
@@ -194,6 +203,7 @@ func refresh(race_time: float, delta: float) -> void:
 		else:
 			_item_pulse += delta * 8.0
 			_item_back.scale = _item_back.scale.lerp(Vector2.ONE * (1.0 + sin(_item_pulse) * 0.06), minf(1.0, delta * 10.0))
+	_show_charges()
 	if _keys.visible:
 		_keys_left -= delta
 		_keys.modulate.a = clampf(_keys_left, 0.0, 1.0)
@@ -289,6 +299,20 @@ func _on_bricks_changed(count: int) -> void:
 	for i in _brick_dots.size():
 		var on := i < count
 		_brick_dots[i].add_theme_stylebox_override("panel", UiKit.box(Color("e8483f") if on else Color(1, 1, 1, 0.35), 9, UiKit.INK, 3))
+
+## Triple turbo: small turbos under the slot, one per turbo left; using one makes the slot pop.
+func _show_charges() -> void:
+	var count := racer.kart.turbo_charges if _shown_item == Items.TRIPLE_TURBO and _roulette <= 0.0 else 0
+	if count == _charges_shown:
+		return
+	if count < _charges_shown and count > 0:
+		_item_back.scale = Vector2.ONE * 1.3
+	_charges_shown = count
+	for child in _charge_row.get_children():
+		child.queue_free()
+	for i in count:
+		_charge_row.add_child(UiKit.icon_rect("item_turbo", 48, UiKit.SUN))
+	_charge_row.visible = count > 0
 
 func _on_item_changed(item: int) -> void:
 	_shown_item = item
