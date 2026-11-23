@@ -12,6 +12,23 @@ The couch test below is the gate for milestone 1.
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
 
+## Nineteenth round (24 Nov 2026): toy models fixed
+
+![Toy models: photo, before, Blender, local AI, Codex views](img/toy-models-2026-11-24b.png)
+
+- **Police car and Koba** rebuilt from the new Codex drawings (Pixal3D): police car full length
+  with clean 3D "POLIZEI" letters on both sides; Koba with a friendly face, warm orange.
+- **Sanitäter** from the Codex drawings: clean face, short legs. He drives the Krankenwagen
+  (new `DriverDef.favourite_kart`, picked with him in the menu and for the computer), siren horn.
+- **Krankenwagen roof opens:** shut at the start, springs open on "go" with a pop, snaps shut
+  and open again on the horn (`KartVisual.animate_roof`, any kart with a `roof` node).
+- **Traktor** from local FLUX views of the real photos + Pixal3D (best of three tries), recoloured.
+- **Zug** has a rounded roof edge (Blender; the AI trains hid the driver from the camera).
+- **Duplo legs shorter** on Mädchen, Bauarbeiterin; Duplo-Flieger portrait shows both wings.
+- Lesson (in `docs/MODELS_3D.md`): Codex views for figures and print, local views for hard
+  vehicles, Blender where parts move or the driver must stay visible.
+- Not yet tested by hand: picking the Sanitäter in the menu selects the Krankenwagen.
+
 ## Eighteenth round (24 Nov 2026)
 
 ![Splash, mode page, players page, toy fixes](img/overview-menu-2026-11-24.jpg)
@@ -27,7 +44,6 @@ The couch test below is the gate for milestone 1.
 - **X-ray:** your own kart shows through as a silhouette in your colour when hidden.
 - **Toy fixes:** Duplo-Flieger portrait now matches the toy; Jumbo has windows and a cockpit;
   tractor front rebuilt (bonnet, grille, lights, lowered bucket).
-- Still waiting on you: Codex redraw of the police car and Koba (`docs/CODEX_REDO_POLIZEI_KOBA.md`).
 
 ## Since the seventeenth round
 

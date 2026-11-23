@@ -16,8 +16,8 @@ He had fun and likes it. Being fixed now unless marked "waits".
 | Balance | The front one or two karts take all item boxes (pick-up range too big); 3rd and 4th get nothing and fall further behind | Fixing |
 | Items | A boost you collect and fire whenever you want | Fixing |
 | Vehicles | Remove pickups, trucks, buses, jeeps: keep only our own toys and open karts/cabrios/race cars a toy can sit in (changes the karts decision) | Done: pickup, truck, bus and jeep removed; go-karts, racing car, oldtimer and motorcycle stay |
-| Police car | Too short and a bit small; looks like it floats (shadow/ground contact) | Size and ground: done (1.15 times bigger, 1.25 times longer, wheels stay on the road, contact shadow; also motorbike and planes; `docs/img/police-car-2026-11-23.png`). Lettering and length of the drawing: Codex, `docs/CODEX_REDO_POLIZEI_KOBA.md`, then local 3D |
-| Koba | Face looks bulky and odd: new Codex views, then rebuild the 3D model locally | Waits for Codex |
+| Police car | Too short and a bit small; looks like it floats (shadow/ground contact) | Size and ground: done (1.15 times bigger, 1.25 times longer, wheels stay on the road, contact shadow; also motorbike and planes; `docs/img/police-car-2026-11-23.png`). Lettering and length: done (Codex views + Pixal3D, 3D "POLIZEI" letters, `docs/img/toy-models-2026-11-24b.png`) |
+| Koba | Face looks bulky and odd: new Codex views, then rebuild the 3D model locally | Done: Codex views + Pixal3D, warm orange (`docs/img/toy-models-2026-11-24b.png`) |
 | Menu | Two players: the panels swap sides when clicking. Both on keyboard: grown-up left with WASD, kid right with arrow keys; easy to switch | Done: auto-swap removed, W A S D left / arrows right, swap button + Tab |
 | Menu | Pictures of the real keys and pad buttons instead of written key names; less text overall | Done: `tools/make_key_icons.py`, `KeyHints` |
 | Track | New photos: blue police station and the Duplo shop become props beside the track, not vehicles | Done: photo cards beside the start straight (`scripts/track/roadside.gd`, `tools/make_props.py`, `docs/img/roadside-2026-11-23.png`). Then 3D models built in Blender (`tools/blender/build_duplo_buildings.py`); the tower card was the station's end view and is gone; trees in front are cleared |
@@ -37,7 +37,6 @@ He had fun and likes it. Being fixed now unless marked "waits".
 | --- | --- | --- |
 | Test | Play with his small pad (only your Xbox pad and simulated pads so far) | Milestone 5 |
 | Tuning | Kid mode after watching him: how strongly the stick answers, edge strip, AI gaps, Kid speed | Milestone 5 |
-| Art | Police car: the "POLICE" lettering on the 3D model is scrambled (AI texture). Fix by painting the lettering into its texture in Blender, or new views | When it bothers him |
 | Art | Vehicle proportions in FLUX pictures are off (police car, motorbike); fine for portraits, not for new views | If new vehicle views are needed |
 | Art | Portraits also on the HUD and the finish podium (the menu has them since round ten) | Milestone 2 |
 | Sound | Listen and tune: volume of music vs. effects, rumble, turbo sound. Real recorded sounds if the generated ones feel cheap | Milestone 2 |
