@@ -9,6 +9,15 @@ class_name TrackMoments extends RefCounted
 ##   {"kind": "tunnel", "from": s, "to": s}
 ##       A rainbow caterpillar the road runs through, mouth first. scripts/track/tunnel.gd adds
 ##       the engine echo, the twinkling lights and the eyes that watch the karts.
+##   {"kind": "pillows", "at": s, "teddy": [metres after s, metres sideways]}
+##       The pillow fort round the sofa-cushion jump whose lip is at s: two towers of fat
+##       cushions with a flag garland high over the road, gold tassels on the cushion's
+##       corners, and a giant teddy beside the landing. scripts/track/pillow_fort.gd makes the
+##       teddy cheer when a kart flies and puffs feathers where karts land.
+##   {"kind": "owl", "at": s}
+##       A tree gate in the forest: two giant trees, a thick branch high across the road with
+##       an owl on it. scripts/track/forest_friends.gd turns the owl's head after the karts and
+##       sends a parade of forest animals over the branch when a player comes.
 ##
 ## Nothing here has collision: the invisible walls keep every kart on the road, so a moment can
 ## never stop, block or reset anyone.
@@ -30,6 +39,11 @@ const C_STONE_DARK := Color("7d8392")
 const C_HILL := Color("2f9e3c")
 const C_HILL_LIGHT := Color("4cc456")
 const C_ROCK := Color("8f8478")
+const C_BARK := Color("8b4f24")
+const C_BARK_LIGHT := Color("b06a32")
+const C_LEAF := Color("2fa83c")
+const C_LEAF_LIGHT := Color("5fd04a")
+const PILLOW_COLORS: Array[Color] = [C_YELLOW, C_BLUE, C_GREEN, C_PURPLE, C_ORANGE, C_PINK]
 const RAINBOW: Array[Color] = [C_RED, C_ORANGE, C_YELLOW, C_GREEN, C_BLUE, C_PURPLE]
 const BULBS: Array[Color] = [Color("ffd23a"), Color("ff5c8a"), Color("3ee0ff"), Color("7dff5a"), Color("ff8a1e")]
 
@@ -50,6 +64,19 @@ const SKIN := 0.3
 const SEGMENT := 4           ## slices per body segment (3 m)
 const BULGE := 0.45
 const HEAD_BULGE := 1.1
+
+## Pillow fort: towers this far before the lip and out from the centre line; the garland's
+## lowest point this high over the lip (the chase camera flies at most ~6 m over it).
+const PILLOW_TOWER_BEFORE := 3.0
+const PILLOW_TOWER_OUT := 9.0
+const PILLOW_LAYERS := 6
+const GARLAND_CLEAR := 9.5
+const GARLAND_SAG := 1.0
+
+## Owl tree gate: trunks this far from the centre line, branch this high over the road.
+const OWL_TRUNK_OUT := 6.6
+const OWL_BRANCH_HEIGHT := 7.2
+const OWL_BRANCH_R := 0.7
 
 var _pos: PackedVector3Array
 var _right: PackedVector3Array
@@ -85,6 +112,10 @@ func build(root: Node3D, cfg: Dictionary) -> void:
 			node = _build_train(root, moment)
 		"tunnel":
 			node = _build_tunnel(root, moment)
+		"pillows":
+			node = _build_pillows(root, moment)
+		"owl":
+			node = _build_owl(root, moment)
 		_:
 			push_error("Unknown moment: %s" % moment)
 			return
@@ -484,7 +515,231 @@ func _lip(j: int, facing: float, color: Color, width: float) -> void:
 		var c1 := _ring(j, k + 1, 0.0, 0.0)
 		_face([b0, b1, c1, c0], (_ring_normal(j, k, 0.0) + n).normalized(), color)
 
+# --- Pillow fort (living room) ---------------------------------------------------------------
+
+func _build_pillows(root: Node3D, m: Dictionary) -> Node3D:
+	var lip := _slice(m["at"])
+	var ground := _road_y - 0.03
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3601
+	var road_top := _at(lip, 0.0, 0.0).y
+
+	# Two towers of fat cushions just before the lip, one on each side of the road.
+	var tower := lip - int(round(PILLOW_TOWER_BEFORE / _step))
+	var fwd := _forward(tower)
+	var tops: Array[Vector3] = []
+	for side: float in [-1.0, 1.0]:
+		var base := _flat(tower, side * PILLOW_TOWER_OUT, 0.0)
+		var y := ground
+		var top := Vector3.ZERO
+		for k in PILLOW_LAYERS:
+			var half := Vector3(2.7 - k * 0.16, 0.95, 2.5 - k * 0.12)
+			var yaw := rng.randf_range(-0.4, 0.4) + atan2(fwd.x, fwd.z)
+			var color := PILLOW_COLORS[(k * 2 + (0 if side < 0.0 else 3)) % PILLOW_COLORS.size()]
+			var c := base + Vector3(rng.randf_range(-0.3, 0.3), y + half.y * 0.82, rng.randf_range(-0.3, 0.3))
+			_pillow(c, Basis(Vector3.UP, yaw) * Basis(Vector3.FORWARD, rng.randf_range(-0.05, 0.05)), half, color)
+			y += half.y * 1.6
+			top = c + Vector3.UP * half.y * 0.8
+		tops.append(top)
+
+	# A candy-striped pole on each tower and a garland of flags between them, high over the road.
+	var pole_top := road_top + GARLAND_CLEAR + GARLAND_SAG
+	var ends: Array[Vector3] = []
+	for top in tops:
+		var height := maxf(1.5, pole_top - top.y)
+		var stripes := int(ceil(height / 0.6))
+		for k in stripes:
+			var y0 := top.y + height * k / stripes
+			var y1 := top.y + height * (k + 1) / stripes
+			_tube(Vector3(top.x, y0, top.z), Vector3(top.x, y1, top.z), 0.16, 0.16, C_RED if k % 2 == 0 else C_WHITE, 8)
+		var knob := Vector3(top.x, top.y + height, top.z)
+		_ball(knob + Vector3.UP * 0.2, Vector3.ONE * 0.38, C_YELLOW)
+		ends.append(knob)
+	var a := ends[0]
+	var b := ends[1]
+	var sag := func(t: float) -> Vector3: return a.lerp(b, t) - Vector3.UP * GARLAND_SAG * 4.0 * t * (1.0 - t)
+	var steps := 24
+	for k in steps:
+		_beam(sag.call(float(k) / steps), sag.call(float(k + 1) / steps), fwd, 0.05, C_WHITE)
+	var span := a.distance_to(b)
+	var flags := int(span / 1.05)
+	var across := (b - a).normalized()
+	for k in flags:
+		var t0 := (k + 0.18) / flags
+		var t1 := (k + 0.82) / flags
+		var p0: Vector3 = sag.call(t0)
+		var p1: Vector3 = sag.call(t1)
+		var tip := (p0 + p1) * 0.5 + Vector3.DOWN * 1.15
+		var n := across.cross(Vector3.DOWN).normalized()
+		var color := RAINBOW[k % RAINBOW.size()]
+		_face([p0, p1, tip], n, color)
+		_face([p0, p1, tip], -n, color)
+
+	# Gold tassels on the four corners of the cushion the road runs over.
+	var from_i: int = m.get("from_slice", lip - int(12.0 / _step))
+	var to_i: int = m.get("to_slice", lip + int(24.0 / _step))
+	for i: int in [from_i, to_i]:
+		for side: float in [-1.0, 1.0]:
+			var corner := _at(i, side * (_half_width + 0.75), 0.25)
+			_ball(corner, Vector3(0.42, 0.42, 0.42), C_YELLOW)
+			_tube(corner - Vector3.UP * 0.2, corner - Vector3.UP * 1.0, 0.18, 0.42, C_ORANGE, 10)
+
+	var fort := PillowFort.new()
+	fort.name = "PillowFort"
+	var teddy: Array = m.get("teddy", [8.0, 10.0])
+	var ti := lip + int(round(float(teddy[0]) / _step))
+	var d: float = teddy[1]
+	fort.teddy_spot = _flat(ti, d, ground)
+	fort.teddy_facing = (-_right[posmod(ti, _count)] * signf(d) - _forward(ti) * 0.55).normalized()
+	fort.lip_point = _at(lip, 0.0, 0.0)
+	root.add_child(fort)
+	fort.owner = root
+	print("pillow fort: lip at s=%.0f, garland %.1f m over the lip, %d flags" % [float(m["at"]), a.y - GARLAND_SAG - road_top, flags])
+	return fort
+
+## A fat cushion: square seen from above with round corners, thick in the middle and thin at
+## the edges, with a gold tassel on each corner.
+func _pillow(c: Vector3, basis: Basis, half: Vector3, color: Color) -> void:
+	var rings := 8
+	var segs := 24
+	var shape := func(eta: float, om: float) -> Vector3:
+		var ce := _spow(cos(eta), 0.9)
+		return Vector3(half.x * ce * _spow(cos(om), 0.28), half.y * _spow(sin(eta), 0.9), half.z * ce * _spow(sin(om), 0.28))
+	var normal := func(eta: float, om: float) -> Vector3:
+		if absf(eta) > PI * 0.5 - 0.001:
+			return Vector3.UP * signf(eta)
+		var h := 0.004
+		var n: Vector3 = ((shape.call(eta, om + h) - shape.call(eta, om - h)) as Vector3).cross(shape.call(eta + h, om) - shape.call(eta - h, om))
+		var q: Vector3 = shape.call(eta, om)
+		if n.dot(q) < 0.0:
+			n = -n
+		return n.normalized()
+	for r in rings:
+		var e0 := PI * r / rings - PI * 0.5
+		var e1 := PI * (r + 1) / rings - PI * 0.5
+		for s in segs:
+			var o0 := TAU * s / segs
+			var o1 := TAU * (s + 1) / segs
+			var v: Array[Vector3] = []
+			var normals: Array[Vector3] = []
+			for p: Vector2 in [Vector2(e0, o0), Vector2(e0, o1), Vector2(e1, o1), Vector2(e1, o0)]:
+				v.append(c + basis * (shape.call(p.x, p.y) as Vector3))
+				normals.append(basis * (normal.call(p.x, p.y) as Vector3))
+			if r == 0:
+				_poly([v[0], v[2], v[3]], [normals[0], normals[2], normals[3]], color)
+			elif r == rings - 1:
+				_poly([v[0], v[1], v[2]], [normals[0], normals[1], normals[2]], color)
+			else:
+				_poly(v, normals, color)
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			_ball(c + basis * Vector3(sx * half.x * 0.97, 0.0, sz * half.z * 0.97), Vector3.ONE * 0.24, C_YELLOW, null, 4, 8)
+	# A button in the middle of the top.
+	_ball(c + basis * Vector3(0.0, half.y * 0.97, 0.0), Vector3(0.3, 0.1, 0.3), color.darkened(0.25), null, 3, 8)
+
+static func _spow(v: float, e: float) -> float:
+	return signf(v) * pow(absf(v), e)
+
+# --- Owl tree gate (forest) ------------------------------------------------------------------
+
+func _build_owl(root: Node3D, m: Dictionary) -> Node3D:
+	var i := _slice(m["at"])
+	var across := _right[i]
+	var along := _forward(i)
+	var ground := _road_y - 0.05
+	var branch_y := _road_y + OWL_BRANCH_HEIGHT
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7007
+	var holes: Array[Vector3] = []
+	for side: float in [-1.0, 1.0]:
+		var foot := _flat(i, side * OWL_TRUNK_OUT, ground - 0.4)
+		var top := foot + Vector3.UP * (OWL_BRANCH_HEIGHT + 5.0)
+		_tube(foot, top, 1.35, 0.85, C_BARK, 14)
+		# Roots spreading out at the foot.
+		for k in 5:
+			var a := TAU * k / 5.0 + 0.4
+			var out := (across * cos(a) + along * sin(a))
+			if out.dot(across * side) < -0.3:
+				continue  # no roots across the road
+			_tube(foot + Vector3.UP * 1.6 + out * 0.6, foot + out * 2.6 + Vector3.UP * 0.25, 0.55, 0.2, C_BARK, 8)
+		# A knothole facing the road just above the branch: the animals come out of it.
+		var face := -across * side
+		var hole_c := _flat(i, side * (OWL_TRUNK_OUT - 1.08), branch_y + 1.05)
+		_ball(hole_c - face * 0.12, Vector3(0.62, 0.8, 0.62), C_BARK.darkened(0.25), null, 4, 10)
+		_ball(hole_c + face * 0.06, Vector3(0.45, 0.62, 0.45), C_BLACK, null, 4, 10)
+		holes.append(_flat(i, side * (OWL_TRUNK_OUT - 1.0), branch_y + OWL_BRANCH_R))
+		# The crown: big round leaf balls in two greens, with red apples.
+		for k in 7:
+			var a := TAU * k / 7.0 + rng.randf() * 0.5
+			var r := rng.randf_range(2.4, 3.3)
+			var c := top + (across * cos(a) + along * sin(a)) * rng.randf_range(1.8, 2.8) + Vector3.UP * rng.randf_range(-0.6, 1.6)
+			_ball(c, Vector3(r, r * 0.9, r), C_LEAF if k % 2 == 0 else C_LEAF_LIGHT, null, 6, 12)
+		_ball(top + Vector3.UP * 2.8, Vector3(3.0, 2.6, 3.0), C_LEAF_LIGHT, null, 6, 12)
+		for k in 9:
+			var a := TAU * k / 9.0 + rng.randf() * 0.4
+			var c := top + (across * cos(a) + along * sin(a)) * 4.3 + Vector3.UP * rng.randf_range(-0.8, 2.2)
+			_ball(c, Vector3.ONE * 0.42, C_RED, null, 4, 8)
+		# Toadstools round the foot.
+		for k in 3:
+			var a := TAU * (k + 0.3) / 3.0 + rng.randf() * 0.6
+			var at := foot + (across * cos(a) + along * sin(a)) * rng.randf_range(2.6, 3.4)
+			if (at - _flat(i, 0.0, at.y)).dot(across * side) < OWL_TRUNK_OUT - 0.5:
+				continue  # keep off the road side
+			at.y = ground
+			var h := rng.randf_range(0.9, 1.5)
+			_tube(at, at + Vector3.UP * h, 0.28, 0.34, C_WHITE, 8)
+			var cap := at + Vector3.UP * h
+			_ball(cap, Vector3(0.95, 0.6, 0.95) * (h / 1.2), C_RED, null, 5, 12)
+			for dot in 5:
+				var da := TAU * dot / 5.0
+				_ball(cap + Vector3(cos(da) * 0.55, 0.38, sin(da) * 0.55) * (h / 1.2), Vector3(0.16, 0.08, 0.16), C_WHITE, null, 3, 6)
+	# The branch from tree to tree, a little arched, with leafy tufts at both ends.
+	var p0 := _flat(i, -OWL_TRUNK_OUT + 0.6, branch_y)
+	var p1 := _flat(i, OWL_TRUNK_OUT - 0.6, branch_y)
+	var mid := (p0 + p1) * 0.5 + Vector3.UP * 0.35
+	_tube(p0, mid, OWL_BRANCH_R * 1.15, OWL_BRANCH_R, C_BARK_LIGHT, 12)
+	_tube(mid, p1, OWL_BRANCH_R, OWL_BRANCH_R * 1.15, C_BARK_LIGHT, 12)
+	_ball(mid, Vector3.ONE * OWL_BRANCH_R, C_BARK_LIGHT, null, 5, 12)
+	for side: float in [-1.0, 1.0]:
+		var at := _flat(i, side * (OWL_TRUNK_OUT - 2.6), branch_y - 0.2) + along * 0.3
+		_tube(at, at + Vector3.DOWN * 1.1 + along * 0.4, 0.12, 0.08, C_BARK, 6)
+		_ball(at + Vector3.DOWN * 1.4 + along * 0.5, Vector3(0.7, 0.55, 0.7), C_LEAF_LIGHT, null, 4, 10)
+
+	var friends := ForestFriends.new()
+	friends.name = "ForestFriends"
+	friends.hole_a = holes[0]
+	friends.hole_b = holes[1]
+	friends.owl_spot = mid + Vector3.UP * (OWL_BRANCH_R - 0.05)
+	friends.facing = -along
+	friends.road_point = _pos[i]
+	root.add_child(friends)
+	friends.owner = root
+	print("owl tree gate: s=%.0f, branch %.1f m over the road, trunks %.1f m out" % [float(m["at"]), OWL_BRANCH_HEIGHT, OWL_TRUNK_OUT])
+	return friends
+
 # --- Shared helpers --------------------------------------------------------------------------
+
+## A point `d` metres to the right of slice i's centre line, at height y (not following the bank).
+func _flat(i: int, d: float, y: float) -> Vector3:
+	var k := posmod(i, _count)
+	return Vector3(_pos[k].x, y, _pos[k].z) + _right[k] * d
+
+## A round tube from p0 (radius r0) to p1 (radius r1), closed at p1.
+func _tube(p0: Vector3, p1: Vector3, r0: float, r1: float, color: Color, segs := 12) -> void:
+	var axis := (p1 - p0).normalized()
+	var ref := Vector3.FORWARD if absf(axis.dot(Vector3.FORWARD)) < 0.9 else Vector3.RIGHT
+	var u := axis.cross(ref).normalized()
+	var w := axis.cross(u)
+	var slope := (r0 - r1) / maxf(p0.distance_to(p1), 0.001)
+	for k in segs:
+		var a0 := TAU * k / segs
+		var a1 := TAU * (k + 1) / segs
+		var d0 := u * cos(a0) + w * sin(a0)
+		var d1 := u * cos(a1) + w * sin(a1)
+		var n0 := (d0 + axis * slope).normalized()
+		var n1 := (d1 + axis * slope).normalized()
+		_poly([p0 + d0 * r0, p0 + d1 * r0, p1 + d1 * r1, p1 + d0 * r1], [n0, n1, n1, n0], color)
+		_poly([p1, p1 + d0 * r1, p1 + d1 * r1], [axis, axis, axis], color)
 
 func _slice(s: float) -> int:
 	return posmod(int(round(s / _step)), _count)

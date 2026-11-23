@@ -31,6 +31,9 @@ const TRACK := {
 	"stars": [[8, [-1.6, 0.0, 1.6]], [18, [-1.2]], [22, [-1.6, 0.0, 1.6]], [32, [1.4]], [38, [-1.6, 0.0, 1.6]]],
 	# Turbo arrows: [metres along the racing line, sideways offsets in metres]
 	"pads": [[12.0, [-1.4, 1.4]], [108.0, [-1.2]], [210.0, [0.0]]],
+	# Signature moment (tools/track_moments.gd): the owl tree gate over the middle of a straight
+	# tile; the tiles on both sides stay empty for the trees.
+	"moment": {"kind": "owl", "tile": 7},
 }
 
 func _process(_delta: float) -> bool:
@@ -114,6 +117,22 @@ func _build(def: Dictionary) -> Error:
 		else:
 			grid.set_cell_item(Vector3i(c.x, 0, c.y), ITEM_CORNER, _yaw_index(grid, _corner_turns(-d_in, d_out)))
 
+	# The moment's trees stand on the tiles beside its tile: keep those free.
+	var keep_free := {}
+	var moment_tile := {}
+	if def.has("moment"):
+		moment_tile = tiles[int(def["moment"]["tile"])]
+		if moment_tile["dir_in"] != moment_tile["dir_out"]:
+			push_error("The moment needs a straight tile.")
+			return ERR_INVALID_DATA
+		var d_in: Vector2i = moment_tile["dir_in"]
+		for side: Vector2i in [Vector2i(d_in.y, -d_in.x), Vector2i(-d_in.y, d_in.x)]:
+			var c: Vector2i = moment_tile["cell"] + side
+			if used.has(c):
+				push_error("The moment's trees would stand on the road at %s." % c)
+				return ERR_INVALID_DATA
+			keep_free[c] = true
+
 	# Scenery around the track: grass next to the road, forest and a few tents further out.
 	var min_c := Vector2i(999, 999)
 	var max_c := Vector2i(-999, -999)
@@ -134,6 +153,9 @@ func _build(def: Dictionary) -> Error:
 						near_track = true
 			var item := ITEM_FOREST
 			var roll := rng.randf()
+			if keep_free.has(c):
+				grid.set_cell_item(Vector3i(x, 0, z), ITEM_EMPTY)
+				continue
 			if near_track:
 				item = ITEM_EMPTY if roll < 0.8 else ITEM_TENTS
 			elif roll < 0.12:
@@ -188,6 +210,8 @@ func _build(def: Dictionary) -> Error:
 	for node in [grid, path, stars]:
 		node.owner = root
 	TrackBuildCommon.add_pads(root, curve, def["pads"], -0.15)
+	if def.has("moment"):
+		_add_moment(root, def, curve, _cell_center(moment_tile["cell"]))
 
 	# Warm evening light with long tree shadows across the road.
 	var area_lo := _cell_center(min_c)
@@ -200,3 +224,24 @@ func _build(def: Dictionary) -> Error:
 	print("track written: res://scenes/tracks/%s.tscn" % def["name"], "  tiles=", tiles.size(), "  line length=%.1f m" % curve.get_baked_length(), "  stars=", star_number - 1, "  err=", err)
 	root.free()
 	return err
+
+## The signature moment over the given tile centre. tools/track_moments.gd builds it from road
+## slices: here they come from the racing line (flat road, no banking).
+func _add_moment(root: Node3D, def: Dictionary, curve: Curve3D, at: Vector3) -> void:
+	var length := curve.get_baked_length()
+	var count := int(round(length / 0.75))
+	var pos := PackedVector3Array()
+	var right := PackedVector3Array()
+	pos.resize(count)
+	right.resize(count)
+	for i in count:
+		pos[i] = curve.sample_baked(length * i / count, true)
+	for i in count:
+		var dir := pos[(i + 1) % count] - pos[(i - 1 + count) % count]
+		dir.y = 0.0
+		right[i] = dir.normalized().cross(Vector3.UP).normalized()
+	var flat := PackedFloat32Array()
+	flat.resize(count)
+	var moment: Dictionary = (def["moment"] as Dictionary).duplicate()
+	moment["at"] = curve.get_closest_offset(at)
+	TrackMoments.new(pos, right, flat, flat, length / count, -0.15, 4.5 * SCALE).build(root, {"id": def["name"], "moment": moment})

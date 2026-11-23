@@ -74,6 +74,7 @@ const TRACKS := [
 		"zones": [[0.0, "holz"], [116.0, "teppich"], [196.0, "spielecke"], [300.0, "holz"]],
 		"arch": 192.0,
 		"fork": {"from": 204.0, "to": 292.0, "side": -1.0, "offset": 10.0, "lane": 2.6, "ease": 22.0},
+		"moment": {"kind": "pillows", "at": 36.0, "teddy": [8.0, 10.0]},
 	},
 ]
 
@@ -875,7 +876,15 @@ func _add_gate(root: Node3D) -> void:
 
 # --- Signature moments ---------------------------------------------------------------------
 
-## The track's one special thing (toy train bridge, caterpillar tunnel): see tools/track_moments.gd.
+## The track's one special thing (toy train bridge, caterpillar tunnel, pillow fort): see
+## tools/track_moments.gd.
 func _add_moment(root: Node3D, cfg: Dictionary) -> void:
-	if cfg.has("moment"):
-		TrackMoments.new(_pos, _right, _bank, _curv, STEP, ROAD_Y, HALF_WIDTH).build(root, cfg)
+	if not cfg.has("moment"):
+		return
+	var moment: Dictionary = (cfg["moment"] as Dictionary).duplicate()
+	if _ramp_from >= 0:
+		moment["from_slice"] = _ramp_from  # where the jump (the sofa cushion) starts and ends
+		moment["to_slice"] = _land_to
+	var with_slices := cfg.duplicate()
+	with_slices["moment"] = moment
+	TrackMoments.new(_pos, _right, _bank, _curv, STEP, ROAD_Y, HALF_WIDTH).build(root, with_slices)
