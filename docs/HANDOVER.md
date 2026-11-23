@@ -19,6 +19,7 @@ The couch test below is the gate for milestone 1.
   the hill). Riesenrunde: on the inside of the long left bend after the jump, round
   brick towers, with a turbo arrow. Computer drivers now brake for the lane's own tighter curve.
   Grass and flowers keep off side lanes.
+- **Physics runs at 120 steps a second** (was 60): less delay between pad and kart.
 
 ## New in the seventeenth round (first playtest with him, 23 Nov)
 
