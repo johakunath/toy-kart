@@ -1,40 +1,23 @@
 class_name XRay extends RefCounted
 ## X-ray silhouette: where a player's own kart is hidden from his camera (tunnel wall, sofa,
-## caterpillar, tree), it shows through as a bright shape in his colour, so he never loses it.
+## caterpillar, another kart), it shows through as a bright shape in his colour, so he never loses it.
 ##
 ## How: the kart's own meshes write a per-player stencil value where they are really seen.
 ## Each mesh gets a "ghost" child: the same mesh with an unshaded, see-through material that
 ## ignores depth and only draws where that stencil value is NOT set, i.e. exactly on the hidden
 ## parts (its own wheel behind its body stays plain). The ghost writes that value too, so its
-## overlapping parts draw only once: one even shape instead of stacked layers. The ghosts sit on a render layer per player;
-## each split-screen camera hides the other players' layers, so every half shows only its own kart.
+## overlapping parts draw only once: one even shape instead of stacked layers. The ghosts sit
+## on a render layer per player; each split-screen camera hides the other players' layers, so every half shows only its own kart.
 ## Works for 3D models (skinned too: the ghost uses the same skeleton) and paper cards (the ghost
 ## cuts the card's picture out by its alpha, so no rectangle shows).
 
 const FIRST_LAYER_BIT := 12        ## player 0 -> render layer 13, player 1 -> layer 14
-const MAX_PLAYERS := 4
-const STENCIL_BASE := 64           ## stencil value of player 0's kart; player n uses 64 + n
+const MAX_PLAYERS := 2             ## one shader file per player (stencil value is compile-time)
+const STENCIL_BASE := 64           ## stencil value of player 0's kart; player n uses 64 + n (match the shaders)
 const ALPHA := 0.85
 
-const SHADER := """
-shader_type spatial;
-render_mode unshaded, cull_back, depth_draw_never, depth_test_disabled, shadows_disabled, fog_disabled;
-stencil_mode read, write, compare_not_equal, %d;
-uniform vec4 tint : source_color = vec4(1.0);
-uniform sampler2D mask : source_color, hint_default_white, filter_linear_mipmap;
-uniform bool use_mask = false;
-void fragment() {
-	if (use_mask && texture(mask, UV).a < 0.5) {
-		discard;
-	}
-	// A lighter edge makes the shape read as a body, not a flat blob.
-	float rim = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 3.0);
-	ALBEDO = mix(tint.rgb, vec3(1.0), 0.08 + rim * 0.5);
-	ALPHA = tint.a;
-}
-"""
+const SHADERS: Array[String] = ["res://scripts/kart/xray_p1.gdshader", "res://scripts/kart/xray_p2.gdshader"]
 
-static var _shaders := {}          ## player index -> Shader
 static var _write_cache := {}      ## "material id:stencil value" -> stencil-writing copy
 static var _ghost_cache := {}      ## "player:mask texture id" -> ghost material
 
@@ -109,8 +92,4 @@ static func _ghost_material(original: BaseMaterial3D, player_index: int, tint: C
 	return mat
 
 static func _shader(player_index: int) -> Shader:
-	if not _shaders.has(player_index):
-		var shader := Shader.new()
-		shader.code = SHADER % (STENCIL_BASE + player_index)
-		_shaders[player_index] = shader
-	return _shaders[player_index]
+	return load(SHADERS[player_index]) as Shader

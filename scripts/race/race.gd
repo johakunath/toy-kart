@@ -157,7 +157,8 @@ func _spawn_racers() -> void:
 		racer.kart.set_marker_color(racer.color)
 		racer.kart.visual.add_stickers(Game.sticker_ids())
 		# His own kart shows through walls in his colour (only in his own half: see _build_views).
-		XRay.apply(racer.kart.visual, racer.player_index, racer.color)
+		if not (Game.smoke and Game.smoke_args.get("xray", "1") == "0"):  # --xray=0: A/B perf runs
+			XRay.apply(racer.kart.visual, racer.player_index, racer.color)
 		cfg.source.swallow_held()
 		humans.append(racer)
 		_kid_context = _kid_context or racer.assist.kid
