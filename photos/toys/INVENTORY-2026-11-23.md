@@ -97,8 +97,8 @@ White 4-engine airliner, blue tail and wing livery. Use: track prop / driver lik
 | top | 11.59.28 (3) |
 | bottom | 11.59.28 |
 
-## tower
-Blue tower on white base (airport control tower?). Use: track prop.
+## polizeiwache_turm
+Blue tower on white base, part of the police station set. Use: track prop.
 
 | View | Photo |
 | --- | --- |
@@ -106,16 +106,16 @@ Blue tower on white base (airport control tower?). Use: track prop.
 | side (other) | 11.59.27 (8) |
 | top | 11.59.27 (7) |
 
-## flughafen
-Blue two-storey building on white base (airport terminal / station). Use: track prop.
+## polizeiwache
+Blue two-storey police station on white base. Use: track prop.
 
 | View | Photo |
 | --- | --- |
 | front | 11.59.27 (11) |
 | back | 11.59.27 (9) |
 
-## duplo_haus
-Duplo brick tower with white window and number bricks 2 and 5. Use: track prop / brick.
+## duplo_laden
+Duplo shop built from bricks, white window, number bricks 2 and 5. Use: track prop / brick.
 
 | View | Photo |
 | --- | --- |
@@ -128,7 +128,7 @@ Duplo brick tower with white window and number bricks 2 and 5. Use: track prop /
 Unassigned photos: none.
 
 ## Gaps
-- Airplane tower and building: no front/back pair for the tower, only two views of the building.
+- Police station tower and building: no front/back pair for the tower, only two views of the building.
 - Woman standing: no top view (the seated top view works for both).
 - Side views are marked by facing direction; left/right for `make_3d_toy.py` still to be set.
 
