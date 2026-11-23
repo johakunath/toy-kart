@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="DriverDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/driver_def.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/paper/jumbo_front.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/paper/jumbo_back.png" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = "paper_jumbo"
+display_name = "Jumbo"
+type = 1
+sort_order = 21
+front_texture = ExtResource("2")
+back_texture = ExtResource("3")
+card_height = 0.40
+is_vehicle = true
+vehicle_width = 1.7
+vehicle_hover = 0.4
+ai_lane = 1
+ai_wobble = 0.8
+ai_horn = 0.3
+ai_show_off = 0.5
+ai_friendly = 0.8
+ai_brave = 0.3
