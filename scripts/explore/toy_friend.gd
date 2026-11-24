@@ -90,18 +90,21 @@ func _build_bubble() -> void:
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	mat.albedo_texture = load("res://assets/icons/bubble.svg") as Texture2D
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	# Both bubble and picture are drawn in the transparent pass (no depth writes), the picture
+	# after the bubble: at the same depth the picture would otherwise sink behind it.
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.render_priority = 0
 	back.material_override = mat
 	back.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_bubble.add_child(back)
 	var picture := Sprite3D.new()
 	picture.texture = load(LostThing.icon_path(wants)) as Texture2D
-	picture.pixel_size = 3.4 / 128.0
+	picture.pixel_size = 3.6 / float(picture.texture.get_width())
 	picture.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	picture.shaded = false
 	picture.render_priority = 1
 	picture.position.y = 0.35
-	picture.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+	picture.alpha_cut = SpriteBase3D.ALPHA_CUT_DISABLED
 	_bubble.add_child(picture)
 
 func _process(delta: float) -> void:

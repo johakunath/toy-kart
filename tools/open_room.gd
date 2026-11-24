@@ -19,6 +19,8 @@ const GLASS_OPEN := Vector2(-22.0, 28.0)  ## the open part of the sliding wall (
 const HALL_DOOR := Vector2(-30.0, -13.0)  ## the hall door in the south wall (x from, to)
 const EAST_DOOR := Vector2(44.0, 60.0)    ## the balcony door in the east wall (z from, to)
 const FLOOR_Y := -0.15        ## kart models sit 0.15 m below the physics floor (Kenney kit)
+const VIEW_TEXTURE := "res://assets/textures/room/window_view.png"
+const DRAWINGS_TEXTURE := "res://assets/textures/room/photo_wall.png"
 
 const C_WALL_OPEN := Color("8fd0f5")
 const C_OAK := Color("dba862")
@@ -220,25 +222,24 @@ static func _room_walls(room: Node3D) -> void:
 	_solid(Vector3(X1 - X0 + 2 * thick, 60.0, thick), Vector3(0, 0, Z0 - thick * 0.5))
 	_solid(Vector3(X1 - X0 + 2 * thick, 60.0, thick), Vector3(0, 0, Z1 + thick * 0.5))
 
-## The north wall is all window: the river, autumn trees and red houses across the water,
-## white frames, a balcony railing, green blinds and a grey curtain.
+## The north wall is all window: the river view (a picture), white frames, a balcony railing,
+## green blinds and a grey curtain.
 static func _window_wall(room: Node3D) -> void:
 	var group := _group(room, "Windows")
 	var z := Z0 - 0.6
 	var w := X1 - X0
-	# The view, in bands: river, far bank with trees and houses, sky.
-	_no_shadow(_box(group, Vector3(w, 16.0, 0.3), Vector3(0, 0, z - 0.4), Color("4f86b0"), 0.0, 0.2))
-	_no_shadow(_box(group, Vector3(w, 12.0, 0.3), Vector3(0, 16.0, z - 0.4), Color("d98a3a"), 0.0, 0.9))
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 51
-	var x := X0 + 3.0
-	while x < X1 - 3.0:
-		var tall := rng.randf_range(5.0, 11.0)
-		var house := rng.randf() < 0.35
-		_no_shadow(_box(group, Vector3(rng.randf_range(4.0, 8.0), tall, 0.2), Vector3(x, 26.0, z - 0.3),
-			Color("c0563a") if house else [Color("e0a040"), Color("c8742e"), Color("b5522a")][rng.randi_range(0, 2)], 0.0, 0.9))
-		x += rng.randf_range(5.0, 9.0)
-	_no_shadow(_box(group, Vector3(w, HEIGHT - 28.0, 0.3), Vector3(0, 28.0, z - 0.4), Color("bfe3fb"), 0.0, 0.3))
+	# The view: our river with autumn trees and red brick houses (a FLUX picture made from the
+	# family's photo, art/room/window_view_*.png), river blue below it and sky above.
+	var view_h := w / 1536.0 * 640.0
+	var view_y := 9.0
+	var view := QuadMesh.new()
+	view.size = Vector2(w, view_h)
+	var view_mat := StandardMaterial3D.new()
+	view_mat.albedo_texture = load(VIEW_TEXTURE) as Texture2D
+	view_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_no_shadow(_place(group, view, Vector3(0, view_y + view_h * 0.5, z - 0.4), view_mat))
+	_no_shadow(_box(group, Vector3(w, view_y, 0.3), Vector3(0, 0, z - 0.5), Color8(91, 185, 246), 0.0, 0.2))
+	_no_shadow(_box(group, Vector3(w, HEIGHT - view_y - view_h + 1.0, 0.3), Vector3(0, view_y + view_h - 0.5, z - 0.5), Color8(136, 215, 249), 0.0, 0.3))
 	# Frames.
 	for k in 5:
 		var fx := lerpf(X0 + 0.8, X1 - 0.8, k / 4.0)
@@ -633,12 +634,13 @@ static func _south_wall(room: Node3D) -> void:
 			var thick := rng.randf_range(0.6, 1.2)
 			_box(group, Vector3(0.4, rng.randf_range(3.0, 4.4), thick), Vector3(sx.y + 0.1, y, z + thick * 0.5), TOY_COLORS[rng.randi_range(0, 5)], 0.0, 0.7)
 			z += thick + 0.1
-	# Photo wall (family pictures and his drawing).
-	for k in 14:
-		var px := -9.0 + (k % 5) * 2.8 + rng.randf_range(-0.8, 0.8)
-		var py := 18.0 + int(k / 5.0) * 4.0 + rng.randf_range(-0.8, 0.8)
-		var photo := _box(group, Vector3(2.6, 3.2, 0.2), Vector3(px, py, Z1 - 0.15), [Color("fffdf5"), Color("8fd0ff"), Color("f2b90f"), Color("e8483f"), Color("3fbf5f")][k % 5], 0.0, 0.6)
-		photo.rotation.z = rng.randf_range(-0.3, 0.3)
+	# His drawings taped to the wall (a FLUX picture, art/room/photo_wall_*.png).
+	var wall_pic := QuadMesh.new()
+	wall_pic.size = Vector2(15.0, 15.0 * 718.0 / 885.0)
+	var wall_mat := StandardMaterial3D.new()
+	wall_mat.albedo_texture = load(DRAWINGS_TEXTURE) as Texture2D
+	wall_mat.roughness = 0.9
+	_no_shadow(_place(group, wall_pic, Vector3(-3.0, 25.0, Z1 - 0.12), wall_mat, PI))
 	# Oak bookshelf with doors below and board games on top, and a low one beside it.
 	var tall := Vector2(6.0, 21.0)
 	var low := Vector2(21.2, 34.0)

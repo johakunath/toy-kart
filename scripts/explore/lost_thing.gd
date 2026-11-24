@@ -20,8 +20,10 @@ var _light: OmniLight3D
 var _time := 0.0
 var _leaving := false
 
+## The picture of a thing (Fundkiste, bubbles): rendered from its model (.png), else drawn (.svg).
 static func icon_path(thing_id: String) -> String:
-	return "res://assets/icons/find_%s.svg" % thing_id
+	var png := "res://assets/icons/find_%s.png" % thing_id
+	return png if ResourceLoader.exists(png) else "res://assets/icons/find_%s.svg" % thing_id
 
 func setup(p_id: String, p_for: String) -> void:
 	id = p_id

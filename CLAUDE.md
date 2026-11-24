@@ -82,6 +82,7 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1       # builds\ToyKart
   or `-- --track=<id>`), or `build_track.gd` (Waldkurs). After adding a `class_name`, run `godot --headless --import` once.
 - Open living room (Entdecken): `godot --headless --path . --script res://tools/build_open_room.gd` (layout in
   `tools/open_room.gd`, hiding spots and friends at the top of the builder). Smoke: `--mode=explore`.
+  Its 8 lost things: `blender -b --python tools/blender/build_lost_things.py -- --out assets/models/finds`.
 - Light, sky, clouds and weather per track: the looks in `scripts/track/atmosphere.gd`.
 - Regenerate sounds / music: `tools\.venv\Scripts\python.exe tools\make_sfx.py` / `make_music.py`.
   Audio buses (Music, Effects, Engines) in `default_bus_layout.tres`; split screen adds Player1/Player2 at runtime.

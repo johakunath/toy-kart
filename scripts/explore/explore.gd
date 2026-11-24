@@ -53,6 +53,8 @@ func _ready() -> void:
 	_build_overlay()
 	if Game.smoke and Game.smoke_args.get("top", "0") == "1":
 		_top_view()
+	if Game.smoke and Game.smoke_args.has("look"):
+		_look_view(str(Game.smoke_args["look"]))
 	if explorers.size() > 1:
 		var sun := world.find_child("Sun", true, false) as DirectionalLight3D
 		if sun:
@@ -216,6 +218,19 @@ func _top_view() -> void:
 	camera.far = 1000.0
 	viewport.add_child(camera)
 	camera.look_at_from_position(Vector3(0, 300, 0), Vector3.ZERO, Vector3(1, 0, 0))
+	camera.current = true
+
+## Dev helper "--look=x,y,z,tx,ty,tz": the first player's screen looks from one point at
+## another (pictures of a corner of the room).
+func _look_view(spec: String) -> void:
+	var v := spec.split_floats(",")
+	if v.size() < 6:
+		return
+	var camera := Camera3D.new()
+	camera.fov = 70.0
+	camera.far = 1000.0
+	(_views[0].get_parent() as SubViewport).add_child(camera)
+	camera.look_at_from_position(Vector3(v[0], v[1], v[2]), Vector3(v[3], v[4], v[5]), Vector3.UP)
 	camera.current = true
 
 func _build_overlay() -> void:
@@ -467,6 +482,7 @@ func _on_joy_connection_changed(device: int, connected: bool) -> void:
 ##   --seconds=N   stop after N seconds (default 90)
 ##   --finish=1    must find all 8 and reach "Gute Nacht"
 ##   --shot=<png> --shot_at=<s|found|carry|dim|night>   save a picture and quit
+##   --top=1, --look=x,y,z,tx,ty,tz   dev helpers: a fixed camera for pictures
 ##   --found=N     dev helper: the first N things are found at once (ending pictures)
 func _smoke_tick(delta: float) -> void:
 	var args := Game.smoke_args

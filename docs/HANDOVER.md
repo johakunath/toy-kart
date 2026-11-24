@@ -1,6 +1,6 @@
 # Handover
 
-Updated 24 Nov 2026, twentieth round: the new mode "Entdecken" (our real living room as an open world, 8 lost things, toy friends, bedtime ending). Before that: toy models fixed (19th), welcome screen and console-style menu (18th).
+Updated 24 Nov 2026, twenty-first round: Entdecken assets (toy models, window view, drawings, lullaby). Twentieth round: the new mode "Entdecken" (our real living room as an open world, 8 lost things, toy friends, bedtime ending). Before that: toy models fixed (19th), welcome screen and console-style menu (18th).
 
 ## Where it stands
 
@@ -11,6 +11,27 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## Twenty-first round (24 Nov 2026): Entdecken assets
+
+![The 8 lost things, Koba asking for the dino, the Sanitäter asking for the dummy, window view, drawings](img/explore-assets-2026-11-24.jpg)
+
+- **8 toy models** for the lost things, built in Blender from simple shapes
+  (`tools/blender/build_lost_things.py` -> `assets/models/finds/`): striped sock, TV remote with
+  buttons, hexagonal crayon in its paper wrapper, foam puzzle piece with a bear inlay, yellow
+  Duplo brick, dummy, little orange car, a soft plush dino (round shapes melted together).
+  The old simple shapes stay as a fallback in `LostThing`.
+- **Fundkiste and bubble pictures** are rendered from those models with an ink outline
+  (`assets/icons/find_*.png`, `art/finds/`); the drawn SVGs stay as a fallback.
+- **Window view** from your river photo (FLUX, 4 variants, the first picked) and **a wall of
+  crayon drawings** instead of the coloured rectangles (FLUX; no family photos or faces).
+  Both in `assets/textures/room/`, the other variants in `art/room/`.
+- **Sounds:** a music-box chime for a find, a happy boing for a friend, a sleepy tune at bedtime,
+  and "Guten Abend, gut' Nacht" (Brahms, public domain) as a music-box lullaby on the Gute Nacht
+  screen (`tools/make_sfx.py`, `tools/make_music.py`). Not listened to by a human yet.
+- **Fixed on the way:** the friends' bubbles showed no picture from the side (drawn behind the
+  bubble).
+- Dev helper for pictures of one corner of the room: `--look=x,y,z,tx,ty,tz`.
 
 ## Twentieth round (24 Nov 2026): Entdecken
 
