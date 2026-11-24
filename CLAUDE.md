@@ -17,12 +17,13 @@ checks yourself. Give him steps only in the Godot editor or on websites.
 | Path | What |
 | --- | --- |
 | `scripts/core/` | `game.gd` (autoload `Game`: mode, speed, track, players, catalog, settings), `music.gd` (autoload `Music`), `DriverDef`, `KartDef`, `TrackDef` |
-| `scripts/input/` | `Intent`, `InputSource` (keyboard, pad, AI, test), `Assist` (kid/full), `LineFollow` |
+| `scripts/input/` | `Intent`, `InputSource` (keyboard, pad, AI, test, `ExploreBot`), `Assist` (kid/full), `OpenAssist` (no racing line), `LineFollow` |
 | `scripts/kart/` | `Kart` (rolling-ball arcade physics, items, tricks), `KartVisual`, `DriverRig` (3D model or paper card), `Items` (item set and odds), `ToyLook` (rim light, clear coat) |
 | `scripts/track/` | `Track` (racing line lookups), `TrackProgress` (laps), `BoostStar`, `BoostPad` (turbo arrows), `Brick` (toy bricks, placed by the race), `Atmosphere` (light, sky, weather), `Scatter` (trees), `GrassField`, `Pond`, `ToyMotion` (background life), `Roadside` (props, watching toys), moments (`ToyTrain`, `Tunnel`, `PillowFort`, `ForestFriends`) |
+| `scripts/explore/` | `explore.gd` (mode Entdecken: open living room, 8 lost things, friends, bedtime), `Explorer`, `LostThing`, `ToyFriend`, `OpenMap` (floor grid, ways round furniture) |
 | `scripts/race/` | `race.gd` (builds the race at runtime), `Racer`, `ChaseCamera`, `CoopHelp` + `MagicRope` (rope and gifts from dad) |
 | `scripts/ui/` | `menu.gd`, `MenuStyle` (console look), `MenuBackdrop` (track flyover), `KeyHints` (key pictures), `PlayerSlot`, `PlayerHud`, `FinishScreen`, `PauseMenu`, `KartPreview`, `UiKit` |
-| `scenes/` | `menu.tscn` (main), `race.tscn`, `kart.tscn`, `boost_star.tscn`, `tracks/kurvenkurs.tscn`, `tracks/waldkurs.tscn`, `tracks/riesenrunde.tscn`, `tracks/wohnzimmer.tscn` |
+| `scenes/` | `menu.tscn` (main), `race.tscn`, `kart.tscn`, `boost_star.tscn`, `tracks/kurvenkurs.tscn`, `tracks/waldkurs.tscn`, `tracks/riesenrunde.tscn`, `tracks/wohnzimmer.tscn`, `explore.tscn` + `worlds/wohnzimmer_offen.tscn` |
 | `data/drivers/`, `data/karts/`, `data/tracks/` | one `.tres` per driver / kart / track; the game lists these folders at start |
 | `assets/` | `ui/` (logo, splash, icon), `props/`, `models/toys/`, `kenney_racing/`, `kenney_car_kit/`, `kenney_toy_car_kit/`, `characters/`, `paper/` (toy cut-outs), `sfx/`, `fx/`, `icons/` |
 | `photos/toys/` | toy photos + `pairs.json` (which photo is front/back). Not imported by Godot |
@@ -79,6 +80,8 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1       # builds\ToyKart
   3D model and menu portrait: docs/MODELS_3D.md and the global skill `local-game-assets`.
 - Rebuild a track: `godot --headless --path . --script res://tools/build_round_track.gd` (all round tracks,
   or `-- --track=<id>`), or `build_track.gd` (Waldkurs). After adding a `class_name`, run `godot --headless --import` once.
+- Open living room (Entdecken): `godot --headless --path . --script res://tools/build_open_room.gd` (layout in
+  `tools/open_room.gd`, hiding spots and friends at the top of the builder). Smoke: `--mode=explore`.
 - Light, sky, clouds and weather per track: the looks in `scripts/track/atmosphere.gd`.
 - Regenerate sounds / music: `tools\.venv\Scripts\python.exe tools\make_sfx.py` / `make_music.py`.
   Audio buses (Music, Effects, Engines) in `default_bus_layout.tres`; split screen adds Player1/Player2 at runtime.

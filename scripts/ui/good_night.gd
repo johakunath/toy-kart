@@ -35,6 +35,7 @@ func _init() -> void:
 	center.add_child(column)
 	var holder := Control.new()
 	holder.custom_minimum_size = Vector2(300, 300)
+	holder.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	column.add_child(holder)
 	_moon = UiKit.icon_rect("good_night", 300, Color.WHITE)
 	_moon.pivot_offset = Vector2(150, 150)

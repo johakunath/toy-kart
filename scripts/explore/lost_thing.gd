@@ -79,7 +79,7 @@ func _process(delta: float) -> void:
 		return
 	if carrier and is_instance_valid(carrier):
 		var at := carrier.container.get_global_transform_interpolated().origin
-		global_position = at + Vector3(0, 2.6 + sin(_time * 4.0) * 0.15, 0)
+		global_position = at + Vector3(0, 1.65 + sin(_time * 4.0) * 0.1, 0)
 		_model.rotation.y += delta * 2.5
 		return
 	_model.position.y = 0.6 + sin(_time * 2.0) * 0.35
@@ -95,7 +95,7 @@ func ride_on(kart: Kart) -> void:
 	_ring.visible = false
 	_light.omni_range = 5.0
 	var tween := create_tween()
-	tween.tween_property(_model, "scale", Vector3.ONE * 0.6, 0.35).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(_model, "scale", Vector3.ONE * 0.32, 0.35).set_trans(Tween.TRANS_BACK)
 	_model.position.y = 0.0
 
 ## Found: a happy spin up into the air, then pop.

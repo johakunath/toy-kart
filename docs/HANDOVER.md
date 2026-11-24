@@ -1,6 +1,6 @@
 # Handover
 
-Updated 24 Nov 2026, eighteenth round: welcome screen, console-style menu, moments on all tracks, X-ray; before that, the seventeenth round: 3D station and shop, side lanes on every round track, 120 Hz physics, gifts that wait.
+Updated 24 Nov 2026, twentieth round: the new mode "Entdecken" (our real living room as an open world, 8 lost things, toy friends, bedtime ending). Before that: toy models fixed (19th), welcome screen and console-style menu (18th).
 
 ## Where it stands
 
@@ -11,6 +11,52 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## Twentieth round (24 Nov 2026): Entdecken
+
+![Top view, split screen, carrying the dummy, a find, bedtime, Gute Nacht, menu](img/explore-2026-11-24.jpg)
+
+A new mode card **Entdecken** (teal, magnifier, second on the mode page). Calm and finite: no
+timer, no score, no track. Two players in split screen, or him alone.
+
+- **Our real living room**, laid out after your photos and the floor plan (4.3 x 7.6 m, at toy
+  scale 87 x 152 m): veranda with the bench and the big box, the plant jungle, the glass sliding
+  wall (open in the middle), play kitchen and workbench, the green sheet as a blanket tent, the
+  puzzle mats, the grey corner sofa with the fox and the bear, coffee table with the projector,
+  floor lamp, side table, yoga mat (turbo arrows), desk, dining table with four velvet chairs and
+  the high chair, bookshelves, photo wall, hall door. Sofa, desk, tables and chairs stand a bit
+  higher than real so karts and camera fit underneath. A robot vacuum makes its rounds.
+  Built by `tools/build_open_room.gd` + `tools/open_room.gd` (one collider per solid piece; the
+  ~480 small shapes are merged into a few meshes).
+- **8 lost things** (sock under the sofa, remote by the projector, crayon under the desk, puzzle
+  piece in the mat hole, Duplo brick in the tent, dummy by the high chair, little car under the
+  bench, dino in the jungle): big, glowing, with a chime and confetti. They fill the shared
+  **Fundkiste** at the top (8 silhouettes that light up).
+- **Toy friends ask for help** with picture bubbles: Koba wants the dino, the Sanitäter the
+  dummy, the police car the little car. A friend's thing rides above your kart until you reach
+  the friend; then it flies into their arms and the friend jumps and spins.
+- **Kid assist for open driving** (`OpenAssist`, same chain: InputSource -> Intent -> assist ->
+  Kart): cruise with gas for full speed, soft steering away from furniture (five feelers,
+  only when something is close), and a gentle pull toward the nearest thing that stops the
+  moment he moves the stick. Pushed into a corner, the kart backs out; stuck again, it glides
+  out toward open floor. In all checks no kart needed the helicopter.
+- **Bedtime ending:** when all 8 are found the window light fades, the floor lamp and the bulb
+  come on, the toys lean over and sleep ("z z Z"), the karts park in a row, then "Gute Nacht"
+  with a moon. Any button (or 14 s) goes back to the menu. No "play again".
+- Checks: five new headless runs in `tools/check.ps1` (hands off, holding left, button mashing,
+  one kid finds all 8, kid + Papa find all 8). By hand: `res://scenes/explore.tscn -- --smoke`
+  with `--players --control --input --seconds --finish=1`, pictures with `--shot_at=found|carry|dim|night`
+  and `--top=1` for a view from above. `race.tscn -- --smoke --mode=explore` works too.
+- Frame rate, split screen at 1080p without vsync, measured the same afternoon: Entdecken
+  108 to 148 fps (1 %-low 52 to 71), the Wohnzimmer race 111 fps (1 %-low 49). The PC was
+  slower than on earlier days (the race had ~200 fps then), so the new room costs no more than
+  the race room. Re-measure on the projector PC before blaming either.
+- The exe is rebuilt (`builds/ToyKart.exe`) and runs Entdecken to "Gute Nacht".
+- **Not tested by hand yet:** playing it with real pads; whether the pull feels too strong or
+  too weak for him (`PULL_HAND` in `scripts/input/open_assist.gd`, 0.22 now; hands off he finds
+  about 5 of 8 in 90 s by himself, so try lowering it if it feels like autopilot).
+- Once today, windowed test runs quit silently right after start with Vulkan (for races too);
+  twenty minutes later they worked again. If it happens, `--rendering-driver d3d12` works.
 
 ## Nineteenth round (24 Nov 2026): toy models fixed
 

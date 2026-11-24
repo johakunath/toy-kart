@@ -81,7 +81,12 @@ if (-not $Quick) {
         @{ Name = 'Wohnzimmer: kid + full-mode driver, Fast speed';   Args = @('--track=wohnzimmer', '--control=mixed', '--input=right', '--speed=2') },
         @{ Name = 'Pokal: three races in a row, kid + full-mode driver, Kid speed'; Args = @('--cup=1', '--control=mixed', '--input=none', '--speed=0') },
         @{ Name = 'Wohnzimmer: free drive, kid steering well (gets rings)'; Args = @('--track=wohnzimmer', '--players=1', '--mode=free', '--input=skilled') },
-        @{ Name = 'Riesenrunde: free drive, kid + Papa (rings, catch Papa)'; Args = @('--track=riesenrunde', '--mode=free', '--control=mixed', '--input=none') }
+        @{ Name = 'Riesenrunde: free drive, kid + Papa (rings, catch Papa)'; Args = @('--track=riesenrunde', '--mode=free', '--control=mixed', '--input=none') },
+        @{ Name = 'Entdecken: 2 kids (hands off), Kid speed, no helicopter'; Args = @('--mode=explore', '--input=none', '--speed=0') },
+        @{ Name = 'Entdecken: 2 kids holding left, Kid speed';           Args = @('--mode=explore', '--input=left', '--speed=0') },
+        @{ Name = 'Entdecken: 2 kids mashing buttons for 150 s, Kid speed'; Args = @('--mode=explore', '--input=random', '--speed=0', '--seconds=150') },
+        @{ Name = 'Entdecken: 1 kid steering well finds all 8, Gute Nacht'; Args = @('--mode=explore', '--players=1', '--input=skilled', '--finish=1', '--seconds=300') },
+        @{ Name = 'Entdecken: kid + Papa find all 8 (friends get their things)'; Args = @('--mode=explore', '--control=mixed', '--input=none', '--finish=1', '--seconds=300') }
     )
 }
 foreach ($s in $scenarios) {

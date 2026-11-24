@@ -31,6 +31,20 @@ He had fun and likes it. Being fixed now unless marked "waits".
 | Little toy city, "kids' GTA" | A small town to drive around freely: little missions, a paint shop for new kart colours, collectibles. Gentle, nothing violent |
 | Collectibles | Things to find in free drive (pairs with stickers/presents) |
 
+## Entdecken (open living room), 24 Nov 2026
+
+| Area | Item | When |
+| --- | --- | --- |
+| World | Drive under the bed and into a second room (the kids' room) | Later (Johannes) |
+| World | A race track that runs through the open room | Later (Johannes) |
+| Play | Hide-and-seek: dad hides the remote, son finds it | Later (Johannes) |
+| Play | Day/night: lights out, headlights on (flashlight idea) | Later (Johannes) |
+| Play | "Catch Papa", bricks and the brick jar in Entdecken (not wired yet; the yoga mat has turbo arrows) | When he wants more to do |
+| Play | A cushion ramp up onto the sofa (in the brief; left out of the first version) | Next Entdecken round |
+| Tuning | Pull toward the next thing: 22 % now; hands off he finds about 5 of 8 in 90 s. Lower it if it feels like autopilot | After he plays it |
+| World | The race track "Wohnzimmer" still uses the older, made-up room; rebuild it after the photos too | If wanted |
+| Tech | Once on 24 Nov windowed runs quit silently with Vulkan for a while (D3D12 worked, later Vulkan too) | If it comes back |
+
 ## Found while building milestone 1
 
 | Area | Item | When |

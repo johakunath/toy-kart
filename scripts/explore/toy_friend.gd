@@ -18,6 +18,7 @@ var _holder: Node3D
 var _bubble: Node3D
 var _time := 0.0
 var _zzz: Label3D
+var _radius := 2.0
 
 func setup(p_id: String, model_id: String, p_height: float, p_wants: String) -> void:
 	id = p_id
@@ -34,6 +35,7 @@ func setup(p_id: String, model_id: String, p_height: float, p_wants: String) -> 
 		model.scale = Vector3.ONE * (height / 0.7)  # the prepared toy models are 0.7 m tall
 		_holder.add_child(model)
 		ToyLook.apply(_holder, ToyLook.Kind.DRIVER)
+		_radius = _footprint(model)
 	# Karts bump into the friend, not through it.
 	var body := StaticBody3D.new()
 	body.name = "Body"
@@ -49,9 +51,27 @@ func setup(p_id: String, model_id: String, p_height: float, p_wants: String) -> 
 	add_child(body)
 	_build_bubble()
 
-## How far the friend reaches out from its middle (metres).
+## How far the friend reaches out from its middle (metres): the model's footprint.
 func radius() -> float:
-	return clampf(height * 0.22, 2.0, 3.0)
+	return _radius
+
+## Half the width of the model seen from above (a little less: plush is soft).
+func _footprint(model: Node3D) -> float:
+	var reach := 0.0
+	for node in model.find_children("*", "MeshInstance3D", true, false):
+		var mi := node as MeshInstance3D
+		if mi.mesh == null:
+			continue
+		var xform := mi.transform
+		var p := mi.get_parent()
+		while p != null and p != _holder:
+			xform = (p as Node3D).transform * xform
+			p = p.get_parent()
+		var box := xform * mi.mesh.get_aabb()
+		for corner in 8:
+			var c := box.get_endpoint(corner)
+			reach = maxf(reach, Vector2(c.x, c.z).length())
+	return clampf(reach * 0.8, 2.0, height * 0.5)
 
 ## Where a given thing goes: in front of the friend, at chest height.
 func hand_spot() -> Vector3:

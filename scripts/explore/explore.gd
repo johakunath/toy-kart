@@ -51,6 +51,8 @@ func _ready() -> void:
 	_spawn_explorers()
 	_build_views()
 	_build_overlay()
+	if Game.smoke and Game.smoke_args.get("top", "0") == "1":
+		_top_view()
 	if explorers.size() > 1:
 		var sun := world.find_child("Sun", true, false) as DirectionalLight3D
 		if sun:
@@ -203,6 +205,18 @@ func _build_views() -> void:
 		if atmosphere:
 			camera.add_child(atmosphere.make_camera_weather())
 		_views.append(camera)
+
+## Dev helper "--top=1": the first player's screen looks straight down on the whole room
+## (windows on the left, hall door on the right), for checking the layout.
+func _top_view() -> void:
+	var viewport := _views[0].get_parent() as SubViewport
+	var camera := Camera3D.new()
+	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
+	camera.size = 96.0
+	camera.far = 1000.0
+	viewport.add_child(camera)
+	camera.look_at_from_position(Vector3(0, 300, 0), Vector3.ZERO, Vector3(1, 0, 0))
+	camera.current = true
 
 func _build_overlay() -> void:
 	var overlay := CanvasLayer.new()
@@ -448,7 +462,7 @@ func _on_joy_connection_changed(device: int, connected: bool) -> void:
 
 ##   --seconds=N   stop after N seconds (default 90)
 ##   --finish=1    must find all 8 and reach "Gute Nacht"
-##   --shot=<png> --shot_at=<s|found|night>   save a picture and quit
+##   --shot=<png> --shot_at=<s|found|carry|dim|night>   save a picture and quit
 ##   --found=N     dev helper: the first N things are found at once (ending pictures)
 func _smoke_tick(delta: float) -> void:
 	var args := Game.smoke_args
@@ -467,6 +481,9 @@ func _smoke_tick(delta: float) -> void:
 			now = _night_time > 2.6
 		elif at == "dim":
 			now = state != State.PLAYING and _end_time > PARK_AT + 1.2
+		elif at == "carry":
+			_carry_wait = _carry_wait + delta if explorers.any(func(e: Explorer) -> bool: return e.carrying != null) else 0.0
+			now = _carry_wait > 1.2
 		elif at == "found":
 			now = _found_shot_wait(delta)
 		else:
@@ -478,12 +495,14 @@ func _smoke_tick(delta: float) -> void:
 			Game.quit_clean(0)
 			return
 	var limit := float(args.get("seconds", "90"))
-	var done := state == State.NIGHT and _night_time > 1.0
+	var done := state == State.NIGHT and _night_time > 1.0 and not args.has("shot")
 	if not done and _time < limit:
 		return
 	var ok := true
 	print("SMOKE mode=Entdecken speed=%s time=%.1fs found=%d/%d resets=%d state=%s map_free=%d" % [
 		Game.SPEED_NAMES[Game.speed_class], _time, found, things.size(), _resets, State.keys()[state], map.free_count()])
+	for id: String in friends:
+		print("SMOKE   friend %s radius=%.1fm" % [id, (friends[id] as ToyFriend).radius()])
 	for e in explorers:
 		print("SMOKE   %-12s kid=%s dist=%.0fm found=%d backups=%d escapes=%d wall_hits=%d boosts=%d" % [
 			e.display_name, e.assist.kid, e.distance, e.found, e.assist.backups, e.assist.escapes, e.kart.wall_hits, e.kart.pad_boosts])
@@ -511,6 +530,7 @@ func _smoke_tick(delta: float) -> void:
 	set_physics_process(false)
 	Game.quit_clean(0 if ok else 1)
 
+var _carry_wait := 0.0
 var _found_wait := 0.0
 var _found_seen := 0
 
