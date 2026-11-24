@@ -33,6 +33,16 @@ else {
     $r.Output -split "`r?`n" | Where-Object { $_ -match 'SMOKE|ERROR' } | Select-Object -First 20 | ForEach-Object { Write-Host ("        " + $_) }
 }
 
+# Start test 1b: Entdecken in the exe (scripts there cannot use anything from tools/).
+$r = Invoke-Tool -Exe $exe -Arguments @('--headless', '--fixed-fps', '60', '--', '--smoke', '--mode=explore', '--players=1', '--input=skilled', '--finish=1', '--seconds=300') -WorkDir $builds
+$explore_ok = ($r.Output -match 'SMOKE RESULT: PASS') -and ($r.Code -eq 0)
+if ($explore_ok) { Write-Host "  PASS  exe plays Entdecken to Gute Nacht" -ForegroundColor Green }
+else {
+    Write-Host "  FAIL  exe Entdecken test" -ForegroundColor Red
+    $r.Output -split "`r?`n" | Where-Object { $_ -match 'SMOKE|ERROR' } | Select-Object -First 20 | ForEach-Object { Write-Host ("        " + $_) }
+}
+$race_ok = $race_ok -and $explore_ok
+
 # Start test 2: the exe opens its window, draws the menu, saves a picture of it, and quits.
 $shot = Join-Path $builds 'menu_check.png'
 Remove-Item $shot -ErrorAction SilentlyContinue

@@ -51,7 +51,9 @@ timer, no score, no track. Two players in split screen, or him alone.
   108 to 148 fps (1 %-low 52 to 71), the Wohnzimmer race 111 fps (1 %-low 49). The PC was
   slower than on earlier days (the race had ~200 fps then), so the new room costs no more than
   the race room. Re-measure on the projector PC before blaming either.
-- The exe is rebuilt (`builds/ToyKart.exe`) and runs Entdecken to "Gute Nacht".
+- The exe is rebuilt (`builds/ToyKart.exe`) and plays Entdecken to "Gute Nacht"; `tools/export.ps1`
+  now tests that too (it caught that runtime scripts must not use classes from `tools/`, which the
+  exported game leaves out).
 - **Not tested by hand yet:** playing it with real pads; whether the pull feels too strong or
   too weak for him (`PULL_HAND` in `scripts/input/open_assist.gd`, 0.22 now; hands off he finds
   about 5 of 8 in 90 s by himself, so try lowering it if it feels like autopilot).

@@ -258,7 +258,9 @@ func _process(delta: float) -> void:
 		_perf_frames.append(delta)
 
 func _build_map() -> void:
-	map.build(world.get_world_3d().direct_space_state, Vector2(OpenRoom.X0, OpenRoom.Z0), Vector2(OpenRoom.X1, OpenRoom.Z1))
+	var lo: Vector2 = world.get_meta("room_lo", Vector2(-50, -80))
+	var hi: Vector2 = world.get_meta("room_hi", Vector2(50, 80))
+	map.build(world.get_world_3d().direct_space_state, lo, hi)
 	for thing in things:
 		_fields[thing] = map.field_to(thing.global_position)
 	for id: String in friends:

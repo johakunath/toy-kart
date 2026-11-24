@@ -36,6 +36,9 @@ const PARKING := [Vector2(-12.0, 36.0), Vector2(-5.0, 36.0), Vector2(2.0, 36.0),
 func _process(_delta: float) -> bool:
 	var root := Node3D.new()
 	root.name = "OpenWorld"
+	# The explore mode reads the room's floor from here (tools/ is not in the exported game).
+	root.set_meta("room_lo", Vector2(OpenRoom.X0, OpenRoom.Z0))
+	root.set_meta("room_hi", Vector2(OpenRoom.X1, OpenRoom.Z1))
 	var center := Vector3(0, 0, 0)
 	var size := Vector3(OpenRoom.X1 - OpenRoom.X0, 0, OpenRoom.Z1 - OpenRoom.Z0)
 	TrackBuildCommon.add_atmosphere(root, Atmosphere.Look.LIVING_ROOM, center, size)
