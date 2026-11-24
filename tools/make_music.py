@@ -3,7 +3,7 @@ No downloads, no licences: everything is synthesised here, like tools/make_sfx.p
 
     tools\\.venv\\Scripts\\python.exe tools\\make_music.py
 
-Writes assets/music/menu.wav, race.wav and race_final.wav (16-bit stereo). The .import files are
+Writes assets/music/menu.wav, race.wav, race_final.wav and lullaby.wav (16-bit stereo). The .import files are
 set to loop, so Godot plays them round and round without a gap.
 
 Songs are written as text: one bar per string, eight eighth notes per bar.
@@ -70,6 +70,14 @@ def bell(f, n):
     x = t(n)
     y = np.sin(2 * np.pi * f * x) + 0.4 * np.sin(2 * np.pi * f * 2.76 * x) * np.exp(-8 * x)
     return y * np.exp(-3.0 * x) * adsr(n, 0.002, 0.0, 1.0, 0.05)
+
+
+def music_box(f, n):
+    """A music box: a bright tine an octave up, ringing out slowly."""
+    x = t(n)
+    f = f * 2
+    y = np.sin(2 * np.pi * f * x) + 0.25 * np.sin(2 * np.pi * f * 3.9 * x) * np.exp(-14 * x)
+    return y * np.exp(-2.2 * x) * adsr(n, 0.002, 0.0, 1.0, 0.08)
 
 
 def bass(f, n):
@@ -140,9 +148,9 @@ def render_line(bars, instrument, eighth, total, gain=1.0):
     return out
 
 
-def render_song(bpm, chords, melody, lead_instr, style):
+def render_song(bpm, chords, melody, lead_instr, style, eighths_per_bar=8):
     eighth = 60.0 / bpm / 2
-    bar_len = eighth * 8
+    bar_len = eighth * eighths_per_bar
     total = int(len(chords) * bar_len * SR)
     left = np.zeros(total + SR * 2)
     right = np.zeros(total + SR * 2)
@@ -158,9 +166,12 @@ def render_song(bpm, chords, melody, lead_instr, style):
     for b, chord in enumerate(chords):
         at = b * bar_len
         notes = CHORDS[chord]
-        add(pad([freq(x) * 2 for x in notes], int(bar_len * SR)), at, 0.16 if style == "race" else 0.2, -0.3)
+        add(pad([freq(x) * 2 for x in notes], int(bar_len * SR)), at, {"race": 0.16, "lullaby": 0.12}.get(style, 0.2), -0.3)
         root = freq(notes[0])
-        if style == "race":
+        if style == "lullaby":
+            # Bedtime: one soft low note per bar, nothing else.
+            add(bass(root, int(bar_len * SR * 0.9)), at, 0.14)
+        elif style == "race":
             # Driving eighth-note bass, octave jumps on the off-beats.
             for k in range(8):
                 f = root if k % 2 == 0 else root * 2
@@ -227,8 +238,20 @@ RACE_MELODY = [
     "F5 A5 C6 A5 F5 A5 C6 D6", "D6 ~ B5 ~ G5 ~ B5 D6", "E6 ~ ~ ~ D6 ~ C6 ~", "C6 ~ ~ ~ . . G5 ~",
 ]
 
+# "Guten Abend, gut' Nacht" (Brahms' lullaby, public domain) in 3/4: six eighths per bar.
+LULLABY_CHORDS = ["C", "C", "C", "C", "F", "C", "G", "G", "G", "G", "G", "C",
+                  "C", "F", "C", "C", "F", "C", "F", "C", "G", "C", "C", "C"]
+LULLABY_MELODY = [
+    "E5 ~ E5 ~ G5 ~", "~ ~ E5 ~ E5 ~", "G5 ~ ~ ~ E5 ~", "G5 ~ C6 ~ B5 ~", "A5 ~ ~ ~ A5 ~", "G5 ~ ~ ~ D5 ~",
+    "E5 ~ F5 ~ D5 ~", "~ ~ D5 ~ E5 ~", "F5 ~ ~ ~ D5 ~", "F5 ~ B5 ~ A5 ~", "G5 ~ ~ ~ B5 ~", "C6 ~ ~ ~ ~ ~",
+    "C5 ~ C5 ~ C6 ~", "~ ~ A5 ~ F5 ~", "G5 ~ ~ ~ E5 ~", "C5 ~ C5 ~ C6 ~", "~ ~ A5 ~ F5 ~", "G5 ~ ~ ~ ~ ~",
+    "E5 ~ C5 ~ F5 ~", "G5 ~ ~ ~ E5 ~", "D5 ~ ~ ~ ~ ~", "C5 ~ ~ ~ ~ ~", ". . . . . .", ". . . . . .",
+]
+
 if __name__ == "__main__":
     save("menu.wav", render_song(100, MENU_CHORDS, MENU_MELODY, marimba, "calm"))
     save("race.wav", render_song(144, RACE_CHORDS, RACE_MELODY, lead, "race"))
     # Last lap: the same tune, faster (Mario Kart style); the game cross-fades into it.
     save("race_final.wav", render_song(166, RACE_CHORDS, RACE_MELODY, lead, "race"))
+    # Entdecken: the music box at bedtime ("Gute Nacht").
+    save("lullaby.wav", render_song(84, LULLABY_CHORDS, LULLABY_MELODY, music_box, "lullaby", 6))

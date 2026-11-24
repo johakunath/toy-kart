@@ -8,6 +8,7 @@ const TRACKS := {
 	"menu": "res://assets/music/menu.wav",
 	"race": "res://assets/music/race.wav",
 	"race_final": "res://assets/music/race_final.wav",
+	"lullaby": "res://assets/music/lullaby.wav",  # Entdecken: "Gute Nacht"
 }
 const FADE_SECONDS := 0.8
 const SILENT := -40.0

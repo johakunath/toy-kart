@@ -325,7 +325,7 @@ func _check_gifts() -> void:
 			e.carrying = null
 			thing.fly_to(friend.hand_spot())
 			friend.be_happy()
-			UiKit.play(self, "applause", -6.0)
+			UiKit.play(self, "friend_happy", -2.0)
 			_found(thing, e)
 
 func _found(thing: LostThing, e: Explorer) -> void:
@@ -333,7 +333,7 @@ func _found(thing: LostThing, e: Explorer) -> void:
 	found += 1
 	e.found += 1
 	_box.fill(thing.id)
-	UiKit.play(self, "star")
+	UiKit.play(self, "found")
 	_hop(e)
 	e.kart.rumble_requested.emit(0.4, 0.2, 0.2)
 	if found >= things.size():
@@ -403,7 +403,8 @@ func _tick_ending(delta: float) -> void:
 		for node in world.find_children("*", "ToyMotion", true, false):
 			if node.name != "RobotVacuum":
 				node.set_process(false)
-		Music.stop(3.0)
+		Music.stop(2.0)
+		UiKit.play(self, "sleepy", -3.0)
 	if before < PARK_AT and _end_time >= PARK_AT:
 		for e in explorers:
 			var spot := world.get_node_or_null("Spots/Park%d" % e.player_index) as Marker3D
@@ -420,6 +421,7 @@ func _tick_ending(delta: float) -> void:
 	if before < NIGHT_AT and _end_time >= NIGHT_AT:
 		state = State.NIGHT
 		_night.open()
+		Music.play("lullaby", 1.5)
 
 ## Evening in the room: the window light fades, the floor lamp and the bulb come on.
 func _dim_lights() -> void:

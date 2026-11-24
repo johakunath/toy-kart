@@ -1,6 +1,7 @@
 class_name LostThing extends Node3D
 ## One of the 8 lost things in the living room: big, bright, glowing, turning slowly, with a
-## soft beam of light above it so it can be seen from far away. Built from simple shapes.
+## soft beam of light above it so it can be seen from far away. Toy models from
+## tools/blender/build_lost_things.py, simple shapes as a fallback.
 ## Found: it spins up and pops (the Fundkiste fills). A friend's thing rides above the kart
 ## until it reaches the friend.
 
@@ -206,7 +207,20 @@ static func _ballm(radius: float) -> SphereMesh:
 	m.height = radius * 2.0
 	return m
 
+## The toy models from tools/blender/build_lost_things.py (scale: the dino is drawn big).
+const MODEL := "res://assets/models/finds/%s.glb"
+const MODEL_SCALE := {"dino": 0.8}
+
 func _build_model() -> void:
+	if ResourceLoader.exists(MODEL % id):
+		var scene := load(MODEL % id) as PackedScene
+		if scene:
+			var model := scene.instantiate() as Node3D
+			model.scale = Vector3.ONE * float(MODEL_SCALE.get(id, 1.0))
+			_model.add_child(model)
+			ToyLook.apply(model, ToyLook.Kind.KART)
+			return
+	# Fallback: simple shapes (also what the models were sized after).
 	match id:
 		"sock":
 			_add(_capm(0.75, 3.4), Color("e8483f"), Vector3(0, 0.75, -0.4), Vector3(PI * 0.5, 0, 0))

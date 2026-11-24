@@ -281,6 +281,43 @@ def gift():
     save("gift.wav", buf, 0.6)
 
 
+def found():
+    """Entdecken: a lost thing is found. A quick music-box run up with a sparkle on top."""
+    buf = np.zeros(int(SR * 1.4))
+    for i, f in enumerate([1047, 1319, 1568, 2093, 2637]):
+        mix_at(buf, tone(f, 0.9, "sine", decay=5.5), i * 0.06, 0.8)
+        mix_at(buf, tone(f * 2.0, 0.5, "sine", decay=9), i * 0.06, 0.25)
+        mix_at(buf, tone(f * 4.07, 0.25, "sine", decay=18), i * 0.06, 0.1)
+    n = t(0.8)
+    sparkle = rng.standard_normal(len(n))
+    sparkle = (sparkle - np.convolve(sparkle, np.ones(30) / 30, mode="same")) * np.exp(-5 * n)
+    mix_at(buf, sparkle * env(len(n), 0.02, 0.3), 0.25, 0.12)
+    save("found.wav", buf, 0.7)
+
+
+def friend_happy():
+    """Entdecken: a toy friend gets its thing back. Two bouncy boings up and a happy trill."""
+    buf = np.zeros(int(SR * 1.3))
+    for k, (f0, f1) in enumerate([(220, 440), (330, 660)]):
+        n = t(0.28)
+        f = f0 + (f1 - f0) * (n / 0.28) ** 0.6
+        boing = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-6 * n) * env(len(n), 0.005, 0.05)
+        mix_at(buf, boing, k * 0.22, 0.8)
+    for i in range(8):
+        f = [1319, 1568][i % 2]
+        mix_at(buf, tone(f, 0.12, "tri", decay=12), 0.5 + i * 0.07, 0.35)
+    save("friend_happy.wav", buf, 0.7)
+
+
+def sleepy():
+    """Entdecken: bedtime. A slow music-box tune going down, like a yawn."""
+    buf = np.zeros(int(SR * 2.8))
+    for i, f in enumerate([1568, 1319, 1175, 988, 784]):
+        mix_at(buf, tone(f, 1.4, "sine", decay=2.6), i * 0.38, 0.8 - i * 0.08)
+        mix_at(buf, tone(f * 2.0, 0.8, "sine", decay=6), i * 0.38, 0.2)
+    save("sleepy.wav", buf, 0.6)
+
+
 if __name__ == "__main__":
     os.makedirs(SFX, exist_ok=True)
     os.makedirs(FX, exist_ok=True)
@@ -301,4 +338,7 @@ if __name__ == "__main__":
     leaf_png()
     magic_rope()
     gift()
+    found()
+    friend_happy()
+    sleepy()
     print("sfx written to", SFX)
