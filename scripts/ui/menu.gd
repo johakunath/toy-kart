@@ -12,7 +12,7 @@ const START_DELAY := 1.2
 
 var _page := Page.MODE
 var _pages := {}
-var _mode_buttons: Array[Button] = []
+var _mode_buttons := {}  ## Game.Mode -> its card
 var _team_button: Button
 var _cup_button: Button
 var _track_block: Control
@@ -68,27 +68,29 @@ func _build_mode_page() -> void:
 	MenuStyle.bob(logo)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 34)
+	row.add_theme_constant_override("separation", 26)
 	column.add_child(row)
-	# Big coloured cards, one colour per mode (MenuStyle.MODE_COLORS, in screen order).
+	# Big coloured cards, one colour per mode: [icon, label, colour, mode, team, cup].
 	var cards := [
-		["wheel", Game.MODE_NAMES[Game.Mode.FREE_DRIVE], [Game.Mode.FREE_DRIVE]],
-		["flag", Game.MODE_NAMES[Game.Mode.RACE], [Game.Mode.RACE]],
-		["team", "Team", [Game.Mode.RACE, true]],
-		["trophy", "Pokal", [Game.Mode.RACE, false, true]],
-		["clock", Game.MODE_NAMES[Game.Mode.TIME_TRIAL], [Game.Mode.TIME_TRIAL]],
+		["wheel", Game.MODE_NAMES[Game.Mode.FREE_DRIVE], MenuStyle.MODE_COLORS[0], Game.Mode.FREE_DRIVE, false, false],
+		["search", Game.MODE_NAMES[Game.Mode.EXPLORE], MenuStyle.EXPLORE_COLOR, Game.Mode.EXPLORE, false, false],
+		["flag", Game.MODE_NAMES[Game.Mode.RACE], MenuStyle.MODE_COLORS[1], Game.Mode.RACE, false, false],
+		["team", "Team", MenuStyle.MODE_COLORS[2], Game.Mode.RACE, true, false],
+		["trophy", "Pokal", MenuStyle.MODE_COLORS[3], Game.Mode.RACE, false, true],
+		["clock", Game.MODE_NAMES[Game.Mode.TIME_TRIAL], MenuStyle.MODE_COLORS[4], Game.Mode.TIME_TRIAL, false, false],
 	]
-	var card_size := Vector2(330, 420)
-	for i in cards.size():
-		var spec: Array = cards[i]
-		var button := MenuStyle.mode_card(spec[0], spec[1], MenuStyle.MODE_COLORS[i], card_size)
-		button.pressed.connect(_on_mode_picked.bindv(spec[2]))
+	var card_size := Vector2(282, 400)
+	for spec: Array in cards:
+		var button := MenuStyle.mode_card(spec[0], spec[1], spec[2], card_size)
+		button.pressed.connect(_on_mode_picked.bind(spec[3], spec[4], spec[5]))
 		row.add_child(MenuStyle.holder(button))
 		MenuStyle.pop_on_focus(button)
-		match i:
-			2: _team_button = button
-			3: _cup_button = button
-			_: _mode_buttons.append(button)
+		if spec[4]:
+			_team_button = button
+		elif spec[5]:
+			_cup_button = button
+		else:
+			_mode_buttons[spec[3]] = button
 	var quit_row := HBoxContainer.new()
 	quit_row.alignment = BoxContainer.ALIGNMENT_END
 	column.add_child(quit_row)
@@ -284,7 +286,7 @@ func _enter_players_page() -> void:
 	for slot in _slots:
 		slot.queue_free()
 	_slots.clear()
-	var slot_count := 2 if Game.mode == Game.Mode.RACE else 1
+	var slot_count := 2 if Game.mode == Game.Mode.RACE or Game.mode == Game.Mode.EXPLORE else 1
 	for i in slot_count:
 		var slot := PlayerSlot.new(i if slot_count > 1 else -1)
 		slot.taken_colors = _colors_taken_by_others
@@ -439,11 +441,12 @@ func _show(page: Page) -> void:
 	MenuStyle.page_in(_pages[page] as Control)
 	match page:
 		Page.MODE:
-			(_cup_button if Game.cup else _team_button if Game.team_race else _mode_buttons[Game.mode]).grab_focus()
+			(_cup_button if Game.cup else _team_button if Game.team_race else _mode_buttons[Game.mode] as Button).grab_focus()
 		Page.OPTIONS:
 			_options_title.text = "Pokal" if Game.cup else "Team-Rennen" if Game.team_race else Game.MODE_NAMES[Game.mode]
-			_options_icon.texture = UiKit.icon("trophy" if Game.cup else "team" if Game.team_race else ["wheel", "flag", "clock"][Game.mode])
-			_track_block.visible = not Game.cup  # a cup always drives its three tracks
+			_options_icon.texture = UiKit.icon("trophy" if Game.cup else "team" if Game.team_race else ["wheel", "flag", "clock", "search"][Game.mode])
+			# A cup always drives its three tracks; Entdecken is always the open living room.
+			_track_block.visible = not Game.cup and Game.mode != Game.Mode.EXPLORE
 			_ai_row.visible = Game.mode == Game.Mode.RACE
 			_speed_buttons[Game.speed_class].button_pressed = true
 			var track_index := Game.tracks.find(Game.track)

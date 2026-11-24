@@ -59,6 +59,12 @@ var _rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	if Game.players.is_empty():
 		_use_default_setup()
+	if Game.mode == Game.Mode.EXPLORE:
+		# "--mode=explore" (checks) or a stale setting: the open living room has its own scene.
+		set_physics_process(false)
+		set_process(false)
+		get_tree().change_scene_to_file.call_deferred(Game.EXPLORE_SCENE)
+		return
 	_build_world()
 	_spawn_racers()
 	_place_bricks()
@@ -91,7 +97,9 @@ func _use_default_setup() -> void:
 	if Game.smoke:
 		var args := Game.smoke_args
 		var count := int(args.get("players", "2"))
-		Game.mode = {"free": Game.Mode.FREE_DRIVE, "trial": Game.Mode.TIME_TRIAL}.get(args.get("mode", "race"), Game.Mode.RACE)
+		Game.mode = {"free": Game.Mode.FREE_DRIVE, "trial": Game.Mode.TIME_TRIAL, "explore": Game.Mode.EXPLORE}.get(args.get("mode", "race"), Game.Mode.RACE)
+		if Game.mode == Game.Mode.EXPLORE:
+			return  # the explore scene reads the rest of the command line itself
 		Game.speed_class = clampi(int(args.get("speed", "0")), 0, 2) as Game.SpeedClass
 		Game.ai_count = clampi(int(args.get("ai", "3")), 0, Game.MAX_AI)
 		Game.team_race = args.get("team", "0") == "1"

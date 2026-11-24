@@ -7,6 +7,8 @@ class_name MenuStyle extends RefCounted
 const MODE_COLORS: Array[Color] = [
 	Color("2fb54f"), Color("e83a3a"), Color("2f7fee"), Color("f39c12"), Color("8e44ef"),
 ]
+## The "Entdecken" card (second on the mode page).
+const EXPLORE_COLOR := Color("14a89b")
 const SHADOW := Color(0.04, 0.07, 0.2, 0.4)
 const GLOW := Color(1.0, 0.85, 0.2, 0.75)
 const FOCUS_SCALE := 1.08

@@ -2,13 +2,13 @@ extends Node
 ## Autoload "Game": what the next race should look like, the driver/kart catalog,
 ## saved settings, and scene switching. Menus write to it, the race scene reads it.
 
-enum Mode { FREE_DRIVE, RACE, TIME_TRIAL }
+enum Mode { FREE_DRIVE, RACE, TIME_TRIAL, EXPLORE }
 enum SpeedClass { KID, NORMAL, FAST }
 enum ControlMode { KID, FULL }
 
 const SPEED_FACTOR: Array[float] = [0.92, 1.05, 1.5]
 const SPEED_NAMES: Array[String] = ["Kind", "Normal", "Schnell"]
-const MODE_NAMES: Array[String] = ["Freie Fahrt", "Rennen", "Zeitfahren"]
+const MODE_NAMES: Array[String] = ["Freie Fahrt", "Rennen", "Zeitfahren", "Entdecken"]
 const CONTROL_NAMES: Array[String] = ["Kind", "Profi"]
 const MAX_AI := 3
 
@@ -20,6 +20,8 @@ const COLOR_NAMES: Array[String] = ["Rot", "Blau", "Grün", "Gelb", "Lila", "Ora
 
 const MENU_SCENE := "res://scenes/menu.tscn"
 const RACE_SCENE := "res://scenes/race.tscn"
+## The open living room (mode "Entdecken"): no track, no laps.
+const EXPLORE_SCENE := "res://scenes/explore.tscn"
 const SETTINGS_PATH := "user://settings.cfg"
 
 var mode := Mode.RACE
@@ -275,7 +277,7 @@ func award_cup_stars(order: Array[Racer]) -> void:
 
 func start_race() -> void:
 	get_tree().paused = false
-	get_tree().change_scene_to_file(RACE_SCENE)
+	get_tree().change_scene_to_file(EXPLORE_SCENE if mode == Mode.EXPLORE else RACE_SCENE)
 
 func go_to_menu() -> void:
 	cup = false
