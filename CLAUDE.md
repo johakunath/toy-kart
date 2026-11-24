@@ -40,7 +40,7 @@ steering, AI, laps, places, reset and the start grid.
 
 ## Checks (run before every handover)
 ```
-powershell -ExecutionPolicy Bypass -File tools\check.ps1        # names, parse, pad mapping, menu flow, 9 headless races on both tracks
+powershell -ExecutionPolicy Bypass -File tools\check.ps1        # names, parse, pad mapping, menu flow, headless races on every track + Entdecken
 powershell -ExecutionPolicy Bypass -File tools\check.ps1 -Quick # parse + one race
 powershell -ExecutionPolicy Bypass -File tools\export.ps1       # builds\ToyKart.exe + start tests
 ```

@@ -373,19 +373,22 @@ static func _play_corner(room: Node3D) -> void:
 	var kz := GLASS_Z + 1.6
 	# Play kitchen.
 	var red := Color("d1302e")
-	_block(group, Vector3(-29.0 - X0, 10.0, 6.0), Vector3((X0 - 29.0) * 0.5, 0, kz + 3.0), red, 0.5, 0.4)
-	_box(group, Vector3(13.4, 0.8, 6.4), Vector3(-35.5, 10.0, kz + 3.0), C_WHITE, 0.0, 0.4, 0.4)
-	for x: float in [-41.6, -29.4]:
+	# It reaches from the west wall to the workbench (no gap for a kart to wedge into).
+	var kw := -29.0 - X0
+	var kx := (X0 - 29.0) * 0.5
+	_block(group, Vector3(kw, 10.0, 6.0), Vector3(kx, 0, kz + 3.0), red, 0.5, 0.4)
+	_box(group, Vector3(kw, 0.8, 6.4), Vector3(kx, 10.0, kz + 3.0), C_WHITE, 0.0, 0.4, 0.4)
+	for x: float in [X0 + 0.4, -29.4]:
 		_block(group, Vector3(0.8, 10.0, 6.0), Vector3(x, 10.8, kz + 3.0), red, 0.5, 0.4)
-	_box(group, Vector3(13.0, 4.0, 6.0), Vector3(-35.5, 17.0, kz + 3.0), red, 0.0, 0.5, 0.4)
+	_box(group, Vector3(kw, 4.0, 6.0), Vector3(kx, 17.0, kz + 3.0), red, 0.0, 0.5, 0.4)
 	_box(group, Vector3(5.0, 3.0, 0.3), Vector3(-38.0, 3.0, kz + 6.1), Color("2a2b33"), 0.0, 0.2, 0.6)  # oven door
 	_cyl(group, 1.4, 1.4, 0.3, Vector3(-33.0, 10.8, kz + 3.0), C_BLACK, 16)
 	_box(group, Vector3(5.0, 1.2, 2.0), Vector3(-39.0, 10.8, kz + 3.5), Color("f2b90f"), 0.4, 0.6)  # a toy dino on the stove
 	# Workbench.
 	var green := Color("23683c")
 	_block(group, Vector3(12.0, 9.0, 6.0), Vector3(-23.0, 0, kz + 3.0), Color("8f939c"), 0.5, 0.3)
-	_box(group, Vector3(11.6, 1.0, 6.4), Vector3(-22.5, 9.0, kz + 3.0), green, 0.0, 0.5, 0.3)
-	_block(group, Vector3(11.0, 13.0, 1.0), Vector3(-22.5, 10.0, kz + 0.6), green, 0.5, 0.3)
+	_box(group, Vector3(12.4, 1.0, 6.4), Vector3(-23.0, 9.0, kz + 3.0), green, 0.0, 0.5, 0.3)
+	_block(group, Vector3(12.0, 13.0, 1.0), Vector3(-23.0, 10.0, kz + 0.6), green, 0.5, 0.3)
 	var tools: Array[Color] = [Color("e8483f"), Color("f2b90f"), Color("3b8beb"), Color("f08a24")]
 	for k in 4:
 		_box(group, Vector3(1.2, 4.0, 0.6), Vector3(-26.5 + k * 2.6, 15.0, kz + 1.3), tools[k], 0.3, 0.5)

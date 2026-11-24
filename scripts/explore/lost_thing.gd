@@ -17,7 +17,6 @@ var _beam: MeshInstance3D
 var _ring: MeshInstance3D
 var _light: OmniLight3D
 var _time := 0.0
-var _home := Vector3.ZERO
 var _leaving := false
 
 static func icon_path(thing_id: String) -> String:
@@ -29,7 +28,6 @@ func setup(p_id: String, p_for: String) -> void:
 	name = "Lost_%s" % id
 
 func _ready() -> void:
-	_home = position
 	_time = randf() * 3.0
 	_model = Node3D.new()
 	_model.name = "Model"

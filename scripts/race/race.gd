@@ -63,6 +63,7 @@ func _ready() -> void:
 		# "--mode=explore" (checks) or a stale setting: the open living room has its own scene.
 		set_physics_process(false)
 		set_process(false)
+		set_process_unhandled_input(false)  # no pause menu exists in this frame
 		get_tree().change_scene_to_file.call_deferred(Game.EXPLORE_SCENE)
 		return
 	_build_world()

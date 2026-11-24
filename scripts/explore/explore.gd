@@ -471,9 +471,17 @@ func _smoke_tick(delta: float) -> void:
 	if args.has("found") and _time - delta < 0.5 and _time >= 0.5:
 		var n := clampi(int(args["found"]), 0, things.size())
 		for k in n:
-			if not things[k].found and things[k].carrier == null:
-				_found(things[k], explorers[0])
-				things[k].celebrate()
+			var thing := things[k]
+			if thing.found or thing.carrier != null:
+				continue
+			var friend: ToyFriend = friends.get(thing.for_friend)
+			if friend:
+				# A friend's thing goes to the friend, as if it had been carried there.
+				thing.fly_to(friend.hand_spot())
+				friend.be_happy()
+			else:
+				thing.celebrate()
+			_found(thing, explorers[0])
 	if state == State.NIGHT:
 		_night_time += delta
 	if args.has("shot") and not _shot_done:
