@@ -110,6 +110,7 @@ var best_air := 0.0              ## longest time in the air, seconds (the checks
 var items_got := 0               ## items picked up from stars (the checks report them)
 var pad_boosts := 0              ## turbo arrows driven over (the checks report them)
 var turbo_charges := 0           ## turbos left in a held triple turbo
+var taken_charges := 0           ## turbos that were left in the item take_item() handed over
 ## Kid assist: m/s above which a boost stops pushing (set before a bend; 0 = no limit).
 var boost_cap := 0.0
 var spark_tier := 0
@@ -244,6 +245,13 @@ func place(xform: Transform3D) -> void:
 	input = Vector3.ZERO
 	_ramp_air = false
 	sphere.gravity_scale = _ground_gravity
+	# Rescued in mid-air: the next tick must not see a "landing" with a trick boost.
+	colliding = true
+	_air_time = 0.0
+	_trick = false
+	_spring_trick = false
+	_drift_time = 0.0
+	_set_spark_tier(0)
 	_placed = true
 	reset_physics_interpolation()
 
@@ -273,6 +281,11 @@ func steer_rate() -> float:
 func top_speed() -> float:
 	return BASE_TOP_SPEED * class_factor * (kart_def.top_speed if kart_def else 1.0)
 
+## The speed the kart reaches by itself right now, in m/s: top speed with pacing, catch-up,
+## the magic rope and bricks, but without a boost. Boost targets and caps are measured from it.
+func cruise_speed() -> float:
+	return top_speed() * pace * (1.0 + catchup + tow) * (1.0 + (bricks * BRICK_SPEED if brick_bonus else 0.0))
+
 func is_boosting() -> bool:
 	return _boost_left > 0.0
 
@@ -293,15 +306,20 @@ func boost(duration := 1.6, strength := 0.5) -> void:
 	# The ball alone takes too long to spin up, so a boost pushes the kart directly:
 	# a kick at once, then a steady push up to (top speed x (1 + strength)).
 	# Measured from the normal top speed, so boosts never stack on top of each other.
-	var cruise := top_speed() * pace * (1.0 + catchup)
-	_boost_target = maxf(_boost_target if _boost_left > 0.0 else 0.0, cruise * (1.0 + strength))
-	_push_forward(clampf(boost_cap - speed(), 0.0, BOOST_KICK) if boost_cap > 0.0 else BOOST_KICK)
+	_boost_target = maxf(_boost_target if _boost_left > 0.0 else 0.0, cruise_speed() * (1.0 + strength))
+	# The kick only fills the room up to the boost speed: three turbos fired at once (or a
+	# trick landing on a turbo arrow) are one kick, not three.
+	var room := _boost_target - speed()
+	if boost_cap > 0.0:
+		room = minf(room, boost_cap - speed())
+	_push_forward(clampf(room, 0.0, BOOST_KICK))
 	_boost_strength = maxf(strength, _boost_strength if _boost_left > 0.0 else 0.0)
 	_boost_left = maxf(_boost_left, duration)
 	_fade_left = 0.0
 	linear_speed = maxf(linear_speed, 1.0)
 	sparkles.emitting = true
 	_flames.emitting = true
+	boost_sound.pitch_scale = 1.0  # a popped shield plays it higher
 	boost_sound.play()
 	if visual.driver:
 		visual.driver.hop(0.8)
@@ -444,23 +462,30 @@ func ramp_launch() -> void:
 ## Hands the held item over (dad gives it to the kid); returns it, or Items.NONE.
 func take_item() -> int:
 	var held := item
+	taken_charges = turbo_charges
 	if held != Items.NONE:
 		item = Items.NONE
+		turbo_charges = 0
 		item_changed.emit(Items.NONE)
 	return held
 
 ## Gets an item handed over by another player. False when the hands are already full.
-func receive_item(gift: int) -> bool:
+## `charges`: turbos left in a handed-over triple turbo (0 = a fresh one).
+func receive_item(gift: int, charges := 0) -> bool:
 	if item != Items.NONE or gift == Items.NONE:
 		return false
 	item = gift
-	turbo_charges = TRIPLE_TURBO_CHARGES if item == Items.TRIPLE_TURBO else 0
+	turbo_charges = 0
+	if item == Items.TRIPLE_TURBO:
+		turbo_charges = clampi(charges, 1, TRIPLE_TURBO_CHARGES) if charges > 0 else TRIPLE_TURBO_CHARGES
 	item_changed.emit(item)
 	return true
 
 func use_item() -> void:
 	if item == Items.NONE:
 		return
+	if item == Items.SPRING and not colliding:
+		return  # already in the air: keep the spring for the next press (kid mode tries again)
 	if item == Items.TRIPLE_TURBO:
 		# One turbo per press; the item stays in the slot until the last one is used.
 		turbo_charges -= 1
@@ -485,12 +510,11 @@ func use_item() -> void:
 			_spark_sound.pitch_scale = 0.8
 			_spark_sound.play()
 		Items.SPRING:
-			if colliding:
-				sphere.linear_velocity.y = SPRING_JUMP
-				_spring_trick = true
-				impact_sound.volume_db = -8.0 + engine_db_offset
-				impact_sound.pitch_scale = 1.6
-				impact_sound.play()
+			sphere.linear_velocity.y = SPRING_JUMP
+			_spring_trick = true
+			impact_sound.volume_db = -8.0 + engine_db_offset
+			impact_sound.pitch_scale = 1.6
+			impact_sound.play()
 		Items.TICKLE:
 			tickle_thrown.emit()
 
@@ -599,7 +623,7 @@ func _physics_process(delta: float) -> void:
 	var steering_grip := clampf(absf(linear_speed), 0.2, 1.0)
 	var rate := steer_rate() * (DRIFT_STEER if drifting else 1.0)
 	var target_angular := -input.x * steering_grip * rate * direction
-	if _ramp_air and not colliding:
+	if not colliding:
 		target_angular *= RAMP_AIR_STEER  # gentle air steering, so the kart lands on the road
 	if frozen:
 		target_angular = 0.0  # wheels turn during the countdown, the kart stays put
@@ -649,7 +673,8 @@ func _physics_process(delta: float) -> void:
 		linear_speed = lerpf(linear_speed, target_speed / 2.0, delta * 2.0)
 	else:
 		linear_speed = lerpf(linear_speed, target_speed, delta * 6.0 * accel_stat)
-	if _boost_left > 0.0 and not _boost_capped():
+	var braking := input.z < 0.0
+	if _boost_left > 0.0 and not _boost_capped() and not braking:
 		linear_speed = maxf(linear_speed, 1.0)
 
 	acceleration = lerpf(acceleration, linear_speed + (absf(sphere.angular_velocity.length() * linear_speed) / 100.0), delta)
@@ -664,7 +689,7 @@ func _physics_process(delta: float) -> void:
 
 	if _boost_left > 0.0:
 		var missing := (minf(_boost_target, boost_cap) if boost_cap > 0.0 else _boost_target) - speed()
-		if missing > 0.0 and colliding:
+		if missing > 0.0 and colliding and not braking:
 			_push_forward(minf(missing, BOOST_PUSH * delta))
 		elif colliding and _boost_capped():
 			_push_forward(maxf(missing, -BOOST_PUSH * 0.5 * delta))  # boosted too fast into a bend
@@ -710,8 +735,10 @@ func _handle_intent(delta: float) -> void:
 		if _start_gas or free_start_boost:
 			boost(START_BOOST_SECONDS, START_BOOST_STRENGTH)
 			rumble_requested.emit(0.6, 1.0, 0.3)
+	# Steering is read in the air too (the kit froze it at its take-off value: a kart that left
+	# a ramp or a spring while turning kept turning until it landed). Gas only on the ground.
+	input.x = intent.steer
 	if raycast.is_colliding():
-		input.x = intent.steer
 		input.z = intent.accelerate - intent.brake
 	if intent.horn:
 		honk()
@@ -758,7 +785,7 @@ func _effect_body(delta: float) -> void:
 
 func _effect_wheels(delta: float) -> void:
 	for wheel in visual.wheels:
-		wheel.rotation.x += acceleration * visual.wheel_spin_sign
+		wheel.rotation.x += acceleration * visual.wheel_spin_sign * delta * 60.0
 	for wheel in visual.front_wheels:
 		wheel.rotation.y = lerp_angle(wheel.rotation.y, -input.x / 1.5, delta * 10.0)
 	if visual.fork:
@@ -833,7 +860,7 @@ func _effect_trails(delta: float) -> void:
 	var target_volume := -80.0
 	if should_emit:
 		target_volume = remap(clampf(drift_intensity, 0.25, 2.0), 0.25, 2.0, -14.0, -4.0) + engine_db_offset
-	screech_sound.pitch_scale = lerpf(screech_sound.pitch_scale, clampf(absf(linear_speed), 1.0, 3.0), 0.1)
+	screech_sound.pitch_scale = lerpf(screech_sound.pitch_scale, clampf(absf(linear_speed), 1.0, 3.0), minf(1.0, delta * 6.0))
 	screech_sound.volume_db = lerpf(screech_sound.volume_db, target_volume, 10.0 * delta)
 
 func _effect_marker(delta: float) -> void:

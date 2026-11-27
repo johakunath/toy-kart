@@ -2,8 +2,8 @@ class_name GoodNight extends Control
 ## The end of the explore mode: the screen goes night blue, a moon and "Gute Nacht".
 ## Any button after a moment, or a quiet wait, goes back to the menu. No "play again".
 
-const HOLD := 2.5        ## seconds before a button press counts
-const AUTO_MENU := 14.0  ## seconds until it goes back to the menu by itself
+const HOLD := 6.0        ## seconds before a button press counts (he is still tapping gas)
+const AUTO_MENU := 20.0  ## seconds until it goes back to the menu by itself
 
 var _time := -1.0
 var _moon: TextureRect
@@ -12,6 +12,7 @@ func _init() -> void:
 	visible = false
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	theme = UiKit.theme()  # the same round, bold letters as everywhere else
 	modulate.a = 0.0
 	var night := ColorRect.new()
 	night.color = Color(0.06, 0.08, 0.24, 0.9)
@@ -65,12 +66,10 @@ func _process(delta: float) -> void:
 func _input(event: InputEvent) -> void:
 	if _time < HOLD or Game.smoke:
 		return
+	# Any pad button, or a "yes" / "back" key. Other keys (F11 ...) do not end the screen.
 	var press := event.is_action_pressed("ui_accept") or event.is_action_pressed("ui_cancel")
 	var button := event as InputEventJoypadButton
 	if button and button.pressed:
-		press = true
-	var key := event as InputEventKey
-	if key and key.pressed and not key.echo:
 		press = true
 	if press:
 		_time = -100.0

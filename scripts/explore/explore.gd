@@ -389,9 +389,13 @@ func _soft_bumps() -> void:
 				continue
 			var n := d / dist
 			var closing := -(b.sphere.linear_velocity - a.sphere.linear_velocity).dot(n)
-			var dv := (BUMP_DISTANCE - dist) * 6.0 + maxf(closing, 0.0) * 0.5
-			a.push(-n * dv * 0.5)
-			b.push(n * dv * 0.5)
+			var dv := minf((BUMP_DISTANCE - dist) * 6.0 + maxf(closing, 0.0) * 0.5, 4.0)
+			# As in a race: a kid's kart is hardly moved, the other kart takes most of the push.
+			var share_a := 0.5
+			if explorers[i].assist.kid != explorers[j].assist.kid:
+				share_a = 0.2 if explorers[i].assist.kid else 0.8
+			a.push(-n * dv * share_a)
+			b.push(n * dv * (1.0 - share_a))
 
 # --- Bedtime -------------------------------------------------------------------------------
 
@@ -410,7 +414,8 @@ func _tick_ending(delta: float) -> void:
 	for e in explorers:
 		if not e.kart.frozen:
 			e.kart.intent.clear()
-			e.kart.intent.brake = 0.3
+			# Brake only while rolling: a held brake means reverse once the kart stands.
+			e.kart.intent.brake = 0.3 if e.kart.linear_speed > 0.02 else 0.0
 	if before < DIM_AT and _end_time >= DIM_AT:
 		_dim_lights()
 		for id: String in friends:

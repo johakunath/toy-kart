@@ -125,9 +125,16 @@ static func holder(c: Control) -> Control:
 static func pop_on_focus(c: Control, grow := FOCUS_SCALE) -> void:
 	var update := func() -> void:
 		c.pivot_offset = c.size * 0.5
-		var on := c.has_focus() or c.get_global_rect().has_point(c.get_global_mouse_position())
+		# The mouse counts only while it is in use (Game hides it when pads or keys take over).
+		var hovered := Game.mouse_active and c.get_global_rect().has_point(c.get_global_mouse_position())
+		var on := c.has_focus() or hovered
 		c.z_index = 1 if on else 0
+		# One tween at a time: a quick focus change must not leave the card grown.
+		var old: Tween = c.get_meta("pop_tween") if c.has_meta("pop_tween") else null
+		if old and old.is_valid():
+			old.kill()
 		var tween := c.create_tween()
+		c.set_meta("pop_tween", tween)
 		tween.tween_property(c, "scale", Vector2.ONE * (grow if on else 1.0), 0.28 if on else 0.18) \
 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	c.focus_entered.connect(update)

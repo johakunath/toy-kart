@@ -61,6 +61,7 @@ var _gifts_back := 0
 ## A present that landed while the kid's hands were full: it waits and fills his item slot
 ## the moment it is free (so dad's gift is never lost to a star the kid drove through).
 var _queued := {}
+var _charges := {}              ## Racer (kid) -> turbos left in the triple turbo on its way to him
 var _gifts_used := 0
 var _gift_waiting := {}         ## Racer (kid) -> true while he holds a gifted item
 
@@ -105,7 +106,9 @@ func _update_link(link: Link, delta: float) -> void:
 		for other in _humans:
 			if other == kid or not _on_road(other):
 				continue
-			var gap := other.progress.distance() - kid.progress.distance()
+			# The gap on the road, not in laps: dad a lap ahead or behind (free drive, or a lapped
+			# kid) is still "just ahead" when he drives right in front.
+			var gap := fposmod(other.progress.distance() - kid.progress.distance() + _track.length * 0.5, _track.length) - _track.length * 0.5
 			var limit := ROPE_BREAK if link.connected and other == link.leader else ROPE_CONNECT
 			var side := absf(other.progress.lateral - kid.progress.lateral)
 			if gap > ROPE_MIN_GAP and gap < limit and side < ROPE_LATERAL and gap < best_gap:
@@ -176,6 +179,7 @@ func try_gift(giver: Racer) -> bool:
 	var item := giver.kart.take_item()
 	if item == Items.NONE:
 		return false
+	_charges[kid] = giver.kart.taken_charges  # a triple turbo arrives with the turbos it has left
 	_launch_present(giver, kid, item)
 	return true
 
@@ -225,7 +229,8 @@ func _deliver(p: Dictionary) -> void:
 	var kid: Racer = p["kid"]
 	var giver: Racer = p["giver"]
 	var item: int = p["item"]
-	if not kid.finished and kid.kart.receive_item(item):
+	var charges := int(_charges.get(kid, 0))
+	if not kid.finished and kid.kart.receive_item(item, charges):
 		_gifts_got += 1
 		_gift_waiting[kid] = true
 		UiKit.play(self, "star", -6.0)
@@ -240,7 +245,7 @@ func _deliver(p: Dictionary) -> void:
 		if kid.kart.visual.driver:
 			kid.kart.visual.driver.hop(1.0)
 	elif not giver.finished:
-		giver.kart.receive_item(item)
+		giver.kart.receive_item(item, charges)
 		_gifts_back += 1
 
 func _on_kid_item_changed(item: int, kid: Racer) -> void:
@@ -253,7 +258,7 @@ func _on_kid_item_changed(item: int, kid: Racer) -> void:
 		_give_later.call_deferred(kid, waiting)
 
 func _give_later(kid: Racer, item: int) -> void:
-	if kid.kart.receive_item(item):
+	if kid.kart.receive_item(item, int(_charges.get(kid, 0))):
 		_gift_waiting[kid] = true
 		kid.kart.rumble_requested.emit(0.4, 0.2, 0.15)
 

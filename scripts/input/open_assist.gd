@@ -27,6 +27,9 @@ const KID_STUCK_SECONDS := 1.0    ## then back out ...
 const OTHER_STUCK_SECONDS := 4.0   ## grown-ups and bots: only when really stuck (like the race rescue)
 const BACK_SECONDS := 0.9         ## ... for this long
 const RESCUE_SECONDS := 7.0       ## no progress at all for this long: put back on free floor
+## Stuck again while this much of the last back-out is still remembered (it fades by 0.25 a
+## second, so within about 2.4 s): glide out instead of backing out once more.
+const AGAIN := 0.4
 const ESCAPE_SECONDS := 1.3       ## the glide out of a corner ...
 const ESCAPE_PUSH := 16.0         ## ... with this push (m/s²)
 
@@ -68,6 +71,7 @@ func apply(raw: Intent, kart: Kart, delta: float) -> Intent:
 		_out.steer = clampf(-angle * 1.5, -1.0, 1.0) if facing else 0.0
 		_out.drift = false
 		_out.spark = false
+		_out.spark_cancel = true  # a charge must not fire a boost back into the corner
 		return _out
 	if _back_left > 0.0:
 		_back_left -= delta
@@ -76,6 +80,7 @@ func apply(raw: Intent, kart: Kart, delta: float) -> Intent:
 		_out.steer = _back_steer
 		_out.drift = false
 		_out.spark = false
+		_out.spark_cancel = true
 		return _out
 	if not kid:
 		return _out
@@ -170,13 +175,13 @@ func _watch(raw: Intent, kart: Kart, delta: float) -> void:
 		return
 	_recent = maxf(_recent - delta * 0.25, 0.0)
 	var trying := kid or raw.accelerate > 0.3 or raw.brake > 0.3
-	if trying and kart.speed() < STUCK_SPEED and _back_left <= 0.0:
+	if trying and kart.speed() < STUCK_SPEED and _back_left <= 0.0 and _escape_left <= 0.0:
 		_stuck += delta
 	else:
 		_stuck = maxf(_stuck - delta * 2.0, 0.0)
 	if _stuck >= (KID_STUCK_SECONDS if kid else OTHER_STUCK_SECONDS):
 		_stuck = 0.0
-		if _recent >= 1.0 and map and map.is_ready():
+		if _recent >= AGAIN and map and map.is_ready():
 			# Stuck again right after backing out: glide toward open floor.
 			var to := map.open_spot(pos) - pos
 			to.y = 0.0
@@ -196,6 +201,8 @@ func _watch(raw: Intent, kart: Kart, delta: float) -> void:
 	if _anchor == Vector3.INF or pos.distance_to(_anchor) > 4.0:
 		_anchor = pos
 		_no_progress = 0.0
+	elif not trying:
+		_no_progress = 0.0  # a grown-up who parks and watches is not stuck
 	elif kart.speed() < STUCK_SPEED * 2.0:
 		_no_progress += delta
 	if _no_progress >= RESCUE_SECONDS and trying:

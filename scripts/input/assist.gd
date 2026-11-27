@@ -10,7 +10,7 @@ class_name Assist extends RefCounted
 ##     assist takes over and steers back, and the edge strip slows the kart down.
 ##   - Soft walls: an invisible cushion pushes the kart back before it reaches a real wall.
 ##   - Steering hard in the middle of the road charges drift sparks (blue, then orange);
-##     letting go fires a boost. Near the edge the charge is dropped, never fired.
+##     letting go, or leaving the middle, fires a boost. Close to the wall the charge is dropped.
 ##   - A start boost every time, bigger feeling with gas held.
 ##   - Items fire by themselves after a second (so he sees which one he got); a boost item
 ##     waits for a straight bit of road, so it never throws the kart into a bend.
@@ -25,7 +25,7 @@ const AUTO_USE_LOOK := 2.2    ## kid boost items: seconds of road ahead that mus
 const AUTO_USE_BEND := 0.045  ## ... no bend tighter than this (1/m, about a 22 m radius) ...
 const AUTO_USE_MAX_WAIT := 8.0  ## ... but never wait longer than this
 const BOOST_BEND_LOOK := 1.0  ## kid: seconds ahead a bend limits boosts ...
-const KID_BEND_BOOST := 1.05  ## ... to this share of the normal top speed
+const KID_BEND_BOOST := 1.05  ## ... to this share of the speed he drives without a boost
 const WALL_MARGIN := 1.3         ## the assist steers back to this far from the walls
 const EDGE_ZONE := 2.6           ## metres from the wall where the assist starts to take over
 const LIGHT_HAND := 0.15         ## how much the assist helps in the middle of the road (0..1)
@@ -80,7 +80,9 @@ func apply(raw: Intent, racer: Racer, track: Track, racing: bool, delta: float) 
 		_soft_walls(racer, track, band)
 		# Boosts push only up to normal top speed while a bend is close.
 		var bend_ahead := track.max_curvature(racer.progress.s(), 3.0 + racer.kart.speed() * BOOST_BEND_LOOK)
-		racer.kart.boost_cap = racer.kart.top_speed() * KID_BEND_BOOST if bend_ahead >= AUTO_USE_BEND else 0.0
+		# Measured from his own speed right now (catch-up, rope and bricks included): a boost
+		# must never brake him below the speed he drives without one.
+		racer.kart.boost_cap = racer.kart.cruise_speed() * KID_BEND_BOOST if bend_ahead >= AUTO_USE_BEND else 0.0
 		_out.use = false
 		if racer.kart.has_item:
 			_use_timer += delta

@@ -28,6 +28,8 @@ const BRICK_CLEAR := 7.0         ## metres kept free around stars, turbo pads an
 ## count as last place (strong catch-up items).
 const ITEM_GAP_FROM := 10.0
 const ITEM_GAP_FULL := 50.0
+const FINISH_WAIT := 30.0        ## a finished kid waits at most this long for a grown-up
+const BUMP_MAX := 4.0            ## m/s: the most one tick of a kart-to-kart push may add
 const SMOKE_MIN_AIR := 0.8       ## checks: seconds in the air off a jump ramp, at least
 
 var track: Track
@@ -46,6 +48,8 @@ var _playground: Playground
 var _countdown := COUNTDOWN_SECONDS + 1.0
 var _countdown_shown := 99
 var _finish_delay := -1.0
+var _finish_cap := -1.0           ## seconds until the finish screen comes although a grown-up still drives
+var _bricks_banked := false
 var _kid_context := false
 var _smoke_time := 0.0
 var _resets := 0
@@ -247,7 +251,18 @@ func _pick_item(racer: Racer) -> int:
 		if not other.finished:
 			lead = maxf(lead, other.progress.distance())
 	behind = maxf(behind, clampf((lead - racer.progress.distance() - ITEM_GAP_FROM) / ITEM_GAP_FULL, 0.0, 1.0))
-	return Items.pick(_rng, racer.assist.kid, ahead_of_kid, behind)
+	var item := Items.pick(_rng, racer.assist.kid, ahead_of_kid, behind)
+	# No item that does nothing: a tickle needs somebody it may hit, a bubble somebody who
+	# could tickle. Alone on the track (time trial, free drive) every star is a turbo, so a
+	# best time never depends on luck.
+	var can_tickle := false
+	for other in racers:
+		if other != racer and not other.assist.kid and not _same_team(racer, other):
+			can_tickle = true
+	if (item == Items.TICKLE and not can_tickle) or (item == Items.BUBBLE and racers.size() < 2) \
+			or Game.mode == Game.Mode.TIME_TRIAL:
+		item = Items.TURBO
+	return item
 
 ## Teammates in a team race (humans with humans).
 func _same_team(a: Racer, b: Racer) -> bool:
@@ -334,12 +349,12 @@ func _place_bricks() -> void:
 				clear = false
 		if not clear:
 			s += BRICK_CLEAR * 1.5
+			clear = true
 			for t in taken:
 				if absf(s - t) < BRICK_CLEAR:
 					clear = false
 			if not clear:
 				continue
-			clear = true
 		for lateral: float in patterns[row % patterns.size()]:
 			var brick := Brick.new()
 			brick.name = "Brick%d" % number
@@ -377,7 +392,7 @@ func _wire_rumble(racer: Racer) -> void:
 	var device := pad.device
 	var scale := KID_RUMBLE if racer.assist.kid else 1.0
 	racer.kart.rumble_requested.connect(func(weak: float, strong: float, seconds: float) -> void:
-		if Game.rumble_on and state != State.FINISHED:
+		if Game.rumble_on and state != State.FINISHED and not racer.finished:
 			Input.start_joy_vibration(device, clampf(weak * scale, 0.0, 1.0), clampf(strong * scale, 0.0, 1.0), seconds))
 
 func _wire_ai(ai: AiSource, racer: Racer, skill: float) -> void:
@@ -507,6 +522,10 @@ func _physics_process(delta: float) -> void:
 		_update_pacing(delta)
 		_soft_bumps()
 
+	if _finish_cap > 0.0 and _finish_delay < 0.0:
+		_finish_cap -= delta
+		if _finish_cap <= 0.0:
+			_finish_delay = 0.5
 	if _finish_delay > 0.0:
 		_finish_delay -= delta
 		if _finish_delay <= 0.0:
@@ -576,10 +595,17 @@ func _finish_racer(racer: Racer) -> void:
 		if racer.kart.visual.driver:
 			racer.kart.visual.driver.set_cheering(true)
 		var all_done := true
+		var kid_driving := false
 		for h in humans:
 			all_done = all_done and h.finished
+			kid_driving = kid_driving or (h.assist.kid and not h.finished)
 		if all_done:
 			_finish_delay = 2.0
+			_finish_cap = -1.0
+		elif not kid_driving and _finish_cap < 0.0:
+			# Only grown-ups are still out there: the finish screen comes after a while anyway
+			# (they keep the place they have). A kid still driving is never cut off.
+			_finish_cap = FINISH_WAIT
 	else:
 		racer.kart.pace = 0.6
 
@@ -588,9 +614,11 @@ func _update_places() -> void:
 	order.sort_custom(func(a: Racer, b: Racer) -> bool:
 		if a.finished != b.finished:
 			return a.finished
-		if a.finished:
+		if a.finished and a.finish_time != b.finish_time:
 			return a.finish_time < b.finish_time
-		return a.progress.distance() > b.progress.distance())
+		if not a.finished and a.progress.distance() != b.progress.distance():
+			return a.progress.distance() > b.progress.distance()
+		return racers.find(a) < racers.find(b))  # a dead heat: always the same order
 	for i in order.size():
 		(order[i] as Racer).place = i + 1
 
@@ -608,7 +636,7 @@ func _update_pacing(delta: float) -> void:
 				ai_lead = maxf(ai_lead, other.progress.distance())
 		if ai_lead > -INF:
 			target = clampf((ai_lead - racer.progress.distance() - 8.0) / 40.0, 0.0, 1.0) * 0.12
-		if racer.assist.kid and humans.size() > 1:
+		if racer.assist.kid and humans.size() > 1 and Game.mode != Game.Mode.FREE_DRIVE:
 			for other in humans:
 				if other == racer:
 					continue
@@ -656,7 +684,8 @@ func _soft_bumps() -> void:
 				continue
 			var n := d / dist
 			var closing := -(b.sphere.linear_velocity - a.sphere.linear_velocity).dot(n)
-			var dv := (BUMP_DISTANCE - dist) * 6.0 + maxf(closing, 0.0) * 0.5
+			# Capped: two karts set down on top of each other (a rescue) drift apart, not explode.
+			var dv := minf((BUMP_DISTANCE - dist) * 6.0 + maxf(closing, 0.0) * 0.5, BUMP_MAX)
 			# A kid's kart is hardly moved: the other kart takes most of the push.
 			var share_a := 0.5
 			if racers[i].assist.kid != racers[j].assist.kid:
@@ -725,20 +754,31 @@ func _show_finish_screen() -> void:
 	Music.stop(0.8)
 	for hud in huds:
 		hud.hide_message()
+		hud.visible = false  # place, laps and the item slot would show through behind the cards
 	var record := false
 	if Game.mode == Game.Mode.TIME_TRIAL and not humans.is_empty():
 		record = Game.submit_time(Game.speed_class, humans[0].finish_time)
-	var picked := 0
-	for racer in humans:
-		picked += racer.kart.bricks_picked
-	if picked > 0:
-		Game.add_family_bricks(picked)
+	var picked := _bank_bricks()
 	Game.unlock_sticker()  # a present after every race (the finish screen opens it)
 	if Game.cup:
 		var order: Array[Racer] = racers.duplicate()
 		order.sort_custom(func(a: Racer, b: Racer) -> bool: return a.place < b.place)
 		Game.award_cup_stars(order)
 	_finish_screen.open(racers, humans, record, picked, Game.team_race and Game.mode == Game.Mode.RACE)
+
+## Puts this race's bricks into the family jar, once. Also when the race is left through the
+## pause menu, and in free drive, which has no finish screen.
+func _bank_bricks() -> int:
+	var picked := 0
+	for racer in humans:
+		picked += racer.kart.bricks_picked
+	if picked > 0 and not _bricks_banked:
+		Game.add_family_bricks(picked)
+	_bricks_banked = true
+	return picked
+
+func _exit_tree() -> void:
+	_bank_bricks()
 
 # --- Headless smoke test (tools/check.ps1) -------------------------------------------------
 

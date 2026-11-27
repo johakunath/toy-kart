@@ -79,7 +79,8 @@ func _process(delta: float) -> void:
 	if _leaving:
 		return
 	if carrier and is_instance_valid(carrier):
-		var at := carrier.container.get_global_transform_interpolated().origin
+		# The kart's picture, not its physics spot: it hangs under the helicopter in a rescue.
+		var at := carrier.visual.get_global_transform_interpolated().origin
 		global_position = at + Vector3(0, 1.65 + sin(_time * 4.0) * 0.1, 0)
 		_model.rotation.y += delta * 2.5
 		return

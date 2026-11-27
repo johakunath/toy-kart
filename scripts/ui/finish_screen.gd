@@ -6,7 +6,7 @@ class_name FinishScreen extends Control
 ## shapes shows how far the cup is, and after the last race the cards line up by stars and
 ## every player gets a trophy.
 
-const LOCK_SECONDS := 2.5
+const LOCK_SECONDS := 3.5  ## he keeps tapping gas after the line: the party must not be skipped
 const MEDALS: Array[Color] = [Color("ffc81e"), Color("dfe6ee"), Color("e0894a")]
 
 var _again: Button
@@ -35,7 +35,9 @@ func open(racers: Array[Racer], humans: Array[Racer], new_record: bool, bricks :
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 	var column := VBoxContainer.new()
-	var extra_rows := int(team) + int(bricks > 0 or Game.family_bricks() > 0) + int(Game.cup) * 2 + 1
+	# A time trial has no bricks on the road, so its screen has no brick jar either.
+	var show_jar := Game.mode != Game.Mode.TIME_TRIAL and (bricks > 0 or Game.family_bricks() > 0)
+	var extra_rows := int(team) + int(show_jar) + int(Game.cup) * 2 + 1
 	column.add_theme_constant_override("separation", 26 - 6 * extra_rows)
 	center.add_child(column)
 
@@ -56,7 +58,7 @@ func open(racers: Array[Racer], humans: Array[Racer], new_record: bool, bricks :
 		title_row.add_child(UiKit.icon_rect("trophy", 120, MEDALS[0]))
 		title_row.move_child(title_row.get_child(title_row.get_child_count() - 1), 0)
 	title_row.add_child(UiKit.label(title, 120, Color.WHITE, 26, UiKit.INK))
-	title_row.add_child(UiKit.icon_rect("star", 110, UiKit.SUN))
+	title_row.add_child(UiKit.icon_rect("trophy", 120, MEDALS[0]) if cup_end else UiKit.icon_rect("star", 110, UiKit.SUN))
 	column.add_child(title_row)
 
 	var order := racers.duplicate()
@@ -73,17 +75,20 @@ func open(racers: Array[Racer], humans: Array[Racer], new_record: bool, bricks :
 	cards.alignment = BoxContainer.ALIGNMENT_CENTER
 	cards.add_theme_constant_override("separation", 22)
 	column.add_child(cards)
-	var card_width := (330.0 if order.size() <= 3 else 290.0) - 30.0 * extra_rows
+	# Every card is the same width, whatever the name; only the kart picture gets lower when
+	# more rows (team banner, brick jar, cup) share the screen.
+	var card_width := 330.0 if order.size() <= 3 else 300.0
+	var picture_height := (270.0 if order.size() <= 3 else 230.0) - 30.0 * extra_rows
 	for k in order.size():
 		var racer: Racer = order[k]
-		var card := _make_card(racer, card_width, Game.mode == Game.Mode.RACE and order.size() > 1 and not cup_end)
+		var card := _make_card(racer, card_width, picture_height, Game.mode == Game.Mode.RACE and order.size() > 1 and not cup_end)
 		if Game.cup:
 			(card.get_child(0) as VBoxContainer).add_child(_cup_stars(racer, k, cup_end))
 		cards.add_child(card)
 
 	if team:
 		column.add_child(_team_row(humans, best_place))
-	if bricks > 0 or Game.family_bricks() > 0:
+	if show_jar:
 		column.add_child(_jar_row(bricks))
 
 	if Game.mode == Game.Mode.TIME_TRIAL and not humans.is_empty():
@@ -149,7 +154,7 @@ func _process(delta: float) -> void:
 		_buttons.modulate.a = 1.0
 		_again.grab_focus()
 
-func _make_card(racer: Racer, width: float, show_place: bool) -> Control:
+func _make_card(racer: Racer, width: float, picture_height: float, show_place: bool) -> Control:
 	var card := PanelContainer.new()
 	var border := racer.color if racer.is_human else Color(UiKit.INK, 0.2)
 	card.add_theme_stylebox_override("panel", UiKit.box(UiKit.PAPER, 30, border, 12 if racer.is_human else 4))
@@ -161,7 +166,7 @@ func _make_card(racer: Racer, width: float, show_place: bool) -> Control:
 	var preview := KartPreview.new()
 	preview.cheering = true
 	preview.spin_speed = 1.0
-	preview.custom_minimum_size = Vector2(width - 40, width - 60)
+	preview.custom_minimum_size = Vector2(width - 40, picture_height)
 	if racer.is_human:
 		preview.stickers = Game.sticker_ids()
 	column.add_child(preview)
@@ -170,9 +175,11 @@ func _make_card(racer: Racer, width: float, show_place: bool) -> Control:
 	var name_row := HBoxContainer.new()
 	name_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	name_row.add_theme_constant_override("separation", 10)
+	var name_width := width - 40.0
 	if not racer.is_human:
 		name_row.add_child(UiKit.icon_rect("robot", 40, Color(UiKit.INK, 0.6)))
-	name_row.add_child(UiKit.label(racer.display_name, 40))
+		name_width -= 50.0
+	name_row.add_child(UiKit.label(racer.display_name, UiKit.fit_font_size(racer.display_name, name_width, 40)))
 	column.add_child(name_row)
 	if show_place:
 		if racer.place <= MEDALS.size():

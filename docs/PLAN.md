@@ -314,7 +314,7 @@ Read PLAN.md in this folder first and move it to docs/PLAN.md. Build milestone 1
 - Input: device to intents (steer, accelerate, brake, use, horn) to a per-player assist layer to the kart. Keyboard plus any XInput pad. Each controller gets a colour.
 - Player modes. Kid: stick, D-pad or LB/RB steer left and right, any face button honks, auto-accelerate, smart steering toward the racing line, soft walls, reset onto the track after 2 s off course, catch-up boost when behind the other human, pickups fire by themselves. Full: accelerate, brake, drift, use.
 - Track: one track from Kenney tiles, 3 laps, with a Path3D racing line used for smart steering, AI, lap counting, places and reset.
-- Game modes: Free drive (1 player, full screen, no timer, no AI), Race (1 or 2 players, 0 to 3 AI karts, default 3), Time trial.
+- Game modes: Free drive (1 or 2 players since 27 Nov 2026, no timer, no AI), Race (1 or 2 players, 0 to 3 AI karts, default 3), Time trial.
 - Split screen side by side for 2 players: one shared world, one camera and HUD per player, a coloured frame per player. Cameras higher and wider than full screen. No camera shake in kid mode.
 - Speeds: Kid, Normal, Fast.
 - Driver and kart are separate resources (.tres), picked separately on a simple selection screen. Driver types: 3D model, or paper (front and back photo on a flat card that wobbles and leans in curves). Turn every toy photo pair in photos/toys/ into a paper driver (remove the background locally, free tools only).

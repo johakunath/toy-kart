@@ -58,10 +58,18 @@ var smoke_args := {}
 ## Tests switch this off so they never touch the family's saved colours and best times.
 var save_enabled := true
 
+## The mouse pointer shows only while the mouse is in use: on the projector, with pads and
+## keys, it would sit on a menu card (and light it up) or in the middle of the race.
+var mouse_active := false
+## The menu's mode page opens on the Pokal card after a cup.
+var came_from_cup := false
+
 var _settings := ConfigFile.new()
+var _track_before_cup: TrackDef
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN  # until the mouse moves (see mouse_active)
 	_settings.load(SETTINGS_PATH)
 	_parse_cmdline()
 	if smoke or not smoke_args.is_empty():
@@ -77,6 +85,23 @@ func _ready() -> void:
 	if not OS.has_feature("editor") and not smoke and not OS.get_cmdline_user_args().has("--windowed"):
 		# Exclusive fullscreen: lowest input lag and smooth 144 Hz on the monitor.
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN)
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion and (event as InputEventMouseMotion).relative.length_squared() > 4.0:
+		_set_mouse_active(true)
+	elif event is InputEventMouseButton:
+		_set_mouse_active(true)
+	elif (event is InputEventKey or event is InputEventJoypadButton) and event.is_pressed():
+		_set_mouse_active(false)
+
+func _set_mouse_active(on: bool) -> void:
+	if on == mouse_active:
+		return
+	mouse_active = on
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if on else Input.MOUSE_MODE_HIDDEN
+	if not on and DisplayServer.window_get_mode() >= DisplayServer.WINDOW_MODE_FULLSCREEN:
+		# Out of the way too: a hidden pointer resting on a button would still light it up.
+		get_viewport().warp_mouse(Vector2.ZERO)
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
@@ -166,6 +191,20 @@ func save_options() -> void:
 func device_prefs(device_id: String) -> Dictionary:
 	return _settings.get_value("devices", device_id, {})
 
+## Two pads of the same model are told apart only by the order they were switched on, so a
+## saved "Profi" could land in the kid's hands. True when this pad has such a twin with a
+## different saved control mode: its panel then starts as Kind, the safe one.
+func pad_mode_unsure(device_id: String) -> bool:
+	var cut := device_id.rfind(":")
+	if not device_id.begins_with("pad:") or cut < 0 or not _settings.has_section("devices"):
+		return false
+	var mine: int = device_prefs(device_id).get("control", -1)
+	for other in _settings.get_section_keys("devices"):
+		if other != device_id and other.begins_with(device_id.left(cut + 1)):
+			if int(device_prefs(other).get("control", -1)) != mine:
+				return true
+	return false
+
 func save_device_prefs(device_id: String, prefs: Dictionary) -> void:
 	_settings.set_value("devices", device_id, prefs)
 	_save()
@@ -248,6 +287,8 @@ func is_last_cup_race() -> bool:
 
 ## Starts a new cup from its first race (the menu's "Pokal" card, and "Nochmal" after a cup).
 func start_cup() -> void:
+	if not cup or _track_before_cup == null:
+		_track_before_cup = track  # the family's own track pick comes back after the cup
 	cup = true
 	mode = Mode.RACE
 	team_race = false
@@ -280,6 +321,10 @@ func start_race() -> void:
 	get_tree().change_scene_to_file(EXPLORE_SCENE if mode == Mode.EXPLORE else RACE_SCENE)
 
 func go_to_menu() -> void:
+	came_from_cup = cup
+	if _track_before_cup != null:
+		track = _track_before_cup
+		_track_before_cup = null
 	cup = false
 	get_tree().paused = false
 	get_tree().change_scene_to_file(MENU_SCENE)

@@ -318,7 +318,7 @@ func _physics_process(delta: float) -> void:
 		_fan_wait[i] = maxf(0.0, _fan_wait[i] - delta)
 		if _fan_wait[i] <= 0.0:
 			for racer in _racers:
-				if racer.is_human and racer.kart.global_position.distance_squared_to(fan.global_position) < HOP_RANGE * HOP_RANGE:
+				if racer.is_human and racer.kart.ground_position().distance_squared_to(fan.global_position) < HOP_RANGE * HOP_RANGE:
 					fan.hop(1.2)
 					_fan_wait[i] = HOP_COOLDOWN
 					break

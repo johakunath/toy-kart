@@ -66,7 +66,14 @@ static func device_keys(source: InputSource) -> Array[String]:
 	return []
 
 ## How this device drives in this control mode: a list of [keys, action icon] pairs.
-static func driving(source: InputSource, control_mode: int) -> Array:
+## `with_gift`: the "give my item to the kid" key, which only does something with a kid along.
+static func driving(source: InputSource, control_mode: int, with_gift := true) -> Array:
+	var list := _driving(source, control_mode)
+	if not with_gift:
+		list = list.filter(func(pair: Array) -> bool: return pair[1] != "gift")
+	return list
+
+static func _driving(source: InputSource, control_mode: int) -> Array:
 	var kid := control_mode == Game.ControlMode.KID
 	match _layout(source):
 		0:
@@ -87,21 +94,21 @@ static func driving(source: InputSource, control_mode: int) -> Array:
 	return []
 
 ## Fills `flow` with the driving pictures for this device and mode.
-static func fill_driving(flow: Container, source: InputSource, control_mode: int, height: float) -> void:
+static func fill_driving(flow: Container, source: InputSource, control_mode: int, height: float, with_gift := true) -> void:
 	for child in flow.get_children():
 		child.queue_free()
-	for pair: Array in driving(source, control_mode):
+	for pair: Array in driving(source, control_mode, with_gift):
 		var keys: Array[String] = []
 		keys.assign(pair[0])
 		flow.add_child(group(keys, pair[1], height))
 
 ## Fills `grid` with the driving controls as a tidy table: key pictures (right-aligned), the
 ## action icon, a short word. Up to four controls stand in one column, more in two.
-static func fill_driving_grid(grid: GridContainer, source: InputSource, control_mode: int, height: float, font_size: int) -> void:
+static func fill_driving_grid(grid: GridContainer, source: InputSource, control_mode: int, height: float, font_size: int, with_gift := true) -> void:
 	for child in grid.get_children():
 		grid.remove_child(child)
 		child.queue_free()
-	var pairs := driving(source, control_mode)
+	var pairs := driving(source, control_mode, with_gift)
 	var two := pairs.size() > 4
 	@warning_ignore("integer_division")
 	var per_column := (pairs.size() + 1) / 2 if two else pairs.size()

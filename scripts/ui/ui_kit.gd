@@ -68,6 +68,14 @@ static func label(text: String, size: int, color := INK, outline := 0, outline_c
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return l
 
+## The biggest font size (from `size` down to `min_size`) at which `text` fits into `width`
+## pixels: long names shrink a little instead of stretching their card.
+static func fit_font_size(text: String, width: float, size: int, min_size := 20) -> int:
+	var font := bold_font()
+	while size > min_size and font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > width:
+		size -= 2
+	return size
+
 static func icon_rect(icon_name: String, size: float, color := INK) -> TextureRect:
 	var r := TextureRect.new()
 	r.texture = icon(icon_name)

@@ -21,6 +21,8 @@ enum Kind {
 @export var phase := 0.0
 ## ORBIT: radius of the circle in metres (negative flies the other way round).
 @export var radius := 0.0
+## ORBIT: metres it floats up and down (planes); 0 for things that drive on the floor.
+@export var bob_height := 0.6
 ## An animation of the model to loop (Kenney figures: "emote-yes", "jump", "idle" ...).
 @export var animation := ""
 ## Give the model the toy material look (soft rim light), like the drivers.
@@ -71,7 +73,7 @@ func _process(delta: float) -> void:
 			var look := Basis.looking_at(heading, Vector3.UP, true)
 			# Lean into the circle, and a gentle up and down.
 			look = look * Basis(Vector3.BACK, -amount * dir)
-			var bob := Vector3.UP * sin(_time * 0.7) * 0.6
+			var bob := Vector3.UP * sin(_time * 0.7) * bob_height
 			transform = Transform3D(look.scaled(_base.basis.get_scale()), _base.origin + offset + bob)
 		Kind.BLINK:
 			_blink()

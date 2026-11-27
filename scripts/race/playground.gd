@@ -10,6 +10,8 @@ class_name Playground extends Node3D
 
 const RING_AHEAD_MIN := 45.0
 const RING_AHEAD_MAX := 75.0
+const RING_DEPTH := 1.5          ## metres around a ring's spot where driving through it counts
+const JAR_ICONS := 5             ## full jars shown as bricks beside the jar (more only count)
 const RING_MISSED := 12.0        ## metres past a ring before it moves on ahead
 const JAR_SIZE := 25
 const CATCH_DISTANCE := 2.6
@@ -124,6 +126,8 @@ func _watch_ring(racer: Racer) -> void:
 	if gone > RING_MISSED:
 		_place_ring(racer, _rng.randf_range(RING_AHEAD_MIN, RING_AHEAD_MAX))
 		return
+	if gone > RING_DEPTH:
+		return  # past it without going through: it moves on ahead after RING_MISSED
 	# Passing the ring's spot: through it if the kart is inside the ring's circle.
 	var node := ring["node"] as Node3D
 	var offset := racer.kart.ground_position() - node.global_position
@@ -172,8 +176,8 @@ func _watch_jar() -> void:
 			if hud:
 				hud.show_message("Glas voll!", 2.0, 150, UiKit.SUN)
 			_burst(racer.kart.ground_position() + Vector3.UP * 1.5, UiKit.SUN)
-		var jar := UiKit.icon_rect("brick", 44, UiKit.SUN)
-		_jar_count.add_child(jar)
+		if _jar_count.get_child_count() < JAR_ICONS:  # a long session must not fill the screen
+			_jar_count.add_child(UiKit.icon_rect("brick", 44, UiKit.SUN))
 	if _jar_fill:
 		var part := float(total % JAR_SIZE) / JAR_SIZE
 		_jar_fill.anchor_top = 1.0 - part

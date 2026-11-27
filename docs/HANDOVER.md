@@ -1,6 +1,6 @@
 # Handover
 
-Updated 24 Nov 2026, twenty-first round: Entdecken assets (toy models, window view, drawings, lullaby). Twentieth round: the new mode "Entdecken" (our real living room as an open world, 8 lost things, toy friends, bedtime ending). Before that: toy models fixed (19th), welcome screen and console-style menu (18th).
+Updated 27 Nov 2026, twenty-second round: a full review (code, gameplay, UI from his point of view) and its fixes. Before that: Entdecken assets (21st), the mode "Entdecken" (20th), toy models fixed (19th), welcome screen and console-style menu (18th).
 
 ## Where it stands
 
@@ -11,6 +11,63 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## Twenty-second round (27 Nov 2026): review and fixes
+
+![Finish screen before and after](img/review-finish-2026-11-27.jpg)
+
+Four code reviews (kart and input, race and tracks, menus and HUD, Entdecken), screenshots of every
+page and mode, and 25 extra headless races. About 45 findings fixed; `tools\check.ps1` passes.
+
+**Things that did not work**
+- **Freie Fahrt had one seat**, so "catch Papa" and the rope there could never be played from the
+  menu. It has two seats now (one player alone leaves the other empty).
+- **Alone on the track you got useless items** (bubble, tickle: 75 % for a Profi). Every star is
+  a turbo in a time trial; a tickle or bubble only comes when it can do something.
+- **Steering was dead in the air** (frozen at its value at take-off): a kart that left a ramp or
+  a spring while turning kept turning until it landed. Steering now works in the air, gently.
+- **A boost could slow a kid down:** before a bend the boost limit ignored his catch-up speed,
+  rope and bricks, and braked him below his own speed. Hands-off kids are about 3 % quicker now.
+- **Three turbos fired at once added three kicks**; the brake did nothing during a boost; a
+  spring used in the air was lost; a rescue in mid-air gave a boost. All fixed.
+- **Brick rows near a star or turbo arrow were dropped** instead of moved (Kurvenkurs had 3 of
+  7 rows). The fans at the start only ever watched the start line, not the karts.
+- **Entdecken:** the robot vacuum's collider stayed in the middle of its circle (karts drove
+  through the vacuum and hit an invisible post) and the vacuum bobbed in and out of the floor;
+  the toy walker was invisible to the kid helper; a grown-up who parked for 7 s was "rescued" by
+  the helicopter; the glide out of a corner never came on the second try; after the last find
+  the karts rolled backwards. The room scene is rebuilt.
+- **Cup:** it changed the saved track; after a cup the menu now opens on Pokal with your own
+  track back. Bricks collected in free drive, or in a race left through Pause, now reach the jar.
+
+**Menu and screens (his point of view)**
+- "Ende" needs two presses. The finish buttons wake after 3.5 s (was 2.5), Gute Nacht stays 6 s
+  (was 2.5: one tap of his gas button ended it).
+- If he presses B (his horn button) and leaves his seat while you are ready, the race waits 4 s
+  instead of starting without him. A seat kept from the last race gives way after 5 s when its
+  device stays silent, so your keyboard never blocks him driving alone. Going back a page keeps
+  seats and picks. Pushing toward a taken side takes the free seat.
+- **Two pads of the same model:** a dropped pad no longer hands your seat to his pad. Such pads
+  start as "Kind" when their saved modes differ (the game cannot tell them apart): you switch
+  yours to Profi with two presses. One pad plus keyboard, or two different pads, are unchanged.
+- In kid mode a pushed stick wins over a finger resting on LB / RB.
+- Finish screen: all cards the same width, the HUD no longer shows through, no brick jar after a
+  time trial. Options: long track names fit; Team hides "0 Gegner" (one toy always races).
+  The gift key shows only when there is a kid to give to. "Letzte Runde!" fits a half screen.
+- Flipping past the Sanitäter no longer leaves everyone in the Krankenwagen.
+- The mouse pointer hides until the mouse moves (it sat on a card and lit it up).
+- If only grown-ups are still driving after he finished, the finish screen comes after 30 s.
+
+**Found, not changed (your call or small)**
+- Boost share is 25 to 45 % of a race on the three short tracks (your target in round five was
+  5 to 15 %). Turbo arrows, jump landings and items came after that. Say if it is too much.
+- A kid can still pause and pick "Neustart" for both. Pause is three presses away, so left alone.
+- The Krankenwagen's open roof is cut off at the top of its finish card.
+- A leading kid's tickle bubble flies at nobody (20 % of his items when in front).
+
+**Not tested by hand:** everything above was checked by headless runs and screenshots only.
+Worth a look with real pads: steering in the air off the ramps, and the 4 s / 5 s waits on the
+"Wer fährt mit?" page.
 
 ## Twenty-first round (24 Nov 2026): Entdecken assets
 

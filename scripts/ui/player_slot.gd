@@ -19,9 +19,14 @@ var state := SlotState.EMPTY
 var source: InputSource
 var driver_index := 0
 var kart_index := 0
+var _own_kart_index := 0  ## the kart this player picked himself (see _change)
 var control_mode := Game.ControlMode.KID
 var color_index := 0
 var row := 0
+
+## A seat kept from the last race (or from going back a page): it does not hold up the start
+## for long when its device stays silent. Any input from the device makes it a normal seat.
+var kept := false
 
 ## Set by the menu: returns the colour indices used by the other panels.
 var taken_colors: Callable
@@ -225,7 +230,16 @@ func join(p_source: InputSource, slot_number: int) -> void:
 	var prefs := Game.device_prefs(source.id)
 	driver_index = _index_of_driver(prefs.get("driver", ""), slot_number)
 	kart_index = _index_of_kart(prefs.get("kart", ""), slot_number)
+	# The kart to go back to after flipping past a toy with its own kart. A saved kart that was
+	# only that toy's own one (the Krankenwagen) does not count as this player's pick.
+	_own_kart_index = kart_index
+	var favourite := Game.favourite_kart(Game.drivers[driver_index]) if not Game.drivers.is_empty() else null
+	if favourite and Game.karts.find(favourite) == kart_index:
+		_own_kart_index = slot_number % maxi(1, Game.karts.size())
 	control_mode = clampi(prefs.get("control", _default_control()), 0, 1) as Game.ControlMode
+	if Game.pad_mode_unsure(source.id):
+		control_mode = Game.ControlMode.KID  # two pads of one model: never Profi by mistake
+	kept = false
 	color_index = clampi(prefs.get("color", slot_number), 0, Game.PLAYER_COLORS.size() - 1)
 	if _colors_taken().has(color_index):
 		_step_color(1)
@@ -265,6 +279,8 @@ func save_prefs() -> void:
 # --- Input from this panel's device --------------------------------------------------------
 
 func handle(poll: Dictionary) -> void:
+	if poll.values().has(true):
+		kept = false
 	if state == SlotState.JOINED:
 		if poll.get("up", false):
 			_step_row(-1)
@@ -305,11 +321,12 @@ func _change(step: int) -> void:
 		0:
 			driver_index = posmod(driver_index + step, Game.drivers.size())
 			# A toy with its own kart (the Sanitäter and the Krankenwagen) gets in it right away.
+			# Flipping on to the next driver gives back the kart this player picked himself.
 			var favourite := Game.favourite_kart(Game.drivers[driver_index])
-			if favourite:
-				kart_index = Game.karts.find(favourite)
+			kart_index = Game.karts.find(favourite) if favourite else _own_kart_index
 		1:
 			kart_index = posmod(kart_index + step, Game.karts.size())
+			_own_kart_index = kart_index
 		2:
 			control_mode = (Game.ControlMode.FULL if control_mode == Game.ControlMode.KID else Game.ControlMode.KID)
 		3:
@@ -445,10 +462,10 @@ func _refresh() -> void:
 			arrow_rect.modulate = Color.WHITE if as_key else UiKit.INK
 			arrow_rect.custom_minimum_size = Vector2.ONE * (50.0 if as_key else 40.0)
 
-	var drive_key := "%s:%d" % [source.id, control_mode]
+	var drive_key := "%s:%d:%d" % [source.id, control_mode, side]
 	if drive_key != _drive_shown:
 		_drive_shown = drive_key
-		KeyHints.fill_driving_grid(_drive_grid, source, control_mode, KEY_SIZE, WORD_SIZE)
+		KeyHints.fill_driving_grid(_drive_grid, source, control_mode, KEY_SIZE, WORD_SIZE, side >= 0)
 
 	_ready_banner.add_theme_stylebox_override("panel",
 		_slim(MenuStyle.bevel(UiKit.GRASS, 22, Color(UiKit.GRASS, 0.7)) if is_ready

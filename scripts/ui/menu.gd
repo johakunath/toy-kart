@@ -9,6 +9,13 @@ extends Control
 enum Page { MODE, OPTIONS, PLAYERS }
 
 const START_DELAY := 1.2
+## A player just left his seat (B is also a kid's horn button): the others do not start
+## without him for this long, so he can sit down again.
+const LEFT_GRACE := 4.0
+## A seat kept from the last race gives way after this long when its device stays silent
+## while everybody else is ready (dad's keyboard must not block a kid who drives alone).
+const IDLE_SEAT := 5.0
+const QUIT_CONFIRM := 3.0  ## "Ende" needs a second press within this time
 
 var _page := Page.MODE
 var _pages := {}
@@ -27,6 +34,11 @@ var _slot_row: HBoxContainer
 var _slots: Array[PlayerSlot] = []
 var _sources: Array[InputSource] = []
 var _start_timer := -1.0
+var _grace := 0.0
+var _idle_wait := 0.0
+var _seated_before: Array[InputSource] = []  ## who sat where when the players page was left
+var _quit_armed := 0.0
+var _quit_button: Button
 var _start_label: Label
 var _swap_button: Button
 var _music_button: Button
@@ -94,10 +106,28 @@ func _build_mode_page() -> void:
 	var quit_row := HBoxContainer.new()
 	quit_row.alignment = BoxContainer.ALIGNMENT_END
 	column.add_child(quit_row)
+	# Two presses close the game: one stray press (down, then A) must not end the evening.
 	var quit := UiKit.pill_button("exit", "Ende", Vector2(220, 84))
-	quit.pressed.connect(func() -> void: Game.quit_clean())
+	_quit_button = quit
+	quit.pressed.connect(_on_quit_pressed)
+	quit.focus_exited.connect(_disarm_quit)
 	quit_row.add_child(quit)
 	MenuStyle.pop_on_focus(quit, 1.05)
+
+func _on_quit_pressed() -> void:
+	if _quit_armed > 0.0:
+		Game.quit_clean()
+		return
+	_quit_armed = QUIT_CONFIRM
+	_quit_button.text = "Ende?"
+	_quit_button.add_theme_stylebox_override("normal", MenuStyle.card(UiKit.SUN, 28, UiKit.INK, 5, 10))
+	MenuStyle.bounce(_quit_button, 0.9)
+	UiKit.play(self, "click")
+
+func _disarm_quit() -> void:
+	_quit_armed = 0.0
+	_quit_button.text = "Ende"
+	_quit_button.remove_theme_stylebox_override("normal")
 
 func _on_mode_picked(mode: int, team := false, cup := false) -> void:
 	Game.mode = mode as Game.Mode
@@ -129,11 +159,14 @@ func _build_options_page() -> void:
 	_track_block = track_row.get_parent() as Control
 	# Four or more tracks share the row: narrower buttons, smaller outlines.
 	var track_width := minf(500.0, (1820.0 - 24.0 * (Game.tracks.size() - 1)) / maxf(1.0, Game.tracks.size()))
-	var outline_size := 140.0 if track_width >= 480.0 else 112.0
+	var outline_size := 140.0 if track_width >= 480.0 else 104.0
 	for i in Game.tracks.size():
 		var def := Game.tracks[i]
 		var button := _option_button([], def.display_name, track_group, Vector2(track_width, 170))
 		var content := button.get_child(0) as BoxContainer
+		if track_width < 480.0:
+			# Long names ("Wohnzimmer", "Riesenrunde") must stay inside the narrower button.
+			(content.get_child(0) as Label).add_theme_font_size_override("font_size", 36)
 		var icon := TrackIcon.new(def.outline)
 		icon.custom_minimum_size = Vector2(outline_size, outline_size)
 		content.add_child(icon)
@@ -286,19 +319,40 @@ func _enter_players_page() -> void:
 	for slot in _slots:
 		slot.queue_free()
 	_slots.clear()
-	var slot_count := 2 if Game.mode == Game.Mode.RACE or Game.mode == Game.Mode.EXPLORE else 1
+	# Only the time trial is for one driver. Free drive has two seats too ("catch Papa" needs a
+	# kid and a grown-up); one player alone just leaves the other seat empty.
+	var slot_count := 1 if Game.mode == Game.Mode.TIME_TRIAL else 2
 	for i in slot_count:
 		var slot := PlayerSlot.new(i if slot_count > 1 else -1)
 		slot.taken_colors = _colors_taken_by_others
 		_slot_row.add_child(slot)
 		_slots.append(slot)
 	_place_swap_button()
-	# Players from the last race are already in their seats.
+	# Players from the last race (or from before going back a page) are already in their
+	# seats. Such a seat is "kept": see IDLE_SEAT.
+	var returning: Array[InputSource] = _seated_before.duplicate()
+	var same_sides := not returning.is_empty()
+	if returning.is_empty():
+		for cfg in Game.players:
+			returning.append(cfg.source)
 	var seat := 0
-	for cfg in Game.players:
-		if seat < slot_count and cfg.source != null and cfg.source.is_connected_now() and _find_source(cfg.source.id) != null:
-			_slots[seat].join(_find_source(cfg.source.id), seat)
+	for i in returning.size():
+		var source := returning[i]
+		if source == null or not source.is_connected_now() or _find_source(source.id) == null:
+			continue
+		# The same side as before where that seat exists and is free, else the next free seat.
+		var want := i if same_sides and i < slot_count and _slots[i].state == PlayerSlot.SlotState.EMPTY else -1
+		while want < 0 and seat < slot_count:
+			if _slots[seat].state == PlayerSlot.SlotState.EMPTY:
+				want = seat
 			seat += 1
+		if want < 0:
+			break
+		_slots[want].join(_find_source(source.id), want)
+		_slots[want].kept = true
+	_seated_before.clear()
+	_grace = 0.0
+	_idle_wait = 0.0
 	for source in _sources:
 		source.swallow_held()
 	_start_timer = -1.0
@@ -314,15 +368,30 @@ func _colors_taken_by_others(asking: PlayerSlot) -> Array:
 func _refresh_sources() -> void:
 	var fresh := Game.list_sources()
 	var merged: Array[InputSource] = []
+	var old: Array[InputSource] = _sources.duplicate()
+	for cfg in Game.players:
+		if cfg.source != null and not old.has(cfg.source):
+			old.append(cfg.source)
+	var connected := Input.get_connected_joypads()
 	for source in fresh:
-		var known := _find_source(source.id)
+		var known: InputSource = null
+		var pad := source as PadSource
+		if pad:
+			# The pad we know on this device number is this pad. Two pads of one model share
+			# their id scheme (model + order switched on), and the order shifts when one of
+			# them drops out: matching by id would hand dad's seat to the kid's pad.
+			for o in old:
+				if o is PadSource and (o as PadSource).device == pad.device and not merged.has(o):
+					known = o
 		if known == null:
-			for cfg in Game.players:
-				if cfg.source != null and cfg.source.id == source.id:
-					known = cfg.source
-		if known is PadSource and source is PadSource:
-			(known as PadSource).device = (source as PadSource).device
-			known.label = source.label
+			for o in old:
+				var taken := o is PadSource and connected.has((o as PadSource).device)
+				if o.id == source.id and not merged.has(o) and not (pad and taken):
+					known = o
+			# A pad that came back on another device number.
+			if known is PadSource and pad:
+				(known as PadSource).device = pad.device
+				known.label = source.label
 		merged.append(known if known != null else source)
 	_sources = merged
 	for slot in _slots:
@@ -342,6 +411,10 @@ func _slot_of(source: InputSource) -> PlayerSlot:
 	return null
 
 func _process(delta: float) -> void:
+	if _quit_armed > 0.0:
+		_quit_armed -= delta
+		if _quit_armed <= 0.0:
+			_disarm_quit()
 	if _page != Page.PLAYERS:
 		return
 	var joined := 0
@@ -350,6 +423,8 @@ func _process(delta: float) -> void:
 		var slot := _slot_of(source)
 		if slot != null:
 			slot.handle(poll)
+			if slot.state == PlayerSlot.SlotState.EMPTY:
+				_grace = LEFT_GRACE  # he left his seat: give him time to come back
 		else:
 			# Left or right takes the seat on that side. The join button takes the device's home
 			# seat (W A S D left, arrow keys right), else the first free one.
@@ -367,14 +442,33 @@ func _process(delta: float) -> void:
 						if _slots[k].state == PlayerSlot.SlotState.EMPTY:
 							want = k
 							break
+			# Pushing toward a seat somebody has already taken: the free seat instead.
+			if want >= 0 and _slots[want].state != PlayerSlot.SlotState.EMPTY:
+				want = 1 - want if _slots.size() > 1 and _slots[1 - want].state == PlayerSlot.SlotState.EMPTY else -1
 			if want >= 0 and _slots[want].state == PlayerSlot.SlotState.EMPTY:
 				_slots[want].join(source, want)
 				source.swallow_held()
 	var all_ready := true
+	var idle: Array[PlayerSlot] = []
 	for slot in _slots:
-		if slot.state != PlayerSlot.SlotState.EMPTY:
+		slot.modulate.a = 1.0
+		if slot.state == PlayerSlot.SlotState.JOINED and slot.kept:
+			idle.append(slot)  # kept from the last race, nothing pressed yet
+		elif slot.state != PlayerSlot.SlotState.EMPTY:
 			joined += 1
 			all_ready = all_ready and slot.state == PlayerSlot.SlotState.READY
+	_grace = maxf(_grace - delta, 0.0)
+	if joined > 0 and all_ready and not idle.is_empty():
+		# Everybody who is here is ready: a silent kept seat fades and then gives way.
+		_idle_wait += delta
+		for slot in idle:
+			slot.modulate.a = lerpf(1.0, 0.35, _idle_wait / IDLE_SEAT)
+			if _idle_wait >= IDLE_SEAT:
+				slot.leave()
+		all_ready = false
+	else:
+		_idle_wait = 0.0
+		all_ready = all_ready and idle.is_empty() and _grace <= 0.0
 	if joined > 0 and all_ready:
 		if _start_timer < 0.0:
 			_start_timer = START_DELAY
@@ -404,6 +498,7 @@ func _swap_sides() -> void:
 	_slots[1].set_side(1)
 	_place_swap_button()
 	_start_timer = -1.0
+	_grace = 0.0
 	UiKit.play(self, "pop")
 
 ## Order in the row: left panel, swap button, right panel. The button shows only with two seats.
@@ -435,13 +530,21 @@ func _new_page(page: Page) -> CenterContainer:
 	return center
 
 func _show(page: Page) -> void:
+	if _page == Page.PLAYERS and page != Page.PLAYERS:
+		# Going back keeps the seats and the picks for the way forward again.
+		_seated_before.clear()
+		for slot in _slots:
+			_seated_before.append(slot.source if slot.state != PlayerSlot.SlotState.EMPTY else null)
+			if slot.state != PlayerSlot.SlotState.EMPTY:
+				slot.save_prefs()
 	_page = page
 	for key: Page in _pages:
 		(_pages[key] as Control).visible = key == page
 	MenuStyle.page_in(_pages[page] as Control)
 	match page:
 		Page.MODE:
-			(_cup_button if Game.cup else _team_button if Game.team_race else _mode_buttons[Game.mode] as Button).grab_focus()
+			(_cup_button if Game.cup or Game.came_from_cup else _team_button if Game.team_race else _mode_buttons[Game.mode] as Button).grab_focus()
+			Game.came_from_cup = false
 		Page.OPTIONS:
 			_options_title.text = "Pokal" if Game.cup else "Team-Rennen" if Game.team_race else Game.MODE_NAMES[Game.mode]
 			_options_icon.texture = UiKit.icon("trophy" if Game.cup else "team" if Game.team_race else ["wheel", "flag", "clock", "search"][Game.mode])
@@ -452,7 +555,9 @@ func _show(page: Page) -> void:
 			var track_index := Game.tracks.find(Game.track)
 			if track_index >= 0:
 				_track_buttons[track_index].button_pressed = true
-			_ai_buttons[Game.ai_count].button_pressed = true
+			# Team is "us against the toys": there is always at least one toy (the race adds it).
+			_ai_buttons[0].visible = not Game.team_race
+			_ai_buttons[maxi(Game.ai_count, 1) if Game.team_race else Game.ai_count].button_pressed = true
 			_next_button.grab_focus()
 		Page.PLAYERS:
 			_enter_players_page()
@@ -492,7 +597,11 @@ func _is_swap_press(event: InputEvent) -> bool:
 func _dev_shot() -> void:
 	var page_name: String = Game.smoke_args.get("page", "mode")
 	if page_name != "mode":
-		Game.mode = Game.Mode.RACE
+		# "--mode=free|explore|trial|team|cup": the pages as that mode shows them.
+		var mode_name: String = Game.smoke_args.get("mode", "race")
+		Game.mode = {"free": Game.Mode.FREE_DRIVE, "trial": Game.Mode.TIME_TRIAL, "explore": Game.Mode.EXPLORE}.get(mode_name, Game.Mode.RACE)
+		Game.team_race = mode_name == "team"
+		Game.cup = mode_name == "cup"
 		_show(Page.OPTIONS)
 	if page_name == "join":
 		_show(Page.PLAYERS)

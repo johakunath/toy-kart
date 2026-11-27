@@ -331,7 +331,10 @@ static func _veranda(room: Node3D) -> void:
 		_ball(group, 1.8, Vector3(X1 - 2.0, 4.0, -70.5 + k * 3.0), C_PLANT, 0.2)
 	# The toy walker, parked.
 	var walker := _group(group, "Walker", Vector3(14.0, 0, -36.0))
-	_block(walker, Vector3(6.0, 3.0, 4.0), Vector3(0, 0.8, 0), Color("e8483f"), 0.4, 0.5)
+	_box(walker, Vector3(6.0, 3.0, 4.0), Vector3(0, 0.8, 0), Color("e8483f"), 0.0, 0.4, 0.5)
+	# Solid down to the floor: the kid assist's feelers look low and must see it.
+	var walker_at := _to_world(walker, Vector3.ZERO)
+	_solid(Vector3(6.0, 3.8, 4.0), Vector3(walker_at.x, 0.0, walker_at.z))
 	for x: float in [-2.6, 2.6]:
 		_box(walker, Vector3(0.8, 9.0, 0.8), Vector3(x, 3.0, 1.8), Color("3b8beb"), 0.0, 0.4, 0.5)
 	_box(walker, Vector3(6.0, 1.0, 1.0), Vector3(0, 12.0, 1.8), Color("3b8beb"), 0.0, 0.4, 0.5)
@@ -343,6 +346,7 @@ static func _veranda(room: Node3D) -> void:
 	robot.name = "RobotVacuum"
 	robot.kind = ToyMotion.Kind.ORBIT
 	robot.amount = 0.0
+	robot.bob_height = 0.0  # it drives on the floor
 	robot.speed = 2.2
 	robot.radius = 7.0
 	robot.position = Vector3(-30.0, 0, -45.0)
@@ -354,6 +358,9 @@ static func _veranda(room: Node3D) -> void:
 	eye.material_override = _mat(Color("3fdf6f"), 0.3, 0.0, 3.0)
 	var pusher := AnimatableBody3D.new()
 	pusher.name = "Bumper"
+	# The robot itself is moved (ToyMotion), not this body: with the default "sync to physics"
+	# the collider would stay behind at the middle of the circle.
+	pusher.sync_to_physics = false
 	var shape := CollisionShape3D.new()
 	var cylinder := CylinderShape3D.new()
 	cylinder.radius = 3.5

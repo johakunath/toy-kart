@@ -46,9 +46,10 @@ func _read_raw(control_mode: int) -> Dictionary:
 		var stick_r := _axis(JOY_AXIS_RIGHT_X)
 		if absf(stick_r) > absf(stick):
 			stick = stick_r
+		# A stick that is pushed wins: a small hand resting on LB must not lock the steering.
 		var digital := _digital_steer(true)
 		return {
-			"steer": digital if digital != 0.0 else stick,
+			"steer": stick if stick != 0.0 else digital,
 			"accelerate": maxf(Input.get_joy_axis(device, JOY_AXIS_TRIGGER_RIGHT), 1.0 if _b(JOY_BUTTON_A) else 0.0),
 			"horn": _b(JOY_BUTTON_B) or _b(JOY_BUTTON_X) or _b(JOY_BUTTON_Y),
 		}

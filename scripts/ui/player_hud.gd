@@ -34,6 +34,8 @@ var _faces := {}           ## Racer -> Control in the face column
 var _lap_dots: Array[Panel] = []
 var _gift_hint: PanelContainer   ## "give your item to the kid" hint (CoopHelp shows it)
 var _gift_pulse := 0.0
+var _place_shown := -1
+var _lap_shown := -1
 
 func setup(p_racer: Racer, mode: int, total_racers: int, all_racers: Array[Racer] = []) -> void:
 	racer = p_racer
@@ -167,7 +169,11 @@ func setup(p_racer: Racer, mode: int, total_racers: int, all_racers: Array[Racer
 	key_pictures.add_theme_constant_override("separation", 20)
 	key_pictures.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if racer.source:
-		KeyHints.fill_driving(key_pictures, racer.source, racer.control_mode, 44.0)
+		# The gift key shows only when there is a kid along to give to.
+		var kid_along := false
+		for other in _all:
+			kid_along = kid_along or (other != racer and other.is_human and other.control_mode == Game.ControlMode.KID)
+		KeyHints.fill_driving(key_pictures, racer.source, racer.control_mode, 44.0, kid_along)
 	_keys.add_child(key_pictures)
 	_keys.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_keys.visible = key_pictures.get_child_count() > 0
@@ -177,15 +183,19 @@ func setup(p_racer: Racer, mode: int, total_racers: int, all_racers: Array[Racer
 	racer.kart.bricks_changed.connect(_on_bricks_changed)
 
 func refresh(race_time: float, delta: float) -> void:
-	if _place.visible:
+	# Styles are set only when the place or the lap changes, not every frame.
+	if _place.visible and racer.place != _place_shown:
+		_place_shown = racer.place
 		_place.text = "%d." % racer.place
 		var medal := MEDALS[racer.place - 1] if racer.place <= MEDALS.size() else Color.WHITE
 		_place.add_theme_color_override("font_color", medal)
-	for i in _lap_dots.size():
-		var on := i < racer.display_lap()
-		_lap_dots[i].add_theme_stylebox_override("panel", UiKit.box(UiKit.SUN if on else Color(1, 1, 1, 0.35), 22, UiKit.INK, 4))
+	var lap := racer.display_lap()
+	if lap != _lap_shown:
+		_lap_shown = lap
+		for i in _lap_dots.size():
+			_lap_dots[i].add_theme_stylebox_override("panel", UiKit.box(UiKit.SUN if i < lap else Color(1, 1, 1, 0.35), 22, UiKit.INK, 4))
+		_lap.text = "%d/%d" % [lap, Game.race_laps()]
 	_place_faces(delta)
-	_lap.text = "%d/%d" % [racer.display_lap(), Game.race_laps()]
 	if _time.visible:
 		_time.text = UiKit.format_time(racer.finish_time if racer.finished else race_time)
 	if _item_back.visible:
@@ -282,6 +292,9 @@ func _place_faces(delta: float) -> void:
 ## seconds <= 0 keeps the message until the next one.
 func show_message(text: String, seconds: float, size := 230, color := Color.WHITE) -> void:
 	_message.text = text
+	# Long words ("Letzte Runde!") shrink to fit a split-screen half.
+	if self.size.x > 200.0:
+		size = UiKit.fit_font_size(text, self.size.x - 120.0, size, 60)
 	_message.add_theme_font_size_override("font_size", size)
 	_message.add_theme_color_override("font_color", color)
 	_message.visible = true
