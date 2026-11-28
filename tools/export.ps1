@@ -1,4 +1,4 @@
-# Builds the Windows game to builds\ToyKart.exe and proves that the exe starts.
+# Builds the Windows game to builds\ToyRacer.exe and proves that the exe starts.
 #
 #   powershell -ExecutionPolicy Bypass -File tools\export.ps1
 #
@@ -6,7 +6,7 @@
 
 . "$PSScriptRoot\common.ps1"
 $builds = Join-Path $ProjectRoot 'builds'
-$exe = Join-Path $builds 'ToyKart.exe'
+$exe = Join-Path $builds 'ToyRacer.exe'
 New-Item -ItemType Directory -Force $builds | Out-Null
 
 Write-Host "Exporting to $exe ..."

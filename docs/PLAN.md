@@ -1,4 +1,4 @@
-# Toy Kart Racer: Plan & Prototype
+# Toy Racer: Plan & Prototype
 
 Nov 21, 2026 · @Johannes
 
@@ -276,7 +276,7 @@ Everything here waits until milestone 2 is fun; pick by what the kids ask for.
 
 Five steps on your PC, then Claude Code builds milestone 1 and stops with a couch test script for you.
 
-1. Create an empty folder, for example Documents\\ToyKart.
+1. Create an empty folder, for example Documents\\ToyRacer.
 2. Save this doc as Markdown into that folder as PLAN.md.
 3. Put toy photos into a subfolder photos\\toys: front and back of each toy, plain background, even light, the toy filling most of the frame. One file per side, named like bear-front.jpg and bear-back.jpg. Add left and right shots for toys you may want in 3D later.
 4. Open Claude Code on the PC in that folder and pick Fable 5.2.
@@ -293,7 +293,7 @@ Five steps on your PC, then Claude Code builds milestone 1 and stops with a couc
 **Kickoff prompt:**
 
 ```text
-Project: Toy Kart, a Mario Kart-style racing game for me and my 4-year-old son. Windows PC, Godot 4.7 standard build, GDScript 2.0, no C#.
+Project: Toy Racer, a Mario Kart-style racing game for me and my 4-year-old son. Windows PC, Godot 4.7 standard build, GDScript 2.0, no C#.
 
 I am not a programmer. Never ask me to use a terminal. Do all installs, git, config and builds yourself. Give me steps only in the Godot editor or on websites.
 
@@ -301,7 +301,7 @@ Read PLAN.md in this folder first and move it to docs/PLAN.md. Build milestone 1
 
 1. Setup
 - Install if missing: Git, Godot 4.7.x stable (standard) with Windows export templates, Node.js.
-- Create a private GitHub repo named toy-kart and commit after each working step. No GitHub Actions; run all checks locally.
+- Create a private GitHub repo named toy-racer and commit after each working step. No GitHub Actions; run all checks locally.
 - Add the Godot MCP server (Coding-Solo/godot-mcp) so you can run the game and read its errors.
 - Docs, token-efficient: CLAUDE.md is the single index, under 100 lines (goal, stack, folder map, check commands, rules, links). AGENTS.md is one line pointing to CLAUDE.md. Create docs/DECISIONS.md and docs/BACKLOG.md from PLAN.md, and docs/HANDOVER.md. Never read asset files into context.
 - Rules for CLAUDE.md: Godot 4.7 APIs only, no Godot 3 names. Every change passes a headless script parse and a headless run of the race scene before you hand over.
@@ -319,7 +319,7 @@ Read PLAN.md in this folder first and move it to docs/PLAN.md. Build milestone 1
 - Speeds: Kid, Normal, Fast.
 - Driver and kart are separate resources (.tres), picked separately on a simple selection screen. Driver types: 3D model, or paper (front and back photo on a flat card that wobbles and leans in curves). Turn every toy photo pair in photos/toys/ into a paper driver (remove the background locally, free tools only).
 - Boost stars to drive through, with a sound and a sparkle. A finish screen that celebrates everyone. UI: icons plus short German labels; playable without reading.
-- Windows export preset, built to builds/ToyKart.exe.
+- Windows export preset, built to builds/ToyRacer.exe.
 - Target: 60 fps at 1080p in split screen on an RTX 4070.
 
 4. Done when

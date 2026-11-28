@@ -5,7 +5,7 @@ Updated 27 Nov 2026, twenty-second round: a full review (code, gameplay, UI from
 ## Where it stands
 
 Milestone 1 is built. All local checks pass and the Windows game is exported to
-`builds/ToyKart.exe`. **Not yet done: a real race on the projector with two real controllers.**
+`builds/ToyRacer.exe`. **Not yet done: a real race on the projector with two real controllers.**
 No gamepad was plugged in during the build, so pads were tested with simulated button presses only.
 The couch test below is the gate for milestone 1.
 
@@ -129,7 +129,7 @@ timer, no score, no track. Two players in split screen, or him alone.
   108 to 148 fps (1 %-low 52 to 71), the Wohnzimmer race 111 fps (1 %-low 49). The PC was
   slower than on earlier days (the race had ~200 fps then), so the new room costs no more than
   the race room. Re-measure on the projector PC before blaming either.
-- The exe is rebuilt (`builds/ToyKart.exe`) and plays Entdecken to "Gute Nacht"; `tools/export.ps1`
+- The exe is rebuilt (`builds/ToyRacer.exe`) and plays Entdecken to "Gute Nacht"; `tools/export.ps1`
   now tests that too (it caught that runtime scripts must not use classes from `tools/`, which the
   exported game leaves out).
 - **Not tested by hand yet:** playing it with real pads; whether the pull feels too strong or

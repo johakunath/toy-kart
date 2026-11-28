@@ -9,7 +9,7 @@ checks yourself. Give him steps only in the Godot editor or on websites.
 - Godot exe: `%LOCALAPPDATA%\Programs\Godot\Godot_v4.7.2-stable_win64_console.exe` (export templates installed).
 - Base: Kenney Starter Kit Racing (MIT code, CC0 assets). Also CC0 from Kenney: Mini Characters (drivers),
   Car Kit (go-karts), Toy Car Kit (trees, gate). Licences in `licenses/`.
-- Repo: github.com/johakunath/toy-kart (private). No GitHub Actions; all checks run locally.
+- Repo: github.com/johakunath/toy-racer (public). No GitHub Actions; all checks run locally.
 - `tools/.venv` (Python 3.12: rembg, Pillow) only for photo cut-outs and sound generation.
 - Godot MCP server (Coding-Solo/godot-mcp) is configured in `.mcp.json`.
 
@@ -42,7 +42,7 @@ steering, AI, laps, places, reset and the start grid.
 ```
 powershell -ExecutionPolicy Bypass -File tools\check.ps1        # names, parse, pad mapping, menu flow, headless races on every track + Entdecken
 powershell -ExecutionPolicy Bypass -File tools\check.ps1 -Quick # parse + one race
-powershell -ExecutionPolicy Bypass -File tools\export.ps1       # builds\ToyKart.exe + start tests
+powershell -ExecutionPolicy Bypass -File tools\export.ps1       # builds\ToyRacer.exe + start tests
 ```
 - Headless race by hand: `godot --headless --path . --fixed-fps 60 res://scenes/race.tscn -- --smoke`
   Options after `--smoke`: `--players=1|2 --control=kid|full|mixed --input=none|left|right|random|gas|skilled

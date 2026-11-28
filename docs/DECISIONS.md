@@ -6,7 +6,7 @@ Claude builds from this file. Change a row only with Johannes' OK, and change it
 
 | Area | Decision | Why |
 | --- | --- | --- |
-| Name | Game: **Toy Racer**. Repo: `toy-kart`. Exe: `builds/ToyKart.exe` | Name decided 21 Nov 2026; repo and exe names kept from the kickoff prompt |
+| Name | Game: **Toy Racer**. Repo: `toy-racer`. Exe: `builds/ToyRacer.exe` | Name decided 21 Nov 2026; repo and exe renamed to match on 28 Nov 2026 (owner) |
 | Engine | Godot 4.7, standard build with GDScript, no C# | All project files are text; free; Kenney template exists |
 | Base | Kenney Starter Kit Racing, MIT code and CC0 assets | Arcade kart physics and tile tracks ready |
 | Platform | Windows PC first, played on the 1080p projector | Steam Deck and tablet later |
