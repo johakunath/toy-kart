@@ -33,7 +33,7 @@ const C_BLACK := Color("26272e")
 const C_WHITE := Color("f6f4ee")
 const C_PLANT := Color("2fa84a")
 const C_PLANT_DARK := Color("1f7d3a")
-const C_POT := Color("d2693a")
+const C_POT := Color("2e3033")  ## dark pots, as in the photos (terracotta vanished on the red floor)
 const C_VELVET := Color("7d1a35")
 const C_TEAL := Color("1f5254")
 const C_SAGE := Color("a8c2a8")
@@ -208,7 +208,7 @@ static func _room_walls(room: Node3D) -> void:
 			_no_shadow(_box(walls, Vector3(0.2, HEIGHT - 6.0, 4.0), Vector3(X1 - 0.05, 2.4, z), C_WALL_OPEN, 0.0, 0.9))
 	# The hall behind the door: a short, darker corridor.
 	var hall := _group(room, "Hall")
-	_no_shadow(_box(hall, Vector3(HALL_DOOR.y - HALL_DOOR.x + 4.0, 0.2, 30.0), Vector3((HALL_DOOR.x + HALL_DOOR.y) * 0.5, -0.1, Z1 + 16.0), Color("8d4a28"), 0.0, 0.6))
+	_no_shadow(_box(hall, Vector3(HALL_DOOR.y - HALL_DOOR.x + 4.0, 0.2, 30.0), Vector3((HALL_DOOR.x + HALL_DOOR.y) * 0.5, -0.1, Z1 + 16.0), C_PLANK[0].darkened(0.25), 0.0, 0.6))
 	for side: float in [HALL_DOOR.x - 1.0, HALL_DOOR.y + 1.0]:
 		_no_shadow(_box(hall, Vector3(1.0, HEIGHT, 30.0), Vector3(side, 0, Z1 + 16.0), Color("e6e2d8"), 0.0, 0.9))
 	_no_shadow(_box(hall, Vector3(HALL_DOOR.y - HALL_DOOR.x + 4.0, HEIGHT, 1.0), Vector3((HALL_DOOR.x + HALL_DOOR.y) * 0.5, 0, Z1 + 31.0), Color("c8c2b6"), 0.0, 0.9))

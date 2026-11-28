@@ -32,8 +32,8 @@ After the first real play with his son (speed and kid controls feel good).
   Jumbo does a barrel roll, the Motorrad pulls a wheelie, the Polizei flashes blue and red
   lights, the Zug whistles and puffs steam, the Traktor bounces. The computer toys honk too, so
   they show off their tricks on their own. Other karts: the driver hops as before.
-- **Living rooms in our real colours:** warm white walls instead of blue, a reddish-brown
-  laminate floor (see below), the grey sofa, dark coffee table, linen curtains, a beige rug instead
+- **Living rooms in our real colours:** white walls instead of blue, a reddish-brown
+  laminate floor, the dark grey sofa, dark coffee table, dark teal curtains, a beige rug instead
   of the rainbow, a white lamp shade; the room light is neutral and less saturated. Toys, the toy
   race track and the puzzle mats stay bright. Both the Wohnzimmer track and Entdecken.
 - Dev helpers: `--input=honk` (gas, honk every 2.5 s) and `--input=keyboard` (real key pictures
