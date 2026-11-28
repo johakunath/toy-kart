@@ -20,7 +20,7 @@ const C_WOOD_A := Color("6f4e31")    ## darker oak floor, like ours
 const C_WOOD_B := Color("65462b")
 const C_WOOD_C := Color("7a5739")
 const C_SOFA := Color("6c6e73")      ## our grey sofa
-const C_TABLE := Color("6b4226")     ## dark wood, like the real coffee table
+const C_TABLE := Color("3b2416")     ## dark wood, like the real coffee table (darker than the floor)
 const TOY_COLORS: Array[Color] = [Color("e8483f"), Color("3b8beb"), Color("f2b90f"), Color("3fbf5f"),
 	Color("a55de0"), Color("f08a24")]
 

@@ -509,7 +509,7 @@ static func _coffee_table_and_lamp(room: Node3D) -> void:
 	var x := Vector2(12.5, 18.5)   # smaller than first built, like the real one (28 Nov 2026)
 	var z := Vector2(-12.0, 0.0)
 	_legs(group, x.x, x.y, z.x, z.y, 8.4, 0.7, C_BLACK, 0.2)
-	_box(group, Vector3(x.y - x.x, 1.0, z.y - z.x), Vector3((x.x + x.y) * 0.5, 8.4, (z.x + z.y) * 0.5), Color("6b4226"), 0.0, 0.4, 0.5)
+	_box(group, Vector3(x.y - x.x, 1.0, z.y - z.x), Vector3((x.x + x.y) * 0.5, 8.4, (z.x + z.y) * 0.5), Color("3b2416"), 0.0, 0.4, 0.5)
 	_box(group, Vector3(5.0, 0.3, 7.0), Vector3(15.0, 9.4, -8.0), Color("f3f0e6"), 0.2, 0.9)  # newspaper
 	_box(group, Vector3(3.6, 0.3, 4.6), Vector3(16.0, 9.7, -4.0), Color("3b8beb"), -0.2, 0.4)  # picture book
 	var projector := _block(group, Vector3(4.4, 2.2, 3.6), Vector3(15.5, 0, -10.0), C_WHITE, 0.4, 0.5)
