@@ -4,8 +4,11 @@
 [ext_resource type="PackedScene" path="res://assets/models/toys/zug.glb" id="2"]
 [ext_resource type="AudioStream" path="res://assets/kenney_racing/audio/engine.ogg" id="3"]
 
+[ext_resource type="AudioStream" path="res://assets/sfx/train_whistle.wav" id="9"]
+
 [resource]
 script = ExtResource("1")
+horn_trick = 6
 id = "zug"
 display_name = "Zug"
 sort_order = 9
@@ -19,4 +22,5 @@ top_speed = 1.01
 acceleration = 0.99
 handling = 1.0
 engine_sound = ExtResource("3")
-horn_pitch = 0.8
+horn_pitch = 1.0
+horn_sound = ExtResource("9")

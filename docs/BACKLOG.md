@@ -37,7 +37,6 @@ He had fun and likes it. Being fixed now unless marked "waits".
 | --- | --- | --- |
 | Tuning | Boost share: 25 to 45 % of a race on Kurvenkurs, Wohnzimmer and Waldkurs (target once was 5 to 15 %). Fewer arrows or shorter boosts if it feels like too much | Johannes decides |
 | UI | Pause menu: a kid can pick "Neustart" for everybody. A hold-to-confirm if it happens | If it happens |
-| UI | Krankenwagen's open roof is cut off on its finish card | Small |
 | Items | A leading kid's tickle has no target (bubble flies ahead at nobody) | Small |
 | Input | Two pads of one model start as Kind when their saved modes differ; a per-seat memory would avoid dad's two presses | If two equal pads are used |
 | Entdecken | A friend who gets the 8th thing is still spinning when it falls asleep | Small |

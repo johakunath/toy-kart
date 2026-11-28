@@ -14,14 +14,18 @@ var fork: Node3D          ## bikes only
 var lean_node: Node3D     ## bikes only: the whole bike leans
 var driver: DriverRig
 var wheel_spin_sign := 1.0  ## -1 for models that are turned round to face forward
+## What the vehicle does when it honks; the model hangs under it.
+var trick: HornTrick
 ## Flip-up roof (the Krankenwagen): a "roof" node in the model, closed at rest, hinged about its
-## own X axis. Purely visual. Open in menus; in a race closed at the start, springs open on "go".
+## own X axis. Purely visual. Shut by default (menus too); a honk opens it, the next one shuts it.
 var roof: Node3D
+var roof_open := false
 var _roof_rest := Vector3.ZERO
 var _roof_angle := 0.0       ## radians open
 var _roof_speed := 0.0
-var _roof_pop := 0.0         ## seconds left of a honk "pop shut"
+var _roof_wait := 0.0        ## seconds until the next honk may flip it (a siren honks 4 times)
 var _roof_sound: AudioStreamPlayer3D
+const ROOF_TOGGLE_GAP := 0.7
 const ROOF_SPRING := 160.0   ## stiff with little damping: a springy flip in about 0.6 s
 const ROOF_DAMPING := 11.0
 
@@ -35,18 +39,23 @@ func build(p_kart: KartDef, p_driver: DriverDef) -> void:
 	front_wheels.clear()
 	body = null
 	roof = null
+	roof_open = false
 	_roof_sound = null
 	fork = null
 	lean_node = null
 	driver = null
+	trick = HornTrick.new()
+	trick.name = "Trick"
+	add_child(trick)
 	if driver_def and driver_def.is_vehicle:
 		_build_toy_vehicle()
+		trick.setup(driver_def.horn_trick, _model_box(true))
 		return
 	if kart_def == null or kart_def.model_scene == null:
 		return
 	model = kart_def.model_scene.instantiate() as Node3D
 	model.name = "Model"
-	add_child(model)
+	trick.add_child(model)
 	model.scale = Vector3.ONE * kart_def.model_scale
 	model.rotation.y = deg_to_rad(kart_def.model_yaw_degrees)
 	wheel_spin_sign = -1.0 if absf(kart_def.model_yaw_degrees) > 90.0 else 1.0
@@ -65,7 +74,7 @@ func build(p_kart: KartDef, p_driver: DriverDef) -> void:
 	roof = model.find_child("roof", true, false) as Node3D
 	if roof:
 		_roof_rest = roof.rotation
-		set_roof_open(1.0)
+		set_roof_open(0.0)
 		_roof_sound = AudioStreamPlayer3D.new()
 		_roof_sound.stream = load("res://assets/sfx/pop.wav")
 		_roof_sound.bus = &"Effects"
@@ -95,12 +104,13 @@ func build(p_kart: KartDef, p_driver: DriverDef) -> void:
 	driver.build(driver_def, kart_def.seat_scale)
 	ToyLook.apply(model, ToyLook.Kind.KART)
 	ToyLook.apply(driver, ToyLook.Kind.DRIVER)
+	trick.setup(kart_def.horn_trick, _model_box())
 
 ## A toy vehicle stands in for the whole kart: no kart model, the toy sits on the ground.
 func _build_toy_vehicle() -> void:
 	model = Node3D.new()
 	model.name = "Model"
-	add_child(model)
+	trick.add_child(model)
 	driver = DriverRig.new()
 	driver.name = "Driver"
 	model.add_child(driver)
@@ -158,13 +168,15 @@ func add_stickers(ids: Array[String]) -> void:
 		holder.add_child(sticker)
 		sticker.transform = to_holder * local
 
-## The model's outline in this node's space (without the driver and the wheels).
-func _model_box() -> AABB:
+## The model's outline in this node's space (without the driver and the wheels, unless `all`).
+func _model_box(all := false) -> AABB:
 	var box := AABB()
 	var first := true
 	for node in model.find_children("*", "MeshInstance3D", true, false):
 		var mesh := node as MeshInstance3D
-		if not mesh.visible or String(mesh.name).begins_with("wheel") or String(mesh.name).begins_with("roof") or (driver and driver.is_ancestor_of(mesh)):
+		if not all and (not mesh.visible or String(mesh.name).begins_with("wheel") or String(mesh.name).begins_with("roof") or (driver and driver.is_ancestor_of(mesh))):
+			continue
+		if all and String(mesh.name) == "ContactShadow":
 			continue
 		var b := _chain(mesh) * mesh.get_aabb()
 		box = b if first else box.merge(b)
@@ -190,14 +202,14 @@ func set_roof_open(share: float) -> void:
 	_roof_speed = 0.0
 	roof.rotation = _roof_rest - Vector3(_roof_angle, 0, 0)  # minus: the front end lifts
 
-## Each frame in a race: shut while waiting at the start, springs open on "go" (a pop sound),
-## leans further back with speed so the driver stays in view, pops shut for a moment on a honk.
-func animate_roof(delta: float, racing: bool, speed_share: float) -> void:
+## Each physics tick in a race: the roof springs toward open or shut (a pop when it opens),
+## leaning further back with speed so the driver stays in view.
+func animate_roof(delta: float, speed_share: float) -> void:
 	if roof == null:
 		return
-	_roof_pop = maxf(0.0, _roof_pop - delta)
+	_roof_wait = maxf(0.0, _roof_wait - delta)
 	var target := 0.0
-	if racing and _roof_pop <= 0.0:
+	if roof_open:
 		target = deg_to_rad(lerpf(kart_def.roof_open_degrees, kart_def.roof_open_fast_degrees, clampf(speed_share, 0.0, 1.0)))
 	if target > 0.5 and _roof_angle < 0.15 and _roof_speed <= 0.0 and _roof_sound and _roof_sound.is_inside_tree():
 		_roof_sound.play()
@@ -205,7 +217,25 @@ func animate_roof(delta: float, racing: bool, speed_share: float) -> void:
 	_roof_angle = clampf(_roof_angle + _roof_speed * delta, -0.05, deg_to_rad(170.0))
 	roof.rotation = _roof_rest - Vector3(_roof_angle, 0, 0)  # minus: the front end lifts
 
-## Honk: the roof snaps shut and flips open again.
-func pop_roof() -> void:
+## Honk: the vehicle's trick. The roof flips open or shut; every other kart's driver hops.
+func play_trick() -> void:
 	if roof:
-		_roof_pop = 0.22
+		if _roof_wait <= 0.0:
+			roof_open = not roof_open
+			_roof_wait = ROOF_TOGGLE_GAP
+		if driver:
+			driver.hop(0.6)
+		return
+	var lifts := trick != null and trick.kind in [HornTrick.Kind.LOOP, HornTrick.Kind.ROLL, HornTrick.Kind.WHEELIE, HornTrick.Kind.BOUNCE]
+	if trick:
+		trick.play()
+	if driver and not lifts:
+		driver.hop()
+
+## Each physics tick: the running trick; a toy's contact shadow hides while it is in the air.
+func animate_trick(delta: float) -> void:
+	if trick == null:
+		return
+	trick.animate(delta)
+	if driver:
+		driver.set_shadow_visible(not trick.active() or trick.kind == HornTrick.Kind.STEAM or trick.kind == HornTrick.Kind.SIREN)

@@ -8,6 +8,7 @@
 
 [resource]
 script = ExtResource("1")
+horn_trick = 2
 id = "paper_duploflieger"
 display_name = "Duplo-Flieger"
 type = 0

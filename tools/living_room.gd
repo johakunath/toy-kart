@@ -14,13 +14,13 @@ const WALL_HEIGHT := 70.0
 const TOY := "res://assets/models/toys/%s.glb"
 const FIGURE := "res://assets/characters/kenney_mini/character-%s.glb"
 
-const C_WALL := Color("6fc0ee")
+const C_WALL := Color("eeeae2")      ## warm white, like our real walls
 const C_SKIRTING := Color("fbf7ee")
-const C_WOOD_A := Color("c98b4f")
-const C_WOOD_B := Color("b8773f")
-const C_WOOD_C := Color("d69a5c")
-const C_SOFA := Color("d7262f")
-const C_TABLE := Color("9a5a2c")
+const C_WOOD_A := Color("c29a6c")    ## natural oak floor
+const C_WOOD_B := Color("b48c5f")
+const C_WOOD_C := Color("cea97c")
+const C_SOFA := Color("6c6e73")      ## our grey sofa
+const C_TABLE := Color("6b4226")     ## dark wood, like the real coffee table
 const TOY_COLORS: Array[Color] = [Color("e8483f"), Color("3b8beb"), Color("f2b90f"), Color("3fbf5f"),
 	Color("a55de0"), Color("f08a24")]
 
@@ -196,7 +196,7 @@ static func _floor(room: Node3D) -> void:
 	# The joints: a dark board just under the planks.
 	var under := PlaneMesh.new()
 	under.size = ROOM_HI - ROOM_LO + Vector2(4, 4)
-	var joints := _place(room, under, Vector3((ROOM_LO.x + ROOM_HI.x) * 0.5, -0.01, (ROOM_LO.y + ROOM_HI.y) * 0.5), _mat(Color("6b3f1f"), 0.9), 0.0, false)
+	var joints := _place(room, under, Vector3((ROOM_LO.x + ROOM_HI.x) * 0.5, -0.01, (ROOM_LO.y + ROOM_HI.y) * 0.5), _mat(Color("6e5236"), 0.9), 0.0, false)
 	joints.name = "Joints"
 
 static func _walls(room: Node3D) -> void:
@@ -224,7 +224,7 @@ static func _walls(room: Node3D) -> void:
 	for k in 13:
 		var x := ROOM_LO.x + 7.0 + k * 14.0
 		for z: float in [ROOM_LO.y + 0.05, ROOM_HI.y - 0.05]:
-			var stripe := _box(walls, Vector3(5.0, WALL_HEIGHT - 6.0, 0.2), Vector3(x, 3.2, z), Color("93d2f5"), 0.0, 0.9)
+			var stripe := _box(walls, Vector3(5.0, WALL_HEIGHT - 6.0, 0.2), Vector3(x, 3.2, z), Color("e2ddd2"), 0.0, 0.9)
 			stripe.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 ## Two big windows on the north wall: bright sky in the panes, white frames, red curtains.
@@ -242,10 +242,10 @@ static func _windows(room: Node3D) -> void:
 		# Window sill and curtains.
 		_box(group, Vector3(40.0, 1.2, 3.0), Vector3(cx, 15.4, z + 1.4), C_SKIRTING, 0.0, 0.4, 0.4)
 		for side: float in [-1.0, 1.0]:
-			var curtain := _box(group, Vector3(7.0, 58.0, 2.2), Vector3(cx + side * 22.0, 0.0, z + 1.6), Color("e8483f"), 0.0, 0.95)
+			var curtain := _box(group, Vector3(7.0, 58.0, 2.2), Vector3(cx + side * 22.0, 0.0, z + 1.6), Color("ddd6c8"), 0.0, 0.95)
 			curtain.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			for fold in 3:
-				_box(group, Vector3(1.4, 58.0, 0.6), Vector3(cx + side * 22.0 - 2.4 + fold * 2.4, 0.0, z + 2.8), Color("c92f2a"), 0.0, 0.95).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				_box(group, Vector3(1.4, 58.0, 0.6), Vector3(cx + side * 22.0 - 2.4 + fold * 2.4, 0.0, z + 2.8), Color("cbc3b3"), 0.0, 0.95).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 ## His drawings on the west wall (ahead when driving into the play corner).
 static func _drawings(room: Node3D) -> void:
@@ -307,7 +307,7 @@ static func _sofa(room: Node3D) -> void:
 		roll.position = Vector3(side * 28.5, 12.4, 0)
 		roll.material_override = _mat(C_SOFA, 0.95)
 	# A spare cushion on the floor, the twin of the one on the road.
-	var cushion := _box(group, Vector3(11.0, 2.6, 11.0), Vector3(40.0, 0, -2.0), Color("e0245e"), 0.5, 0.95)
+	var cushion := _box(group, Vector3(11.0, 2.6, 11.0), Vector3(40.0, 0, -2.0), Color("55575c"), 0.5, 0.95)
 	cushion.name = "SpareCushion"
 	_check(Vector3(40.0, 0, 19.0), 7.0, "spare cushion")
 
@@ -353,8 +353,9 @@ static func _coffee_table(room: Node3D) -> void:
 static func _rug(room: Node3D) -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var rings: Array[Array] = [[40.0, Color("e8483f")], [34.0, Color("f2b90f")], [27.0, Color("1fb5a8")],
-		[20.0, Color("3b6fe0")], [13.0, Color("a55de0")], [6.0, Color("f08a24")]]
+	# Calm wool colours, like a real round rug (it was a rainbow).
+	var rings: Array[Array] = [[40.0, Color("cfc4b2")], [34.0, Color("b9ad99")], [27.0, Color("d8cfbf")],
+		[20.0, Color("a99c88")], [13.0, Color("cfc4b2")], [6.0, Color("b9ad99")]]
 	var steps := 72
 	for k in rings.size():
 		var outer: float = rings[k][0]
@@ -439,8 +440,8 @@ static func _floor_lamp(room: Node3D) -> void:
 	_check(group.position, 6.0, "floor lamp")
 	_cyl(group, 4.0, 5.0, 1.0, Vector3.ZERO, Color("2a2b33"))
 	_cyl(group, 0.6, 0.6, 44.0, Vector3(0, 1.0, 0), Color("2a2b33"))
-	var shade := _cyl(group, 5.0, 9.0, 10.0, Vector3(0, 40.0, 0), Color("ffc81e"))
-	shade.material_override = _mat(Color("ffc81e"), 0.6, 0.0, 0.6)
+	var shade := _cyl(group, 5.0, 9.0, 10.0, Vector3(0, 40.0, 0), Color("f6f4ee"))
+	shade.material_override = _mat(Color("fff4d8"), 0.5, 0.0, 0.4)
 	shade.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var light := OmniLight3D.new()
 	light.name = "Glow"

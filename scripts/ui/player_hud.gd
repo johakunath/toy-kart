@@ -25,7 +25,10 @@ var _brick_dots: Array[Panel] = []
 var _message: Label
 var _message_left := 0.0
 var _item_pulse := 0.0
-var _charge_row: HBoxContainer    ## triple turbo: one small turbo per charge left, under the slot
+var _charge_row: HBoxContainer    ## triple turbo: one small turbo per charge left, above the slot
+var _use_hint: PanelContainer     ## next to the slot: the key that uses the item, and its name
+var _use_word: Label
+var _use_pulse := 0.0
 var _charges_shown := -1
 var _keys: PanelContainer
 var _keys_left := 9.0  ## the key help shows during the countdown and a few seconds after
@@ -121,9 +124,11 @@ func setup(p_racer: Racer, mode: int, total_racers: int, all_racers: Array[Racer
 	_charge_row.alignment = BoxContainer.ALIGNMENT_BEGIN
 	_charge_row.add_theme_constant_override("separation", 2)
 	_charge_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	UiKit.pin(_charge_row, Control.PRESET_CENTER_BOTTOM, Vector2(86, -136), Vector2(156, 52))
+	_charge_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	UiKit.pin(_charge_row, Control.PRESET_CENTER_BOTTOM, Vector2(-78, -242), Vector2(156, 52))
 	_charge_row.visible = false
 	add_child(_charge_row)
+	_build_use_hint()
 
 	# Bricks: a brick and ten dots that fill up (each brick = a little more speed).
 	var brick_row := HBoxContainer.new()
@@ -214,6 +219,7 @@ func refresh(race_time: float, delta: float) -> void:
 			_item_pulse += delta * 8.0
 			_item_back.scale = _item_back.scale.lerp(Vector2.ONE * (1.0 + sin(_item_pulse) * 0.06), minf(1.0, delta * 10.0))
 	_show_charges()
+	_show_use_hint(delta)
 	if _keys.visible:
 		_keys_left -= delta
 		_keys.modulate.a = clampf(_keys_left, 0.0, 1.0)
@@ -245,7 +251,7 @@ func show_gift_hint(on: bool, source: InputSource, delta: float) -> void:
 		elif source and source.gift_icon != "":
 			row.add_child(UiKit.icon_rect(source.gift_icon, 64, Color.WHITE))
 		_gift_hint.add_child(row)
-		UiKit.pin(_gift_hint, Control.PRESET_CENTER_BOTTOM, Vector2(-110, -320), Vector2(220, 110))
+		UiKit.pin(_gift_hint, Control.PRESET_CENTER_BOTTOM, Vector2(-110, -360), Vector2(220, 110))
 		_gift_hint.pivot_offset = Vector2(110, 55)
 		_gift_hint.modulate.a = 0.0
 		add_child(_gift_hint)
@@ -313,7 +319,41 @@ func _on_bricks_changed(count: int) -> void:
 		var on := i < count
 		_brick_dots[i].add_theme_stylebox_override("panel", UiKit.box(Color("e8483f") if on else Color(1, 1, 1, 0.35), 9, UiKit.INK, 3))
 
-## Triple turbo: small turbos under the slot, one per turbo left; using one makes the slot pop.
+## Right of the item slot: a picture of this player's "use" key, pulsing, and the item's name.
+## In kid mode it is his honk button (a honk uses the item). Only once the roulette stopped.
+func _build_use_hint() -> void:
+	_use_hint = PanelContainer.new()
+	_use_hint.add_theme_stylebox_override("panel", UiKit.box(Color(1, 1, 1, 0.9), 26, UiKit.INK, 5))
+	_use_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var col := VBoxContainer.new()
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_theme_constant_override("separation", 2)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var use_key := KeyHints.use_key(racer.source) if racer.source else ""
+	if use_key != "":
+		var key_pic := KeyHints.key(use_key, 70)
+		key_pic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		col.add_child(key_pic)
+	_use_word = UiKit.label("", 30)
+	col.add_child(_use_word)
+	_use_hint.add_child(col)
+	UiKit.pin(_use_hint, Control.PRESET_CENTER_BOTTOM, Vector2(96, -178), Vector2(190, 132))
+	_use_hint.pivot_offset = Vector2(95, 66)
+	_use_hint.visible = false
+	add_child(_use_hint)
+
+func _show_use_hint(delta: float) -> void:
+	var on := _item_back.visible and _roulette <= 0.0 and _shown_item != Items.NONE and not racer.finished
+	if on and not _use_hint.visible:
+		_use_word.text = Items.word(_shown_item)
+		_use_hint.scale = Vector2.ONE * 1.3
+	_use_hint.visible = on
+	if on:
+		_use_pulse += delta * 7.0
+		var beat := 1.0 + 0.07 * maxf(0.0, sin(_use_pulse))
+		_use_hint.scale = _use_hint.scale.lerp(Vector2.ONE * beat, minf(1.0, delta * 10.0))
+
+## Triple turbo: small turbos above the slot, one per turbo left; using one makes the slot pop.
 func _show_charges() -> void:
 	var count := racer.kart.turbo_charges if _shown_item == Items.TRIPLE_TURBO and _roulette <= 0.0 else 0
 	if count == _charges_shown:
@@ -333,6 +373,8 @@ func _on_item_changed(item: int) -> void:
 		_item_back.visible = false
 		return
 	_item_back.visible = true
+	# The start key help makes room for the item hint.
+	_keys_left = minf(_keys_left, 0.5)
 	_roulette = 0.7
 	_roulette_tick = 0.0
 

@@ -6,6 +6,7 @@
 
 [resource]
 script = ExtResource("1")
+horn_trick = 4
 id = "motorrad"
 display_name = "Motorrad"
 sort_order = 150

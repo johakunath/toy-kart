@@ -86,6 +86,7 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1       # builds\ToyRace
 - Light, sky, clouds and weather per track: the looks in `scripts/track/atmosphere.gd`.
 - Regenerate sounds / music: `tools\.venv\Scripts\python.exe tools\make_sfx.py` / `make_music.py`.
   Audio buses (Music, Effects, Engines) in `default_bus_layout.tres`; split screen adds Player1/Player2 at runtime.
+- Horn tricks per vehicle: `horn_trick` in the driver or kart `.tres` (`scripts/kart/horn_trick.gd`).
 - Tuning knobs: speeds in `game.gd` (`SPEED_FACTOR`), kart feel in `kart.gd` (constants at the top),
   kid assist in `assist.gd`, AI and catch-up in `race.gd` (`_update_pacing`), cameras in `chase_camera.gd`.
 

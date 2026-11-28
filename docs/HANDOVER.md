@@ -1,6 +1,6 @@
 # Handover
 
-Updated 27 Nov 2026, twenty-second round: a full review (code, gameplay, UI from his point of view) and its fixes. Before that: Entdecken assets (21st), the mode "Entdecken" (20th), toy models fixed (19th), welcome screen and console-style menu (18th).
+Updated 28 Nov 2026, twenty-third round: item hint on each screen, horn tricks for our vehicles, real room colours. Before that: a full review (22nd), Entdecken assets (21st), the mode "Entdecken" (20th), toy models fixed (19th), welcome screen and console-style menu (18th).
 
 ## Where it stands
 
@@ -11,6 +11,37 @@ The couch test below is the gate for milestone 1.
 
 ![Kurvenkurs, split screen](img/race-split-screen.jpg)
 ![Waldkurs in evening light](img/race-waldkurs-evening.jpg)
+
+## Twenty-third round (28 Nov 2026): item hint, horn tricks, room colours
+
+After the first real play with his son (speed and kid controls feel good).
+
+![Horn tricks and the item hint](img/horn-tricks-2026-11-28.jpg)
+![Living rooms before and after](img/room-colours-2026-11-28.jpg)
+
+- **Item hint:** while you hold an item, your half of the screen shows a picture of the key
+  that uses it (E, Enter or pad X: whatever your device is) and its name ("Turbo", "3x Turbo",
+  "Superstern", "Schutzblase", "Hüpfer", "Kitzeln"), pulsing next to the item slot. Triple-turbo
+  charges moved above the slot. The start key help fades when the first item arrives.
+- **Kid mode can use items too:** any of his buttons (they all honk) fires the held item once
+  the roulette stops. If he does not press, it still fires by itself, now after 3 s (was 1 s) on
+  a straight bit. One constant (`AUTO_USE_DELAY` in `assist.gd`) if you want it back to 1 s.
+- **Horn tricks** (`scripts/kart/horn_trick.gd`, set per vehicle with `horn_trick` in the
+  `.tres`): Krankenwagen roof is shut by default, a honk opens it, the next honk shuts it (menus
+  show it shut, which also fixes the cut-off finish card). Flieger and Duplo-Flieger loop, the
+  Jumbo does a barrel roll, the Motorrad pulls a wheelie, the Polizei flashes blue and red
+  lights, the Zug whistles and puffs steam, the Traktor bounces. The computer toys honk too, so
+  they show off their tricks on their own. Other karts: the driver hops as before.
+- **Living rooms in our real colours:** warm white walls instead of blue, natural oak floor
+  instead of orange planks, the grey sofa, dark coffee table, linen curtains, a beige rug instead
+  of the rainbow, a white lamp shade; the room light is neutral and less saturated. Toys, the toy
+  race track and the puzzle mats stay bright. Both the Wohnzimmer track and Entdecken.
+- Dev helpers: `--input=honk` (gas, honk every 2.5 s) and `--input=keyboard` (real key pictures
+  in the HUD) for screenshots.
+
+**Open:** the room colours are matched from the layout notes, not from photos (the photos from
+24 Nov are not on this PC). Drop 3 or 4 room photos into `photos/room/` and the colours can be
+matched exactly (floor, walls, sofa, chairs, curtains, rug).
 
 ## Twenty-second round (27 Nov 2026): review and fixes
 

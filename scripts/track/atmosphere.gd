@@ -35,16 +35,18 @@ const LOOKS := {
 		"leaf_colors": [Color(0.95, 0.55, 0.15), Color(0.9, 0.3, 0.12), Color(0.98, 0.78, 0.2), Color(0.6, 0.35, 0.15)],
 		"leaf_amount": 44,
 	},
-	# Indoors: afternoon sun through the window, warm lamp-like fill, dust glittering in the
-	# light. No clouds and no leaves; the "sky" is the creamy ceiling seen above the walls.
+	# Indoors: afternoon sun through the window, a soft fill, dust glittering in the light.
+	# Close to our real room: neutral daylight and only a little extra saturation (the walls
+	# and the oak floor must not turn orange). No clouds and no leaves; the "sky" is the
+	# white ceiling seen above the walls.
 	Look.LIVING_ROOM: {
-		"sky_top": Color(1.0, 0.95, 0.86), "sky_horizon": Color(1.0, 0.9, 0.78),
-		"ground": Color(0.6, 0.42, 0.28),
-		"sun_elevation": 42.0, "sun_azimuth": 160.0, "sun_color": Color(1.0, 0.9, 0.74), "sun_energy": 1.3,
-		"fill_color": Color(1.0, 0.8, 0.62), "fill_energy": 0.25,
-		"ambient_energy": 0.65, "ambient_color": Color(1.0, 0.93, 0.86), "ambient_sky": 0.55,
-		"fog_color": Color(1.0, 0.9, 0.78), "fog_density": 0.0005, "fog_sun_scatter": 0.25,
-		"glow": 0.6, "bloom": 0.06, "saturation": 1.45, "contrast": 1.08, "exposure": 0.9, "agx_contrast": 1.5,
+		"sky_top": Color(0.98, 0.97, 0.95), "sky_horizon": Color(0.97, 0.95, 0.91),
+		"ground": Color(0.55, 0.46, 0.36),
+		"sun_elevation": 42.0, "sun_azimuth": 160.0, "sun_color": Color(1.0, 0.95, 0.87), "sun_energy": 1.3,
+		"fill_color": Color(0.95, 0.93, 0.9), "fill_energy": 0.25,
+		"ambient_energy": 0.65, "ambient_color": Color(0.98, 0.97, 0.95), "ambient_sky": 0.55,
+		"fog_color": Color(0.97, 0.95, 0.92), "fog_density": 0.0005, "fog_sun_scatter": 0.25,
+		"glow": 0.6, "bloom": 0.06, "saturation": 1.15, "contrast": 1.08, "exposure": 0.9, "agx_contrast": 1.5,
 		"volumetric": 0.0,
 		"cloud_color": Color(1.0, 1.0, 1.0), "cloud_glow": Color(1.0, 1.0, 1.0), "cloud_count": 0,
 		"mote_color": Color(1.0, 0.94, 0.75, 0.9),

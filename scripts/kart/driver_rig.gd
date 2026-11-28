@@ -212,5 +212,10 @@ func hop(strength := 1.0) -> void:
 func knock(strength: float) -> void:
 	_lean_vel += strength * (1.0 if randf() > 0.5 else -1.0)
 
+## A toy vehicle's contact shadow, hidden while a horn trick lifts or turns the toy.
+func set_shadow_visible(on: bool) -> void:
+	if _shadow:
+		_shadow.visible = on
+
 func set_cheering(on: bool) -> void:
 	_cheering = on

@@ -53,6 +53,11 @@ static func accept_key(source: InputSource) -> String:
 static func back_key(source: InputSource) -> String:
 	return ["key_q", "key_backspace", "pad_b"][_layout(source)] if _layout(source) >= 0 else ""
 
+## The "use my item" key. The same in both modes: in kid mode every button honks, and a honk
+## while he holds an item uses it (Assist).
+static func use_key(source: InputSource) -> String:
+	return ["key_e", "key_enter", "pad_x"][_layout(source)] if _layout(source) >= 0 else ""
+
 ## The "give my item to the kid" key (co-op).
 static func gift_key(source: InputSource) -> String:
 	return ["key_r", "key_m", "pad_dpad"][_layout(source)] if _layout(source) >= 0 else ""

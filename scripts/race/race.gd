@@ -121,7 +121,9 @@ func _use_default_setup() -> void:
 			var source: InputSource
 			# "skilled" stands in for a kid who steers well and holds the gas: the AI line driver
 			# at the controls, still going through the kid assist.
-			if is_full or args.get("input", "none") == "skilled":
+			if args.get("input", "none") == "keyboard":
+				source = KeyboardSource.new(i)  # untouched keys: for pictures of the key hints
+			elif is_full or args.get("input", "none") == "skilled":
 				source = AiSource.new()
 				source.id = "bot%d" % i
 				source.label = "Test %d" % (i + 1)

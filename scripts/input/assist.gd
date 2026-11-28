@@ -20,7 +20,8 @@ class_name Assist extends RefCounted
 const KID_OFF_COURSE_SECONDS := 2.0
 const KID_STUCK_SECONDS := 2.5
 const OTHER_RESCUE_SECONDS := 4.0
-const AUTO_USE_DELAY := 1.0   ## the item roulette shows first, then the item fires
+const PRESS_USE_DELAY := 0.7  ## his button uses the item once the roulette has stopped ...
+const AUTO_USE_DELAY := 3.0   ## ... and without a press it fires by itself after this
 const AUTO_USE_LOOK := 2.2    ## kid boost items: seconds of road ahead that must be straight ...
 const AUTO_USE_BEND := 0.045  ## ... no bend tighter than this (1/m, about a 22 m radius) ...
 const AUTO_USE_MAX_WAIT := 8.0  ## ... but never wait longer than this
@@ -86,7 +87,11 @@ func apply(raw: Intent, racer: Racer, track: Track, racing: bool, delta: float) 
 		_out.use = false
 		if racer.kart.has_item:
 			_use_timer += delta
-			if _use_timer >= AUTO_USE_DELAY and (_use_timer >= AUTO_USE_MAX_WAIT or _good_moment(racer, track)):
+			# His button (every button honks in kid mode) uses it, as the HUD shows.
+			if raw.horn and _use_timer >= PRESS_USE_DELAY:
+				_out.use = true
+				_use_timer = 0.0
+			elif _use_timer >= AUTO_USE_DELAY and (_use_timer >= AUTO_USE_MAX_WAIT or _good_moment(racer, track)):
 				_out.use = true
 				_use_timer = 0.0
 		else:

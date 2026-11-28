@@ -28,6 +28,16 @@ const KID_BACK_ODDS := {TRIPLE_TURBO: 40, SUPERSTAR: 35, TURBO: 15, SPRING: 10}
 ## A grown-up driving ahead of a kid in the race gets the small things.
 const AHEAD_OF_KID_ODDS := {BUBBLE: 45, TICKLE: 35, TURBO: 20}
 
+## Short German words for the HUD hint next to the item slot (for the grown-ups; the pictures
+## say the same).
+const WORDS := {
+	TURBO: "Turbo", SUPERSTAR: "Superstern", BUBBLE: "Schutzblase",
+	SPRING: "Hüpfer", TICKLE: "Kitzeln", TRIPLE_TURBO: "3x Turbo",
+}
+
+static func word(item: int) -> String:
+	return WORDS.get(item, "")
+
 static func icon(item: int) -> String:
 	return ICONS.get(item, "star")
 

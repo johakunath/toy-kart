@@ -8,6 +8,7 @@
 
 [resource]
 script = ExtResource("1")
+horn_trick = 4
 model_scene = ExtResource("4")
 animation = ""
 model_scale = 1.0

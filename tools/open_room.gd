@@ -7,7 +7,8 @@ class_name OpenRoom extends LivingRoom
 ## wall that stands open in the middle. South (+z) is the hall door. x runs west to east.
 ## Sofa, desk, tables and chairs stand a little higher than the real ones, so the karts and
 ## the camera fit underneath (caves to explore). Everything solid gets a box collider on layer
-## 1; the floor is the one big ground collider. Simple shapes in strong colours, no new assets.
+## 1; the floor is the one big ground collider. Simple shapes, no new assets. The room itself
+## (walls, oak floor, grey sofa) has our real, calm colours; the toys in it stay bright.
 
 const X0 := -43.3
 const X1 := 43.3
@@ -22,12 +23,12 @@ const FLOOR_Y := -0.15        ## kart models sit 0.15 m below the physics floor 
 const VIEW_TEXTURE := "res://assets/textures/room/window_view.png"
 const DRAWINGS_TEXTURE := "res://assets/textures/room/photo_wall.png"
 
-const C_WALL_OPEN := Color("8fd0f5")
+const C_WALL_OPEN := Color("e4dfd5")
 const C_OAK := Color("dba862")
 const C_OAK_DARK := Color("b9864a")
-const C_PLANK: Array[Color] = [Color("b8682f"), Color("a85b28"), Color("c47538"), Color("b06232")]
-const C_SOFA_GREY := Color("5a6378")
-const C_SOFA_DARK := Color("434a5c")
+const C_PLANK: Array[Color] = [Color("bf9466"), Color("b3895b"), Color("c99f70"), Color("b88e60")]  ## natural oak
+const C_SOFA_GREY := Color("6c6e73")
+const C_SOFA_DARK := Color("55575c")
 const C_BLACK := Color("26272e")
 const C_WHITE := Color("f6f4ee")
 const C_PLANT := Color("2fa84a")
@@ -174,7 +175,7 @@ static func _floor_planks(room: Node3D) -> void:
 	planks.name = "Floor"
 	var under := PlaneMesh.new()
 	under.size = Vector2(X1 - X0 + 4, Z1 - Z0 + 4)
-	_place(room, under, Vector3(0, -0.01, 0), _mat(Color("5e3216"), 0.9), 0.0, false).name = "Joints"
+	_place(room, under, Vector3(0, -0.01, 0), _mat(Color("6e5236"), 0.9), 0.0, false).name = "Joints"
 
 ## Walls (seen, no shadows: the room is lit softly), white skirting, and solid edges.
 static func _room_walls(room: Node3D) -> void:
@@ -207,7 +208,7 @@ static func _room_walls(room: Node3D) -> void:
 			_no_shadow(_box(walls, Vector3(0.2, HEIGHT - 6.0, 4.0), Vector3(X1 - 0.05, 2.4, z), C_WALL_OPEN, 0.0, 0.9))
 	# The hall behind the door: a short, darker corridor.
 	var hall := _group(room, "Hall")
-	_no_shadow(_box(hall, Vector3(HALL_DOOR.y - HALL_DOOR.x + 4.0, 0.2, 30.0), Vector3((HALL_DOOR.x + HALL_DOOR.y) * 0.5, -0.1, Z1 + 16.0), Color("8a5a32"), 0.0, 0.6))
+	_no_shadow(_box(hall, Vector3(HALL_DOOR.y - HALL_DOOR.x + 4.0, 0.2, 30.0), Vector3((HALL_DOOR.x + HALL_DOOR.y) * 0.5, -0.1, Z1 + 16.0), Color("a8835a"), 0.0, 0.6))
 	for side: float in [HALL_DOOR.x - 1.0, HALL_DOOR.y + 1.0]:
 		_no_shadow(_box(hall, Vector3(1.0, HEIGHT, 30.0), Vector3(side, 0, Z1 + 16.0), Color("e6e2d8"), 0.0, 0.9))
 	_no_shadow(_box(hall, Vector3(HALL_DOOR.y - HALL_DOOR.x + 4.0, HEIGHT, 1.0), Vector3((HALL_DOOR.x + HALL_DOOR.y) * 0.5, 0, Z1 + 31.0), Color("c8c2b6"), 0.0, 0.9))

@@ -17,10 +17,15 @@ class_name KartDef extends Resource
 @export var seat_position := Vector3(0, 0.75, -0.1)
 @export var seat_scale := 1.0
 
+@export_group("Horn trick")
+## What the kart does when it honks (HornTrick.Kind). A toy vehicle's own trick wins.
+@export var horn_trick := HornTrick.Kind.HOP
+
 @export_group("Flip-up roof")
 ## Only for models with a "roof" node (built closed, origin on the hinge at its back edge, +X
-## axis): how far it flips open in degrees, standing still and at full speed. At full speed it
-## leans further back, so the chase camera sees the driver over it.
+## axis): how far it flips open in degrees, standing still and at full speed. Shut by default;
+## a honk opens it, the next honk shuts it. At full speed it leans further back, so the chase
+## camera sees the driver over it.
 @export_range(0.0, 170.0, 1.0) var roof_open_degrees := 100.0
 @export_range(0.0, 170.0, 1.0) var roof_open_fast_degrees := 135.0
 
@@ -32,3 +37,5 @@ class_name KartDef extends Resource
 @export_group("Sound")
 @export var engine_sound: AudioStream
 @export_range(0.5, 2.0, 0.01) var horn_pitch := 1.0
+## A horn of its own (the train whistles). Empty: the standard horn.
+@export var horn_sound: AudioStream

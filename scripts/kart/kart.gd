@@ -216,6 +216,8 @@ func setup(p_kart: KartDef, p_driver: DriverDef) -> void:
 		(_engine_high as AudioStreamPlayer3D).play()
 	if kart_def:
 		horn_sound.pitch_scale = kart_def.horn_pitch
+		if kart_def.horn_sound and not (driver_def and driver_def.is_vehicle):
+			horn_sound.stream = kart_def.horn_sound
 		if driver_def:
 			# Every driver honks a little differently (same driver, same horn every time).
 			horn_sound.pitch_scale *= 0.86 + float(absi(hash(driver_def.id)) % 29) / 100.0
@@ -596,9 +598,7 @@ func _build_shield() -> void:
 
 func honk() -> void:
 	horn_sound.play()
-	if visual.driver:
-		visual.driver.hop()
-	visual.pop_roof()
+	visual.play_trick()
 	honked.emit()
 
 ## Sideways shove in m/s, used for soft kart-to-kart bumps.
@@ -781,7 +781,8 @@ func _effect_body(delta: float) -> void:
 		body.position = body.position.lerp(visual.body_rest, delta * 5.0)
 	if visual.driver:
 		visual.driver.animate(delta, input.x, absf(linear_speed), linear_speed - acceleration)
-	visual.animate_roof(delta, not frozen, absf(linear_speed))
+	visual.animate_roof(delta, absf(linear_speed))
+	visual.animate_trick(delta)
 
 func _effect_wheels(delta: float) -> void:
 	for wheel in visual.wheels:
