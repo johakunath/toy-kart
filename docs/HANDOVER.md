@@ -39,6 +39,10 @@ After the first real play with his son (speed and kid controls feel good).
 - Dev helpers: `--input=honk` (gas, honk every 2.5 s) and `--input=keyboard` (real key pictures
   in the HUD) for screenshots.
 
+- Your first look (same day): the floor is darker now (dark oak) and the coffee table in
+  Entdecken is smaller (6 x 12 m in game, about 30 x 60 cm real; the remote still lies under it).
+  The Wohnzimmer track's table stays big: the road runs under it like a bridge.
+
 **Open:** the room colours are matched from the layout notes, not from photos (the photos from
 24 Nov are not on this PC). Drop 3 or 4 room photos into `photos/room/` and the colours can be
 matched exactly (floor, walls, sofa, chairs, curtains, rug).

@@ -16,9 +16,9 @@ const FIGURE := "res://assets/characters/kenney_mini/character-%s.glb"
 
 const C_WALL := Color("eeeae2")      ## warm white, like our real walls
 const C_SKIRTING := Color("fbf7ee")
-const C_WOOD_A := Color("c29a6c")    ## natural oak floor
-const C_WOOD_B := Color("b48c5f")
-const C_WOOD_C := Color("cea97c")
+const C_WOOD_A := Color("6f4e31")    ## darker oak floor, like ours
+const C_WOOD_B := Color("65462b")
+const C_WOOD_C := Color("7a5739")
 const C_SOFA := Color("6c6e73")      ## our grey sofa
 const C_TABLE := Color("6b4226")     ## dark wood, like the real coffee table
 const TOY_COLORS: Array[Color] = [Color("e8483f"), Color("3b8beb"), Color("f2b90f"), Color("3fbf5f"),
@@ -196,7 +196,7 @@ static func _floor(room: Node3D) -> void:
 	# The joints: a dark board just under the planks.
 	var under := PlaneMesh.new()
 	under.size = ROOM_HI - ROOM_LO + Vector2(4, 4)
-	var joints := _place(room, under, Vector3((ROOM_LO.x + ROOM_HI.x) * 0.5, -0.01, (ROOM_LO.y + ROOM_HI.y) * 0.5), _mat(Color("6e5236"), 0.9), 0.0, false)
+	var joints := _place(room, under, Vector3((ROOM_LO.x + ROOM_HI.x) * 0.5, -0.01, (ROOM_LO.y + ROOM_HI.y) * 0.5), _mat(Color("38271a"), 0.9), 0.0, false)
 	joints.name = "Joints"
 
 static func _walls(room: Node3D) -> void:

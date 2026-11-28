@@ -26,7 +26,7 @@ const DRAWINGS_TEXTURE := "res://assets/textures/room/photo_wall.png"
 const C_WALL_OPEN := Color("e4dfd5")
 const C_OAK := Color("dba862")
 const C_OAK_DARK := Color("b9864a")
-const C_PLANK: Array[Color] = [Color("bf9466"), Color("b3895b"), Color("c99f70"), Color("b88e60")]  ## natural oak
+const C_PLANK: Array[Color] = [Color("6f4e31"), Color("65462b"), Color("7a5739"), Color("6b4b2f")]  ## darker oak, like ours
 const C_SOFA_GREY := Color("6c6e73")
 const C_SOFA_DARK := Color("55575c")
 const C_BLACK := Color("26272e")
@@ -175,7 +175,7 @@ static func _floor_planks(room: Node3D) -> void:
 	planks.name = "Floor"
 	var under := PlaneMesh.new()
 	under.size = Vector2(X1 - X0 + 4, Z1 - Z0 + 4)
-	_place(room, under, Vector3(0, -0.01, 0), _mat(Color("6e5236"), 0.9), 0.0, false).name = "Joints"
+	_place(room, under, Vector3(0, -0.01, 0), _mat(Color("38271a"), 0.9), 0.0, false).name = "Joints"
 
 ## Walls (seen, no shadows: the room is lit softly), white skirting, and solid edges.
 static func _room_walls(room: Node3D) -> void:
@@ -506,8 +506,8 @@ static func _sofa_corner(room: Node3D) -> void:
 ## side table by the sofa's south end.
 static func _coffee_table_and_lamp(room: Node3D) -> void:
 	var group := _group(room, "CoffeeTable")
-	var x := Vector2(11.0, 20.0)
-	var z := Vector2(-15.0, 3.0)
+	var x := Vector2(12.5, 18.5)   # smaller than first built, like the real one (28 Nov 2026)
+	var z := Vector2(-12.0, 0.0)
 	_legs(group, x.x, x.y, z.x, z.y, 8.4, 0.7, C_BLACK, 0.2)
 	_box(group, Vector3(x.y - x.x, 1.0, z.y - z.x), Vector3((x.x + x.y) * 0.5, 8.4, (z.x + z.y) * 0.5), Color("6b4226"), 0.0, 0.4, 0.5)
 	_box(group, Vector3(5.0, 0.3, 7.0), Vector3(15.0, 9.4, -8.0), Color("f3f0e6"), 0.2, 0.9)  # newspaper
