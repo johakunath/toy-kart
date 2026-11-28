@@ -32,8 +32,8 @@ After the first real play with his son (speed and kid controls feel good).
   Jumbo does a barrel roll, the Motorrad pulls a wheelie, the Polizei flashes blue and red
   lights, the Zug whistles and puffs steam, the Traktor bounces. The computer toys honk too, so
   they show off their tricks on their own. Other karts: the driver hops as before.
-- **Living rooms in our real colours:** warm white walls instead of blue, darker oak floor
-  instead of orange planks, the grey sofa, dark coffee table, linen curtains, a beige rug instead
+- **Living rooms in our real colours:** white walls instead of blue, a reddish-brown
+  laminate floor, the dark grey sofa, dark coffee table, dark teal curtains, a beige rug instead
   of the rainbow, a white lamp shade; the room light is neutral and less saturated. Toys, the toy
   race track and the puzzle mats stay bright. Both the Wohnzimmer track and Entdecken.
 - Dev helpers: `--input=honk` (gas, honk every 2.5 s) and `--input=keyboard` (real key pictures
@@ -43,9 +43,10 @@ After the first real play with his son (speed and kid controls feel good).
   Entdecken is smaller (6 x 12 m in game, about 30 x 60 cm real; the remote still lies under it).
   The Wohnzimmer track's table stays big: the road runs under it like a bridge.
 
-**Open:** the room colours are matched from the layout notes, not from photos (the photos from
-24 Nov are not on this PC). Drop 3 or 4 room photos into `photos/room/` and the colours can be
-matched exactly (floor, walls, sofa, chairs, curtains, rug).
+- Then three room photos (in `photos/room/` on this PC only, git ignores them: the repo is
+  public): colours matched to them. Reddish-brown laminate
+  floor, white walls, dark grey sofa, burgundy velvet chairs, light oak table and desk, dark teal
+  curtains (dark grey on the veranda), plum yoga mat, sage tent sheet.
 
 ## Twenty-second round (27 Nov 2026): review and fixes
 
