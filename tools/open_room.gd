@@ -23,20 +23,20 @@ const FLOOR_Y := -0.15        ## kart models sit 0.15 m below the physics floor 
 const VIEW_TEXTURE := "res://assets/textures/room/window_view.png"
 const DRAWINGS_TEXTURE := "res://assets/textures/room/photo_wall.png"
 
-const C_WALL_OPEN := Color("e4dfd5")
-const C_OAK := Color("dba862")
-const C_OAK_DARK := Color("b9864a")
-const C_PLANK: Array[Color] = [Color("6f4e31"), Color("65462b"), Color("7a5739"), Color("6b4b2f")]  ## darker oak, like ours
-const C_SOFA_GREY := Color("6c6e73")
-const C_SOFA_DARK := Color("55575c")
+const C_WALL_OPEN := Color("e3e3e0")
+const C_OAK := Color("cfa56e")
+const C_OAK_DARK := Color("b08550")
+const C_PLANK: Array[Color] = [Color("8d4a28"), Color("7f4224"), Color("98532f"), Color("884626")]  ## reddish-brown laminate (photos/room)
+const C_SOFA_GREY := Color("505256")
+const C_SOFA_DARK := Color("3c3e42")
 const C_BLACK := Color("26272e")
 const C_WHITE := Color("f6f4ee")
 const C_PLANT := Color("2fa84a")
 const C_PLANT_DARK := Color("1f7d3a")
 const C_POT := Color("d2693a")
-const C_VELVET := Color("a3204a")
-const C_TEAL := Color("17808a")
-const C_SAGE := Color("86c9a0")
+const C_VELVET := Color("7d1a35")
+const C_TEAL := Color("1f5254")
+const C_SAGE := Color("a8c2a8")
 const C_CARDBOARD := Color("c99a5e")
 
 static var _solids: Node3D
@@ -175,7 +175,7 @@ static func _floor_planks(room: Node3D) -> void:
 	planks.name = "Floor"
 	var under := PlaneMesh.new()
 	under.size = Vector2(X1 - X0 + 4, Z1 - Z0 + 4)
-	_place(room, under, Vector3(0, -0.01, 0), _mat(Color("38271a"), 0.9), 0.0, false).name = "Joints"
+	_place(room, under, Vector3(0, -0.01, 0), _mat(Color("3e2214"), 0.9), 0.0, false).name = "Joints"
 
 ## Walls (seen, no shadows: the room is lit softly), white skirting, and solid edges.
 static func _room_walls(room: Node3D) -> void:
@@ -208,7 +208,7 @@ static func _room_walls(room: Node3D) -> void:
 			_no_shadow(_box(walls, Vector3(0.2, HEIGHT - 6.0, 4.0), Vector3(X1 - 0.05, 2.4, z), C_WALL_OPEN, 0.0, 0.9))
 	# The hall behind the door: a short, darker corridor.
 	var hall := _group(room, "Hall")
-	_no_shadow(_box(hall, Vector3(HALL_DOOR.y - HALL_DOOR.x + 4.0, 0.2, 30.0), Vector3((HALL_DOOR.x + HALL_DOOR.y) * 0.5, -0.1, Z1 + 16.0), Color("a8835a"), 0.0, 0.6))
+	_no_shadow(_box(hall, Vector3(HALL_DOOR.y - HALL_DOOR.x + 4.0, 0.2, 30.0), Vector3((HALL_DOOR.x + HALL_DOOR.y) * 0.5, -0.1, Z1 + 16.0), Color("8d4a28"), 0.0, 0.6))
 	for side: float in [HALL_DOOR.x - 1.0, HALL_DOOR.y + 1.0]:
 		_no_shadow(_box(hall, Vector3(1.0, HEIGHT, 30.0), Vector3(side, 0, Z1 + 16.0), Color("e6e2d8"), 0.0, 0.9))
 	_no_shadow(_box(hall, Vector3(HALL_DOOR.y - HALL_DOOR.x + 4.0, HEIGHT, 1.0), Vector3((HALL_DOOR.x + HALL_DOOR.y) * 0.5, 0, Z1 + 31.0), Color("c8c2b6"), 0.0, 0.9))
@@ -256,7 +256,7 @@ static func _window_wall(room: Node3D) -> void:
 		_no_shadow(_box(group, Vector3(0.35, 18.0, 0.35), Vector3(bar, 0, z - 0.1), C_WHITE, 0.0, 0.4))
 		bar += 2.6
 	# Grey curtain at the west end.
-	_box(group, Vector3(5.0, HEIGHT - 3.0, 2.0), Vector3(X0 + 20.0, 0, Z0 + 1.6), Color("4e535e"), 0.0, 0.95)
+	_box(group, Vector3(5.0, HEIGHT - 3.0, 2.0), Vector3(X0 + 20.0, 0, Z0 + 1.6), Color("3d4246"), 0.0, 0.95)
 
 ## The glass sliding wall: frames and glass at both ends, wide open in the middle.
 static func _glass_wall(room: Node3D) -> void:
@@ -543,7 +543,7 @@ static func _coffee_table_and_lamp(room: Node3D) -> void:
 
 ## The purple yoga mat in the middle of the room (the builder puts turbo arrows on it).
 static func _yoga_mat(room: Node3D) -> void:
-	_no_shadow(_box(room, Vector3(12.0, 0.12, 36.0), Vector3(2.0, 0.02, 20.0), Color("a23b72"), 0.0, 0.9))
+	_no_shadow(_box(room, Vector3(12.0, 0.12, 36.0), Vector3(2.0, 0.02, 20.0), Color("6b2a3c"), 0.0, 0.9))
 
 ## Dad's desk on the west wall: drive under it between the black legs. The chair on its mat.
 static func _desk(room: Node3D) -> void:
